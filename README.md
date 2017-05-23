@@ -49,7 +49,7 @@ This has been tested under Windows 7 with Microsoft Visual Studio 2013.
 ### Source data
 
 Download source DEM data for the region of interest. 90-meter data is
-available from NASA (SRTM), or our void-filled data is at
+available from NASA (SRTM), or improved void-filled data is at
 [viewfinderpanoramas](http://viewfinderpanoramas.org/dem3.html).
 Higher resolution data for North America is available at [The National
 Map](https://viewer.nationalmap.gov/).
@@ -132,13 +132,13 @@ latitude,longitude,elevation in feet,ILP latitude,ILP longitude,isolation in km
 
 where ILP means isolation limit point.
 
-A zip file with our isolation results for the world is [https://drive.google.com/file/d/0B3icWNhBosDXRm1pak56blp1RGc/view?usp=sharing](here).
+A zip file with our isolation results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXRm1pak56blp1RGc/view?usp=sharing)
 
 The prominence file has one peak per line, in this format:
 
 latitude,longitude,elevation in feet,key saddle latitude,key saddle longitude,prominence in feet
 
-A zip file with our prominence results for the world is [https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing](here).
+A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing)
 
 
 ## More information
