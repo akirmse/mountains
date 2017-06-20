@@ -1,0 +1,293 @@
+#
+# Makefile for peak database manipulation programs
+#
+
+AR     = lib -nologo
+CC     = cl -nologo
+MAKE   = nmake -nologo
+LINK   = link -nologo
+
+CP = copy
+RM = rm -f
+RMDIR = rmdir
+MV = rename
+MKDIR = mkdir -p
+
+SOURCEDIR = .
+
+!ifdef RELEASE
+!undef DEBUG
+OUTDIR=release
+!else
+DEBUG = 1
+OUTDIR=debug
+!endif
+
+LIBS =
+
+# Disable easylogging++ logging to a file by default
+CCOMMONFLAGS = -nologo -DPLATFORM_WINDOWS -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE \
+	-DELPP_NO_LOG_TO_FILE -DELPP_THREAD_SAFE /D_USE_MATH_DEFINES /EHsc /DPATH_MAX=1025
+CNORMALFLAGS = $(CCOMMONFLAGS) -W3 -Zi /Ox
+CDEBUGFLAGS = $(CCOMMONFLAGS) -Zi -W3
+LINKCOMMONFLAGS =
+LINKNORMALFLAGS = $(LINKCOMMONFLAGS) /debug
+LINKDEBUGFLAGS = $(LINKCOMMONFLAGS) /debug
+
+!ifdef DEBUG
+
+CFLAGS = $(CDEBUGFLAGS)
+LINKFLAGS = $(LINKDEBUGFLAGS)
+
+!else
+CFLAGS = $(CNORMALFLAGS)
+LINKFLAGS = $(LINKNORMALFLAGS)
+!endif
+
+POINTLIB = $(OUTDIR)/pointlib.a
+
+POINTLIB_OBJS = \
+	$(OUTDIR)/point.o \
+	$(OUTDIR)/quadtree.o \
+	$(OUTDIR)/util.o \
+
+LOJ_MAPPER_OBJS =  \
+	$(OUTDIR)/forced_matches.o \
+	$(OUTDIR)/loj_collection.o \
+	$(OUTDIR)/loj_mapper_main.o \
+	$(OUTDIR)/loj_point.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(OUTDIR)/peak_matcher.o \
+	$(POINTLIB) \
+
+FIND_MISSING_PEAKS_OBJS =  \
+	$(OUTDIR)/find_missing_peaks.o \
+	$(OUTDIR)/loj_collection.o \
+	$(OUTDIR)/loj_point.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(POINTLIB) \
+
+FIND_PEAKBAGGER_DUPLICATES_OBJS =  \
+	$(OUTDIR)/find_peakbagger_duplicates.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(POINTLIB) \
+
+ISOLATION_OBJS = \
+	$(OUTDIR)/easylogging++.o \
+	$(OUTDIR)/isolation.o \
+	$(OUTDIR)/isolation_finder.o \
+	$(OUTDIR)/isolation_results.o \
+	$(OUTDIR)/isolation_task.o \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/peak_finder.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(OUTDIR)/point_map.o \
+	$(OUTDIR)/tile.o \
+	$(OUTDIR)/tile_cache.o \
+	$(POINTLIB) \
+
+PEAKBAGGER_ISOLATION_MAPPER_OBJS = \
+	$(OUTDIR)/isolation_collection.o \
+	$(OUTDIR)/isolation_point.o \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_isolation_mapper.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(POINTLIB) \
+
+PROMINENCE_OBJS = \
+	$(OUTDIR)/coordinate_system.o \
+	$(OUTDIR)/divide_tree.o \
+	$(OUTDIR)/domain_map.o \
+	$(OUTDIR)/easylogging++.o \
+	$(OUTDIR)/filter.o \
+	$(OUTDIR)/island_tree.o \
+	$(OUTDIR)/kml_writer.o \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/line_tree.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(OUTDIR)/point_map.o \
+	$(OUTDIR)/prominence.o \
+	$(OUTDIR)/prominence_task.o \
+	$(OUTDIR)/tile.o \
+	$(OUTDIR)/tile_cache.o \
+	$(OUTDIR)/tree_builder.o \
+	$(POINTLIB) \
+
+MERGE_DIVIDE_TREES_OBJS = \
+	$(OUTDIR)/coordinate_system.o \
+	$(OUTDIR)/divide_tree.o \
+	$(OUTDIR)/easylogging++.o \
+	$(OUTDIR)/island_tree.o \
+	$(OUTDIR)/kml_writer.o \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/line_tree.o \
+	$(OUTDIR)/merge_divide_trees.o \
+	$(OUTDIR)/tile.o \
+	$(POINTLIB) \
+
+
+PEAKBAGGER_PROMINENCE_MAPPER_OBJS = \
+	$(OUTDIR)/filter.o \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/peakbagger_collection.o \
+	$(OUTDIR)/peakbagger_prominence_mapper.o \
+	$(OUTDIR)/peakbagger_point.o \
+	$(OUTDIR)/prominence_collection.o \
+	$(OUTDIR)/prominence_point.o \
+	$(POINTLIB) \
+
+LOJ_PROMINENCE_MAPPER_OBJS = \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/loj_collection.o \
+	$(OUTDIR)/loj_prominence_mapper.o \
+	$(OUTDIR)/loj_point.o \
+	$(OUTDIR)/prominence_collection.o \
+	$(OUTDIR)/prominence_point.o \
+	$(POINTLIB) \
+
+PEAKLIST_PROMINENCE_MAPPER_OBJS = \
+	$(OUTDIR)/latlng.o \
+	$(OUTDIR)/loj_point.o \
+	$(OUTDIR)/peaklist_collection.o \
+	$(OUTDIR)/peaklist_prominence_mapper.o \
+	$(OUTDIR)/prominence_collection.o \
+	$(OUTDIR)/prominence_point.o \
+	$(POINTLIB) \
+
+FILTER_POINTS_OBJS = \
+	$(OUTDIR)/filter.o \
+	$(OUTDIR)/filter_points.o \
+	$(POINTLIB) \
+
+all : makedirs $(OUTDIR)/mapper.exe $(OUTDIR)/find_missing_peaks.exe \
+	$(OUTDIR)/find_peakbagger_duplicates.exe $(OUTDIR)/isolation.exe $(OUTDIR)/peakbagger_isolation_mapper.exe \
+	$(OUTDIR)/prominence.exe $(OUTDIR)/merge_divide_trees.exe $(OUTDIR)/peakbagger_prominence_mapper.exe \
+	$(OUTDIR)/loj_prominence_mapper.exe $(OUTDIR)/peaklist_prominence_mapper.exe $(OUTDIR)/filter_points.exe
+
+$(POINTLIB) : $(POINTLIB_OBJS)
+	$(AR) /OUT:$@ $**
+
+$(OUTDIR)/find_missing_peaks.exe: $(FIND_MISSING_PEAKS_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/find_peakbagger_duplicates.exe: $(FIND_PEAKBAGGER_DUPLICATES_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/isolation.exe: $(ISOLATION_OBJS)
+	$(LINK) $** $(LIBS) -OUT:$@ $(LINKFLAGS)
+
+$(OUTDIR)/peakbagger_isolation_mapper.exe: $(PEAKBAGGER_ISOLATION_MAPPER_OBJS)
+	$(LINK) $** $(LIBS) -OUT:$@ $(LINKFLAGS)
+
+$(OUTDIR)/mapper.exe: $(LOJ_MAPPER_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/prominence.exe: $(PROMINENCE_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/merge_divide_trees.exe: $(MERGE_DIVIDE_TREES_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/peakbagger_prominence_mapper.exe: $(PEAKBAGGER_PROMINENCE_MAPPER_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/loj_prominence_mapper.exe: $(LOJ_PROMINENCE_MAPPER_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/peaklist_prominence_mapper.exe: $(PEAKLIST_PROMINENCE_MAPPER_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+$(OUTDIR)/filter_points.exe: $(FILTER_POINTS_OBJS)
+	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+
+{$(SOURCEDIR)}.cpp{$(OUTDIR)}.o:
+	$(CC) $(CFLAGS) /FpCpch /Fd$(OUTDIR)\vc90.pdb /Fo$*.o -c $< 
+
+{$(SOURCEDIR)}.cc{$(OUTDIR)}.o:
+	$(CC) $(CFLAGS) /FpCpch /Fd$(OUTDIR)\vc90.pdb /Fo$*.o -c $< 
+
+makedirs:
+	-@$(MKDIR) $(OUTDIR)
+
+clean:
+	@$(RM) $(OUTDIR)/*
+	@$(RMDIR) $(OUTDIR)
+
+depend:
+	makedepend -Y -p'$(OUTDIR)/' *.cpp
+	@$(RM) Makefile.bak
+
+# DO NOT DELETE
+
+release/coordinate_system.o: coordinate_system.h primitives.h latlng.h
+release/divide_tree.o: divide_tree.h coordinate_system.h primitives.h
+release/divide_tree.o: latlng.h easylogging++.h island_tree.h util.h
+release/domain_map.o: domain_map.h tile.h primitives.h latlng.h pixel_array.h
+release/domain_map.o: easylogging++.h
+release/find_missing_peaks.o: loj_collection.h loj_point.h point.h quadtree.h
+release/find_missing_peaks.o: peakbagger_collection.h peakbagger_point.h
+release/find_peakbagger_duplicates.o: loj_collection.h loj_point.h point.h
+release/find_peakbagger_duplicates.o: quadtree.h peakbagger_collection.h
+release/find_peakbagger_duplicates.o: peakbagger_point.h
+release/forced_matches.o: forced_matches.h util.h
+release/island_tree.o: island_tree.h primitives.h divide_tree.h
+release/island_tree.o: coordinate_system.h latlng.h easylogging++.h
+release/isolation.o: isolation_task.h tile_cache.h lock.h lrucache.h
+release/isolation.o: point_map.h point.h tile.h primitives.h latlng.h
+release/isolation.o: peakbagger_collection.h peakbagger_point.h quadtree.h
+release/isolation.o: ThreadPool.h easylogging++.h
+release/isolation_collection.o: isolation_collection.h isolation_point.h
+release/isolation_collection.o: point.h latlng.h quadtree.h
+release/isolation_finder.o: isolation_finder.h tile_cache.h lock.h lrucache.h
+release/isolation_finder.o: point_map.h point.h tile.h primitives.h latlng.h
+release/isolation_finder.o: easylogging++.h math_util.h
+release/isolation_point.o: isolation_point.h point.h latlng.h
+release/isolation_results.o: isolation_results.h latlng.h
+release/isolation_task.o: isolation_finder.h tile_cache.h lock.h lrucache.h
+release/isolation_task.o: point_map.h point.h tile.h primitives.h latlng.h
+release/isolation_task.o: isolation_task.h isolation_results.h peak_finder.h
+release/isolation_task.o: easylogging++.h
+release/latlng.o: latlng.h math_util.h
+release/loj_collection.o: loj_collection.h loj_point.h point.h quadtree.h
+release/loj_collection.o: util.h
+release/loj_mapper_main.o: forced_matches.h loj_collection.h loj_point.h
+release/loj_mapper_main.o: point.h quadtree.h peakbagger_collection.h
+release/loj_mapper_main.o: peakbagger_point.h peak_matcher.h
+release/loj_point.o: loj_point.h point.h
+release/merge_divide_trees.o: divide_tree.h coordinate_system.h primitives.h
+release/merge_divide_trees.o: latlng.h island_tree.h easylogging++.h
+release/peak_finder.o: peak_finder.h tile.h primitives.h latlng.h
+release/peak_matcher.o: peak_matcher.h peakbagger_point.h point.h loj_point.h
+release/peakbagger_collection.o: peakbagger_collection.h peakbagger_point.h
+release/peakbagger_collection.o: point.h quadtree.h
+release/peakbagger_isolation_mapper.o: isolation_collection.h
+release/peakbagger_isolation_mapper.o: isolation_point.h point.h latlng.h
+release/peakbagger_isolation_mapper.o: quadtree.h peakbagger_collection.h
+release/peakbagger_isolation_mapper.o: peakbagger_point.h
+release/peakbagger_point.o: peakbagger_point.h point.h
+release/point.o: point.h
+release/point_map.o: point_map.h point.h
+release/prominence.o: peakbagger_collection.h peakbagger_point.h point.h
+release/prominence.o: quadtree.h point_map.h prominence_task.h tile_cache.h
+release/prominence.o: lock.h lrucache.h tile.h primitives.h latlng.h
+release/prominence.o: ThreadPool.h easylogging++.h
+release/prominence_task.o: prominence_task.h tile_cache.h lock.h lrucache.h
+release/prominence_task.o: point_map.h point.h tile.h primitives.h latlng.h
+release/prominence_task.o: divide_tree.h coordinate_system.h tree_builder.h
+release/prominence_task.o: domain_map.h pixel_array.h easylogging++.h
+release/quadtree.o: quadtree.h point.h
+release/tile.o: tile.h primitives.h latlng.h math_util.h util.h
+release/tile.o: easylogging++.h
+release/tile_cache.o: tile_cache.h lock.h lrucache.h point_map.h point.h
+release/tile_cache.o: tile.h primitives.h latlng.h peakbagger_point.h
+release/tile_cache.o: easylogging++.h
+release/tree_builder.o: tree_builder.h primitives.h domain_map.h tile.h
+release/tree_builder.o: latlng.h pixel_array.h divide_tree.h
+release/tree_builder.o: coordinate_system.h easylogging++.h
+release/util.o: util.h
