@@ -146,3 +146,8 @@ A zip file with our prominence results for the world is [here](https://drive.goo
 Explanations of what these calculations are about are at
 http://andrewkirmse.com/isolation and
 http://andrewkirmse.com/prominence, including nice visualizations.
+
+This work was later published in the October, 2017 issue of the
+journal "Progress of Physical Geography"
+[here](https://doi.org/10.1177/0309133317738163).  The article can be
+read [here](http://www.andrewkirmse.com/prominence-article).
