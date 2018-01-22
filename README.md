@@ -42,7 +42,7 @@ Release version:
 nmake RELEASE=1 -f makefile.win
 ```
 
-This has been tested under Windows 7 with Microsoft Visual Studio 2013.
+This has been tested under Windows 10 with Microsoft Visual Studio 2017.
 
 ## Running the code
 
