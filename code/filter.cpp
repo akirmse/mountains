@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
+#include "easylogging++.h"
 #include "filter.h"
 #include "util.h"
 
 #include <fstream>
+
 
 using std::string;
 using std::vector;
@@ -34,7 +36,7 @@ Filter::Filter()
     : mWrapLongitude(-180) {
 }
 
-bool Filter::addPolygonFromKml(const string &filename) {
+bool Filter::addPolygonsFromKml(const string &filename) {
   if (!fileExists(filename)) {
     printf("Can't find polygon file %s\n", filename.c_str());
     return false;
@@ -44,97 +46,180 @@ bool Filter::addPolygonFromKml(const string &filename) {
 
   bool inCoordinates = false;
   string line;
+  vector<LatLng> polygon;
   while (file.good()) {
     std::getline(file, line);
 
-    if (line.find("<coordinates>") != string::npos) {
+    // Try to parse coordinates all on one line, or one line at a time
+    const char *coordinates_tag = "<coordinates>";
+    auto pos = line.find(coordinates_tag);
+    if (pos != string::npos) {
       inCoordinates = true;
-    } else if (line.find("</coordinates>") != string::npos) {
-      inCoordinates = false;
-    } else if (inCoordinates) {
+      line = line.substr(pos + strlen(coordinates_tag));
+    }
+
+    bool endFound = false;
+    if (inCoordinates) {
+      // Look for </coordinates> on same line
+      pos = line.find("</coordinates>");
+      auto coordsStr = line;
+      if (pos != string::npos) {
+        coordsStr = line.substr(0, pos);
+        endFound = true;
+      } 
       vector<string> pointText;
       vector<string> elements;
-      split(line, ' ', pointText);
+      split(coordsStr, ' ', pointText);
       for (const string &eachPoint : pointText) {
         split(eachPoint, ',', elements);
-        float lat = stof(elements[1]);  // note order in KML
-        float lng = stof(elements[0]);
-        mPolygon.push_back(Point(lat, lng));
+        if (elements.size() >= 2) {
+          float lat = stof(elements[1]);  // note order in KML
+          float lng = stof(elements[0]);
+          polygon.push_back(LatLng(lat, lng));
+        }
       }
     }
+
+    if (endFound || line.find("</coordinates>") != string::npos) {
+      inCoordinates = false;
+      mPolygons.push_back(polygon);
+      polygon.clear();
+    } 
   }
 
-  printf("Read polygon with %d points\n", (int) mPolygon.size());
+  int numPoints = 0;
+  for (auto &polygon : mPolygons) {
+    numPoints += polygon.size();
+  }
+
+  LOG(INFO) << "Read " << mPolygons.size() << " polygons with " << numPoints << " points";
   
   return true;
 }
 
 // Polygon must be closed, i.e. first point == last point.
-bool Filter::isPointInside(const Point &point) const {
-  if (mPolygon.empty()) {
+bool Filter::isPointInside(const LatLng &latlng) const {
+  if (mPolygons.empty()) {
     return true;
   }
-  
-  bool inside = false;
-  float testx = point.longitude();
-  float testy = point.latitude();
 
-  // Allow wrapping around antimeridian
-  if (testx < mWrapLongitude) {
-    testx += 360;
+  for (auto &polygon : mPolygons) {
+    if (polygon.empty()) {
+      continue;
+    }
+    
+    bool inside = false;
+    float testx = latlng.longitude();
+    float testy = latlng.latitude();
+    
+    // Allow wrapping around antimeridian
+    if (testx < mWrapLongitude) {
+      testx += 360;
+    }
+    
+    // Horizontal ray cast, check parity of # of polygon intersections.
+    // See http://stackoverflow.com/questions/11716268/point-in-polygon-algorithm 
+    for (int i = 0, j = polygon.size() - 1; i < (int) polygon.size(); j = i++) {
+      if ( ((polygon[i].latitude() > testy) != (polygon[j].latitude() > testy)) &&
+           (testx < (polygon[j].longitude() - polygon[i].longitude()) *
+            (testy - polygon[i].latitude()) / (polygon[j].latitude()-polygon[i].latitude()) + polygon[i].longitude()) )
+        inside = !inside;
+    }
+
+    if (inside) {
+      return true;
+    }
   }
   
-  // Horizontal ray cast, check parity of # of polygon intersections.
-  // See http://stackoverflow.com/questions/11716268/point-in-polygon-algorithm 
-  for (int i = 0, j = mPolygon.size() - 1; i < (int) mPolygon.size(); j = i++) {
-    if ( ((mPolygon[i].latitude() > testy) != (mPolygon[j].latitude() > testy)) &&
-         (testx < (mPolygon[j].longitude() - mPolygon[i].longitude()) *
-          (testy - mPolygon[i].latitude()) / (mPolygon[j].latitude()-mPolygon[i].latitude()) + mPolygon[i].longitude()) )
-      inside = !inside;
-  }
-  return inside;
+  return false;
 }
 
 void Filter::setWrapLongitude(float wrapLongitude) {
   mWrapLongitude = wrapLongitude;
-  vector<Point> newPoints;
-  for (const Point &p : mPolygon) {
-    if (p.longitude() < wrapLongitude) {
-      newPoints.push_back(Point(p.latitude(), p.longitude() + 360));
-    } else {
-      newPoints.push_back(p);
+  vector<vector<LatLng>> newPolygons;
+  for (auto &polygon : mPolygons) {
+    vector<LatLng> newPoints;
+    for (const LatLng &p : polygon) {
+      if (p.longitude() < wrapLongitude) {
+        newPoints.push_back(LatLng(p.latitude(), p.longitude() + 360));
+      } else {
+        newPoints.push_back(p);
+      }
     }
+    newPolygons.push_back(newPoints);
   }
-  mPolygon = newPoints;
+  mPolygons = newPolygons;
 }
 
 bool Filter::intersects(float minLat, float maxLat, float minLng, float maxLng) const {
   // If any corner of the rectangle is inside, there is an intersection
-  Point p1(minLat, minLng);
-  Point p2(minLat, maxLng);
-  Point p3(maxLat, maxLng);
-  Point p4(maxLat, minLng);
+  LatLng p1(minLat, minLng);
+  LatLng p2(minLat, maxLng);
+  LatLng p3(maxLat, maxLng);
+  LatLng p4(maxLat, minLng);
   if (isPointInside(p1) || isPointInside(p2) || isPointInside(p3) || isPointInside(p4)) {
     return true;
   }
 
-  // Try intersecting the four sides of the rectangle with all edges of the polygon
-  Point points[4] = { p1, p2, p3, p4};
-  for (int i = 0; i < 4; ++i) {
-    const Point &point1 = points[i];
-    const Point &point2 = points[(i + 1) % 4];
-    for (int j = 0, k = mPolygon.size() - 1; j < (int) mPolygon.size(); k = j++) {
-      if (segmentsIntersect(point1.longitude(), point1.latitude(),
-                            point2.longitude(), point2.latitude(),
-                            mPolygon[j].longitude(), mPolygon[j].latitude(),
-                            mPolygon[k].longitude(), mPolygon[k].latitude())) {
+  for (auto &polygon : mPolygons) {
+    // Try intersecting the four sides of the rectangle with all edges of the polygon
+    LatLng points[4] = { p1, p2, p3, p4};
+    for (int i = 0; i < 4; ++i) {
+      const LatLng &point1 = points[i];
+      const LatLng &point2 = points[(i + 1) % 4];
+      for (int j = 0, k = polygon.size() - 1; j < (int) polygon.size(); k = j++) {
+        if (segmentsIntersect(point1.longitude(), point1.latitude(),
+                              point2.longitude(), point2.latitude(),
+                              polygon[j].longitude(), polygon[j].latitude(),
+                              polygon[k].longitude(), polygon[k].latitude())) {
+          return true;
+        }
+      }
+    }
+    
+    // Is any point of polygon inside the rectangle?
+    for (auto &point : polygon) {
+      if (point.latitude() >= minLat &&
+          point.latitude() <= maxLat &&
+          point.longitude() >= minLng &&
+          point.longitude() <= maxLng) {
         return true;
       }
     }
   }
+  
   return false;
 }
 
+void Filter::getBounds(LatLng *sw, LatLng *ne) const {
+  if (mPolygons.empty()) {
+    return;
+  }
+
+  bool anyPoints = false;
+  
+  float min_latitude = 999;
+  float max_latitude = -999;
+  float min_longitude = 999;
+  float max_longitude = -999;
+  
+  for (auto &polygon : mPolygons) {
+    if (polygon.empty()) {
+      continue;
+    }
+
+    for (int i = 0; i < (int) polygon.size(); ++i) {
+      const LatLng &point = polygon[i];
+      min_latitude = std::min(min_latitude, point.latitude());
+      max_latitude = std::max(max_latitude, point.latitude());
+      min_longitude = std::min(min_longitude, point.longitude());
+      max_longitude = std::max(max_longitude, point.longitude());
+    }
+    
+    *sw = LatLng(min_latitude, min_longitude);
+    *ne = LatLng(max_latitude, max_longitude);
+  }
+}
 
 // Returns true if the lines intersect, otherwise false.
 bool Filter::segmentsIntersect(float p0_x, float p0_y, float p1_x, float p1_y,

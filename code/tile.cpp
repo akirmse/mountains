@@ -82,7 +82,7 @@ bool Tile::isInExtents(float latitude, float longitude) const {
 
 int Tile::numVerticalSamplesForDistance(float distance) const {
   // Degree of latitude is about 111km
-  return ceil(distance / 111000 * mHeight);
+  return (int) (ceil(distance / 111000 * mHeight));
 }
 
 Tile *Tile::loadFromHgtFile(const string &directory, int minLat, int minLng) {
@@ -285,7 +285,12 @@ Tile *Tile::loadFromNEDZipFileInternal(const std::string &directory,
   string fltFilename = getFltFilename(minLat, minLng, format);
 
   // Unzip flt file from zip to temp dir
+#ifdef PLATFORM_WINDOWS
+  string command = "7z x \"" + filename + "\" " + fltFilename + " -y -o" + tempDirectory
+    + " > nul";
+#else  
   string command = "unzip -o \"" + filename + "\" " + fltFilename + " -d " + tempDirectory;
+#endif
   VLOG(2) << "Unzip command is " << command;
   int retval = system(command.c_str());
   if (retval != 0) {

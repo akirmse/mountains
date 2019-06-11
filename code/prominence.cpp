@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
   // Load filtering polygon
   Filter filter;
   if (!polygonFilename.empty()) {
-    if (!filter.addPolygonFromKml(polygonFilename)) {
+    if (!filter.addPolygonsFromKml(polygonFilename)) {
       printf("Couldn't load KML polygon from %s\n",polygonFilename.c_str());
       exit(1);
     }

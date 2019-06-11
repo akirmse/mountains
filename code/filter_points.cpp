@@ -24,8 +24,9 @@
 
 // Filters a text file of lat, lngs by a polygon specified in a KML file.
 
-#include "point.h"
+#include "easylogging++.h"
 #include "filter.h"
+#include "latlng.h"
 #include "util.h"
 
 #ifdef PLATFORM_LINUX
@@ -41,6 +42,8 @@
 
 using std::string;
 using std::vector;
+
+INITIALIZE_EASYLOGGINGPP
 
 static void usage() {
   printf("Usage:\n");
@@ -79,7 +82,7 @@ int main(int argc, char **argv) {
 
   // Read polygon
   Filter filter;
-  if (!filter.addPolygonFromKml(polygonFilename)) {
+  if (!filter.addPolygonsFromKml(polygonFilename)) {
     exit(1);
   }
 
@@ -109,7 +112,7 @@ int main(int argc, char **argv) {
     split(line, ',', elements);
     float lat = stof(elements[0]);
     float lng = stof(elements[1]);
-    Point point(lat, lng);
+    LatLng point(lat, lng);
 
     if (filter.isPointInside(point)) {
       printf("Point %f %f is in polygon\n", lat, lng);

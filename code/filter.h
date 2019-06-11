@@ -26,7 +26,7 @@
 #define _FILTER_H_
 
 /*
- * Stores a polygonal region and can determine if a point is inside.
+ * Stores one or more polygonal regions and can determine if a point is inside.
  *
  * In general this does not support wrapping around the antimeridian.  However,
  * the specific case of the polygon extending a short way east of the antimeridian
@@ -34,7 +34,7 @@
  * whose longitudes have been adjusted to > 180 degrees.
  */
 
-#include "point.h"
+#include "latlng.h"
 
 #include <string>
 #include <vector>
@@ -43,22 +43,23 @@ class Filter {
 public:
   Filter();
   
-  // TODO: Support multiple polygons, or exclusion polygons?
-  bool addPolygonFromKml(const std::string &filename);
+  bool addPolygonsFromKml(const std::string &filename);
 
-  bool isPointInside(const Point &point) const;
+  bool isPointInside(const LatLng &latlng) const;
 
   // Add 360 to the longitude of (presumably negative) longitudes <
-  // wrapLongitude in the polygon.  This allows the polygon to cross
+  // wrapLongitude in the polygons.  This allows the polygons to cross
   // the antimeridian in a primitive way.
   void setWrapLongitude(float wrapLongitude);
   
-  // Determines whether given rectangle intersects polygon.  Does not
-  // handle the case where the polygon is completely inside the
-  // rectangle.  Does handle the opposite case.
+  // Determines whether given rectangle intersects any polygon.
   bool intersects(float minLat, float maxLat, float minLng, float maxLng) const;
+
+  // Sets sw and ne to northwest and southeast corners of bounds.
+  void getBounds(LatLng *sw, LatLng *ne) const;
+  
 private:
-  std::vector<Point> mPolygon;
+  std::vector<std::vector<LatLng>> mPolygons;
   float mWrapLongitude;
 
   // Returns true if line segment p0-p1 intersects with segment p2-p3.
