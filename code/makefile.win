@@ -48,163 +48,84 @@ LINKFLAGS = $(LINKNORMALFLAGS)
 POINTLIB = $(OUTDIR)/pointlib.a
 
 POINTLIB_OBJS = \
-	$(OUTDIR)/point.o \
-	$(OUTDIR)/quadtree.o \
-	$(OUTDIR)/util.o \
-
-LOJ_MAPPER_OBJS =  \
-	$(OUTDIR)/forced_matches.o \
-	$(OUTDIR)/loj_collection.o \
-	$(OUTDIR)/loj_mapper_main.o \
-	$(OUTDIR)/loj_point.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(OUTDIR)/peak_matcher.o \
-	$(POINTLIB) \
-
-FIND_MISSING_PEAKS_OBJS =  \
-	$(OUTDIR)/find_missing_peaks.o \
-	$(OUTDIR)/loj_collection.o \
-	$(OUTDIR)/loj_point.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(POINTLIB) \
-
-FIND_PEAKBAGGER_DUPLICATES_OBJS =  \
-	$(OUTDIR)/find_peakbagger_duplicates.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(POINTLIB) \
+	$(OUTDIR)/point.obj \
+	$(OUTDIR)/quadtree.obj \
+	$(OUTDIR)/util.obj \
 
 ISOLATION_OBJS = \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/isolation.o \
-	$(OUTDIR)/isolation_finder.o \
-	$(OUTDIR)/isolation_results.o \
-	$(OUTDIR)/isolation_task.o \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/peak_finder.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(OUTDIR)/point_map.o \
-	$(OUTDIR)/tile.o \
-	$(OUTDIR)/tile_cache.o \
-	$(OUTDIR)/tile_loading_policy.o \
+	$(OUTDIR)/easylogging++.obj \
+	$(OUTDIR)/isolation.obj \
+	$(OUTDIR)/isolation_finder.obj \
+	$(OUTDIR)/isolation_results.obj \
+	$(OUTDIR)/isolation_task.obj \
+	$(OUTDIR)/latlng.obj \
+	$(OUTDIR)/peak_finder.obj \
+	$(OUTDIR)/peakbagger_collection.obj \
+	$(OUTDIR)/peakbagger_point.obj \
+	$(OUTDIR)/point_map.obj \
+	$(OUTDIR)/tile.obj \
+	$(OUTDIR)/tile_cache.obj \
+	$(OUTDIR)/tile_loading_policy.obj \
 	$(POINTLIB) \
 
 PEAKBAGGER_ISOLATION_MAPPER_OBJS = \
-	$(OUTDIR)/isolation_collection.o \
-	$(OUTDIR)/isolation_point.o \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_isolation_mapper.o \
-	$(OUTDIR)/peakbagger_point.o \
+	$(OUTDIR)/isolation_collection.obj \
+	$(OUTDIR)/isolation_point.obj \
+	$(OUTDIR)/latlng.obj \
+	$(OUTDIR)/peakbagger_collection.obj \
+	$(OUTDIR)/peakbagger_isolation_mapper.obj \
+	$(OUTDIR)/peakbagger_point.obj \
 	$(POINTLIB) \
 
 PROMINENCE_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
-	$(OUTDIR)/divide_tree.o \
-	$(OUTDIR)/domain_map.o \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/filter.o \
-	$(OUTDIR)/island_tree.o \
-	$(OUTDIR)/kml_writer.o \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/line_tree.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(OUTDIR)/point_map.o \
-	$(OUTDIR)/prominence.o \
-	$(OUTDIR)/prominence_task.o \
-	$(OUTDIR)/tile.o \
-	$(OUTDIR)/tile_cache.o \
-	$(OUTDIR)/tile_loading_policy.o \
-	$(OUTDIR)/tree_builder.o \
+	$(OUTDIR)/coordinate_system.obj \
+	$(OUTDIR)/divide_tree.obj \
+	$(OUTDIR)/domain_map.obj \
+	$(OUTDIR)/easylogging++.obj \
+	$(OUTDIR)/filter.obj \
+	$(OUTDIR)/island_tree.obj \
+	$(OUTDIR)/kml_writer.obj \
+	$(OUTDIR)/latlng.obj \
+	$(OUTDIR)/line_tree.obj \
+	$(OUTDIR)/peakbagger_collection.obj \
+	$(OUTDIR)/peakbagger_point.obj \
+	$(OUTDIR)/point_map.obj \
+	$(OUTDIR)/prominence.obj \
+	$(OUTDIR)/prominence_task.obj \
+	$(OUTDIR)/tile.obj \
+	$(OUTDIR)/tile_cache.obj \
+	$(OUTDIR)/tile_loading_policy.obj \
+	$(OUTDIR)/tree_builder.obj \
 	$(POINTLIB) \
 
 MERGE_DIVIDE_TREES_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
-	$(OUTDIR)/divide_tree.o \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/island_tree.o \
-	$(OUTDIR)/kml_writer.o \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/line_tree.o \
-	$(OUTDIR)/merge_divide_trees.o \
-	$(OUTDIR)/tile.o \
-	$(POINTLIB) \
-
-
-PEAKBAGGER_PROMINENCE_MAPPER_OBJS = \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/filter.o \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_prominence_mapper.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(OUTDIR)/prominence_collection.o \
-	$(OUTDIR)/prominence_point.o \
-	$(POINTLIB) \
-
-LOJ_PROMINENCE_MAPPER_OBJS = \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/loj_collection.o \
-	$(OUTDIR)/loj_prominence_mapper.o \
-	$(OUTDIR)/loj_point.o \
-	$(OUTDIR)/prominence_collection.o \
-	$(OUTDIR)/prominence_point.o \
-	$(POINTLIB) \
-
-PEAKLIST_PROMINENCE_MAPPER_OBJS = \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/loj_point.o \
-	$(OUTDIR)/peaklist_collection.o \
-	$(OUTDIR)/peaklist_prominence_mapper.o \
-	$(OUTDIR)/prominence_collection.o \
-	$(OUTDIR)/prominence_point.o \
+	$(OUTDIR)/coordinate_system.obj \
+	$(OUTDIR)/divide_tree.obj \
+	$(OUTDIR)/easylogging++.obj \
+	$(OUTDIR)/island_tree.obj \
+	$(OUTDIR)/kml_writer.obj \
+	$(OUTDIR)/latlng.obj \
+	$(OUTDIR)/line_tree.obj \
+	$(OUTDIR)/merge_divide_trees.obj \
+	$(OUTDIR)/tile.obj \
 	$(POINTLIB) \
 
 FILTER_POINTS_OBJS = \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/filter.o \
-	$(OUTDIR)/filter_points.o \
+	$(OUTDIR)/easylogging++.obj \
+	$(OUTDIR)/filter.obj \
+	$(OUTDIR)/filter_points.obj \
 	$(POINTLIB) \
 
-FIND_HIGH_POINT_OBJS = \
-	$(OUTDIR)/easylogging++.o \
-	$(OUTDIR)/filter.o \
-	$(OUTDIR)/find_high_point.o \
-	$(OUTDIR)/high_point_task.o \
-	$(OUTDIR)/peakbagger_point.o \
-	$(OUTDIR)/point_map.o \
-	$(OUTDIR)/tile.o \
-	$(OUTDIR)/tile_cache.o \
-	$(POINTLIB) \
+all : makedirs \
+	$(OUTDIR)/isolation.exe \
+	$(OUTDIR)/prominence.exe $(OUTDIR)/merge_divide_trees.exe \
+	$(OUTDIR)/filter_points.exe \
 
-all : makedirs $(OUTDIR)/mapper.exe $(OUTDIR)/find_missing_peaks.exe \
-	$(OUTDIR)/find_peakbagger_duplicates.exe $(OUTDIR)/isolation.exe $(OUTDIR)/peakbagger_isolation_mapper.exe \
-	$(OUTDIR)/prominence.exe $(OUTDIR)/merge_divide_trees.exe $(OUTDIR)/peakbagger_prominence_mapper.exe \
-	$(OUTDIR)/loj_prominence_mapper.exe $(OUTDIR)/peaklist_prominence_mapper.exe $(OUTDIR)/filter_points.exe \
-	$(OUTDIR)/find_high_point.exe
-
-$(POINTLIB) : $(POINTLIB_OBJS)
+$(POINTLIB): $(POINTLIB_OBJS)
 	$(AR) /OUT:$@ $**
-
-$(OUTDIR)/find_missing_peaks.exe: $(FIND_MISSING_PEAKS_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
-
-$(OUTDIR)/find_peakbagger_duplicates.exe: $(FIND_PEAKBAGGER_DUPLICATES_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
 
 $(OUTDIR)/isolation.exe: $(ISOLATION_OBJS)
 	$(LINK) $** $(LIBS) -OUT:$@ $(LINKFLAGS)
-
-$(OUTDIR)/peakbagger_isolation_mapper.exe: $(PEAKBAGGER_ISOLATION_MAPPER_OBJS)
-	$(LINK) $** $(LIBS) -OUT:$@ $(LINKFLAGS)
-
-$(OUTDIR)/mapper.exe: $(LOJ_MAPPER_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
 
 $(OUTDIR)/prominence.exe: $(PROMINENCE_OBJS)
 	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
@@ -212,26 +133,14 @@ $(OUTDIR)/prominence.exe: $(PROMINENCE_OBJS)
 $(OUTDIR)/merge_divide_trees.exe: $(MERGE_DIVIDE_TREES_OBJS)
 	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
 
-$(OUTDIR)/peakbagger_prominence_mapper.exe: $(PEAKBAGGER_PROMINENCE_MAPPER_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
-
-$(OUTDIR)/loj_prominence_mapper.exe: $(LOJ_PROMINENCE_MAPPER_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
-
-$(OUTDIR)/peaklist_prominence_mapper.exe: $(PEAKLIST_PROMINENCE_MAPPER_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
-
 $(OUTDIR)/filter_points.exe: $(FILTER_POINTS_OBJS)
 	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
 
-$(OUTDIR)/find_high_point.exe: $(FIND_HIGH_POINT_OBJS)
-	$(LINK) $** -OUT:$@ $(LIBS) $(LINKFLAGS)
+{$(SOURCEDIR)}.cpp{$(OUTDIR)}.obj::
+	$(CC) $(CFLAGS) /FpCpch /Fd$(OUTDIR)\vc90.pdb /Fo$(OUTDIR)/ -c $< 
 
-{$(SOURCEDIR)}.cpp{$(OUTDIR)}.o:
-	$(CC) $(CFLAGS) /FpCpch /Fd$(OUTDIR)\vc90.pdb /Fo$@ -c $< 
-
-{$(SOURCEDIR)}.cc{$(OUTDIR)}.o:
-	$(CC) $(CFLAGS) /FpCpch /Fd$(OUTDIR)\vc90.pdb /Fo$@ -c $< 
+{$(SOURCEDIR)}.cc{$(OUTDIR)}.obj::
+	$(CC) $(CFLAGS) /FpCpch /Fd$(OUTDIR)\vc90.pdb /Fo$(OUTDIR)/ -c $< 
 
 makedirs:
 	-@$(MKDIR) $(OUTDIR)
