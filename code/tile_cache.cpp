@@ -31,23 +31,13 @@
 
 using std::string;
 
-TileCache::TileCache(const string &directory, PointMap *externalPeaks, int maxEntries)
+TileCache::TileCache(TileLoadingPolicy *policy, PointMap *externalPeaks, int maxEntries)
     : mCache(maxEntries),
-      mDirectory(directory),
-      mExternalPeaks(externalPeaks),
-      mFileFormat(FileFormat::HGT),
-      mNeighborEdgeLoadingEnabled(false) {
+      mLoadingPolicy(policy),
+      mExternalPeaks(externalPeaks) {
 }
 
 TileCache::~TileCache() {
-}
-
-void TileCache::setFileFormat(FileFormat format) {
-  mFileFormat = format;
-}
-
-void TileCache::enableNeighborEdgeLoading(bool enabled) {
-  mNeighborEdgeLoadingEnabled = enabled;
 }
 
 Tile *TileCache::getOrLoad(int minLat, int minLng) {
@@ -84,40 +74,9 @@ Tile *TileCache::getOrLoad(int minLat, int minLng) {
 }
 
 Tile *TileCache::loadWithoutCaching(int minLat, int minLng) {
-  Tile *tile = loadInternal(minLat, minLng);
+  Tile *tile = mLoadingPolicy->loadTile(minLat, minLng);
   if (tile == nullptr) {
     return nullptr;
-  }
-
-  // Although some data sets (like NED) are advertised as "seamless",
-  // meaning pixels in the overlap areas are identical, in practice
-  // this isn't so.  Small differences in elevation in the overlap
-  // pixels can cause big problems in prominence calculations, like
-  // peaks or saddles detected on one side of the border, but not the
-  // other.  We really need the overlap pixels to be identical.
-  //
-  // Despite the major performance penalty, we force the pixels to be
-  // identical by loading our right and bottom neighbors and copying
-  // their leftmost column and topmost row.  Note that this still
-  // leaves ambiguity in our bottom right pixel.  That would be even
-  // more expensive to fix, so we leave it alone in the hopes that
-  // fixing it isn't necessary.
-  //
-  if (mNeighborEdgeLoadingEnabled) {
-    Tile *neighbor = loadInternal(minLat - 1, minLng);  // bottom neighbor
-    if (neighbor != nullptr) {
-      for (int i = 0; i < tile->width(); ++i) {
-        tile->set(i, tile->height() - 1, neighbor->get(i, 0));
-      }
-    }
-
-    int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
-    neighbor = loadInternal(minLat, rightLng);  // right neighbor
-    if (neighbor != nullptr) {
-      for (int i = 0; i < tile->height(); ++i) {
-        tile->set(tile->width() - 1, i, neighbor->get(0, i));
-      }
-    }
   }
 
   // Look for big spikes, and replace them with NODATA.  We want to do
@@ -222,29 +181,6 @@ bool TileCache::getMaxElevation(int lat, int lng, int *elev) {
   return retval;
 }
 
-Tile *TileCache::loadInternal(int minLat, int minLng) const {
-  Tile *tile = nullptr;
-
-  switch (mFileFormat) {
-  case FileFormat::HGT:
-    tile = Tile::loadFromHgtFile(mDirectory, minLat, minLng);
-    break;
-
-  case FileFormat::NED13_ZIP:
-    tile = Tile::loadFromNED13ZipFile(mDirectory, minLat, minLng);
-    break;
-
-  case FileFormat::NED1_ZIP:
-    tile = Tile::loadFromNED1ZipFile(mDirectory, minLat, minLng);
-    break;
-
-  default:
-    LOG(ERROR) << "Unsupported tile file format";
-    break;
-  }
-
-  return tile;
-}
 
 int TileCache::makeCacheKey(int minLat, int minLng) const {
   return minLat * 1000 + minLng;

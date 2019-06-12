@@ -27,7 +27,7 @@ LIBS =
 
 # Disable easylogging++ logging to a file by default
 CCOMMONFLAGS = -DPLATFORM_LINUX -Wall -Werror -Wno-unused-variable -std=c++11 \
-	-DELPP_NO_LOG_TO_FILE -DELPP_THREAD_SAFE -pthread
+	-DELPP_NO_DEFAULT_LOG_FILE -DELPP_THREAD_SAFE -pthread
 CNORMALFLAGS = $(CCOMMONFLAGS) -O3
 CDEBUGFLAGS = $(CCOMMONFLAGS) -g
 LINKCOMMONFLAGS = -pthread
@@ -64,6 +64,7 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/point_map.o \
 	$(OUTDIR)/tile.o \
 	$(OUTDIR)/tile_cache.o \
+	$(OUTDIR)/tile_loading_policy.o \
 	$(POINTLIB) \
 
 PROMINENCE_OBJS = \
@@ -83,6 +84,7 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/prominence_task.o \
 	$(OUTDIR)/tile.o \
 	$(OUTDIR)/tile_cache.o \
+	$(OUTDIR)/tile_loading_policy.o \
 	$(OUTDIR)/tree_builder.o \
 	$(POINTLIB) \
 
@@ -158,17 +160,17 @@ debug/island_tree.o: coordinate_system.h latlng.h easylogging++.h
 debug/island_tree.o: kml_writer.h
 debug/isolation.o: isolation_task.h tile_cache.h lock.h lrucache.h
 debug/isolation.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/isolation.o: peakbagger_collection.h peakbagger_point.h quadtree.h
-debug/isolation.o: ThreadPool.h easylogging++.h
+debug/isolation.o: tile_loading_policy.h peakbagger_collection.h
+debug/isolation.o: peakbagger_point.h quadtree.h ThreadPool.h easylogging++.h
 debug/isolation_finder.o: isolation_finder.h tile_cache.h lock.h lrucache.h
 debug/isolation_finder.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/isolation_finder.o: easylogging++.h math_util.h
+debug/isolation_finder.o: tile_loading_policy.h easylogging++.h math_util.h
 debug/isolation_point.o: isolation_point.h point.h latlng.h
 debug/isolation_results.o: isolation_results.h latlng.h
 debug/isolation_task.o: isolation_finder.h tile_cache.h lock.h lrucache.h
 debug/isolation_task.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/isolation_task.o: isolation_task.h isolation_results.h peak_finder.h
-debug/isolation_task.o: easylogging++.h
+debug/isolation_task.o: tile_loading_policy.h isolation_task.h
+debug/isolation_task.o: isolation_results.h peak_finder.h easylogging++.h
 debug/kml_writer.o: kml_writer.h primitives.h coordinate_system.h latlng.h
 debug/latlng.o: latlng.h math_util.h
 debug/line_tree.o: line_tree.h primitives.h divide_tree.h coordinate_system.h
@@ -184,19 +186,23 @@ debug/point_map.o: point_map.h point.h easylogging++.h
 debug/prominence.o: filter.h latlng.h peakbagger_collection.h
 debug/prominence.o: peakbagger_point.h point.h quadtree.h point_map.h
 debug/prominence.o: prominence_task.h tile_cache.h lock.h lrucache.h tile.h
-debug/prominence.o: primitives.h ThreadPool.h easylogging++.h
+debug/prominence.o: primitives.h tile_loading_policy.h ThreadPool.h
+debug/prominence.o: easylogging++.h
 debug/prominence_collection.o: prominence_collection.h prominence_point.h
 debug/prominence_collection.o: point.h latlng.h quadtree.h
 debug/prominence_point.o: prominence_point.h point.h latlng.h
 debug/prominence_task.o: prominence_task.h tile_cache.h lock.h lrucache.h
 debug/prominence_task.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/prominence_task.o: divide_tree.h coordinate_system.h island_tree.h
-debug/prominence_task.o: tree_builder.h domain_map.h pixel_array.h
-debug/prominence_task.o: easylogging++.h
+debug/prominence_task.o: tile_loading_policy.h divide_tree.h
+debug/prominence_task.o: coordinate_system.h island_tree.h tree_builder.h
+debug/prominence_task.o: domain_map.h pixel_array.h easylogging++.h
 debug/quadtree.o: quadtree.h point.h
 debug/tile.o: tile.h primitives.h latlng.h math_util.h util.h easylogging++.h
 debug/tile_cache.o: tile_cache.h lock.h lrucache.h point_map.h point.h tile.h
-debug/tile_cache.o: primitives.h latlng.h peakbagger_point.h easylogging++.h
+debug/tile_cache.o: primitives.h latlng.h tile_loading_policy.h
+debug/tile_cache.o: peakbagger_point.h easylogging++.h
+debug/tile_loading_policy.o: tile_loading_policy.h tile.h primitives.h
+debug/tile_loading_policy.o: latlng.h easylogging++.h
 debug/tree_builder.o: tree_builder.h primitives.h domain_map.h tile.h
 debug/tree_builder.o: latlng.h pixel_array.h divide_tree.h
 debug/tree_builder.o: coordinate_system.h easylogging++.h

@@ -30,30 +30,21 @@
 #include "lrucache.h"
 #include "point_map.h"
 #include "tile.h"
+#include "tile_loading_policy.h"
 
 #include <string>
 #include <unordered_map>
 
 class TileCache {
 public:
-  // directory is the directory for tile files.
+  // policy determines how to load a tile.
   // externalPeaks is a set of peaks whose elevations are written into tiles as
   // they're loaded; they're "ground truth" elevations.  May be nullptr.
   // maxEntries is the size of the cache.
-  explicit TileCache(const std::string &directory, PointMap *externalPeaks, int maxEntries);
+  explicit TileCache(TileLoadingPolicy *policy, PointMap *externalPeaks, int maxEntries);
 
   ~TileCache();
 
-  void setFileFormat(FileFormat format);
-
-  // Prominence calculations require that pixels along the edges of
-  // tiles are exactly identical.  To enforce this, it turns out to be
-  // necessary to physically copy the pixels from neighbors, which
-  // makes loading a tile much slower.
-  //
-  // This is disabled by default.
-  void enableNeighborEdgeLoading(bool enabled);
-  
   // Retrieve the tile with the given minimum lat/lng, loading it from disk if necessary
   Tile *getOrLoad(int minLat, int minLng);
 
@@ -68,13 +59,11 @@ private:
 
   Lock mLock;
   lru_cache<int, Tile *> mCache;
-  std::string mDirectory;  // Directory for loading tiles
+  TileLoadingPolicy *mLoadingPolicy;
   // Map of encoded lat/lng to max elevation in that tile
   std::unordered_map<int, int> mMaxElevations;
   // External peak elevations, written into tiles as they're loaded
   PointMap *mExternalPeaks;
-  FileFormat mFileFormat;
-  bool mNeighborEdgeLoadingEnabled;
 
   Tile *loadInternal(int minLat, int minLng) const;
   

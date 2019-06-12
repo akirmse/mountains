@@ -29,6 +29,7 @@
 #include "ThreadPool.h"
 #include "tile.h"
 #include "tile_cache.h"
+#include "tile_loading_policy.h"
 
 #include "easylogging++.h"
 
@@ -164,10 +165,10 @@ int main(int argc, char **argv) {
   }
 
   // Caching doesn't do anything for our calculation and the tiles are huge
+  BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
+  policy.enableNeighborEdgeLoading(true);
   const int CACHE_SIZE = 2;
-  TileCache *cache = new TileCache(terrain_directory, peakbagger_peaks, CACHE_SIZE);
-  cache->setFileFormat(fileFormat);
-  cache->enableNeighborEdgeLoading(true);
+  TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
   
   set<Offsets::Value> tilesToSkip;
   tilesToSkip.insert(Offsets(47, -87).value());  // in Lake Superior; lots of fake peaks

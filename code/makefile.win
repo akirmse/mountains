@@ -89,6 +89,7 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/point_map.o \
 	$(OUTDIR)/tile.o \
 	$(OUTDIR)/tile_cache.o \
+	$(OUTDIR)/tile_loading_policy.o \
 	$(POINTLIB) \
 
 PEAKBAGGER_ISOLATION_MAPPER_OBJS = \
@@ -117,6 +118,7 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/prominence_task.o \
 	$(OUTDIR)/tile.o \
 	$(OUTDIR)/tile_cache.o \
+	$(OUTDIR)/tile_loading_policy.o \
 	$(OUTDIR)/tree_builder.o \
 	$(POINTLIB) \
 

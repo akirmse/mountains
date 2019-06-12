@@ -27,6 +27,7 @@
 #include "point_map.h"
 #include "ThreadPool.h"
 #include "tile.h"
+#include "tile_loading_policy.h"
 
 #include "easylogging++.h"
 
@@ -129,8 +130,9 @@ int main(int argc, char **argv) {
     }
   }
 
+  BasicTileLoadingPolicy policy(terrain_directory, FileFormat::HGT);
   const int CACHE_SIZE = 50;
-  TileCache *cache = new TileCache(terrain_directory, peakbagger_peaks, CACHE_SIZE);
+  TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
 
   set<Offsets::Value> tilesToSkip;
   tilesToSkip.insert(Offsets(47, -87).value());  // in Lake Superior; lots of fake peaks
