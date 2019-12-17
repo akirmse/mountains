@@ -39,8 +39,11 @@
 #ifdef PLATFORM_WINDOWS
 #include "getopt-win.h"
 #endif
+#include <cmath>
 #include <set>
 
+using std::ceil;
+using std::floor;
 using std::set;
 using std::string;
 using std::vector;
