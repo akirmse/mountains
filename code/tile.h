@@ -42,6 +42,10 @@ enum FileFormat {
   NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
 };
 
+enum DataType {
+  SRTM, NED,
+};
+
 class Tile {
 public:
 
@@ -104,6 +108,9 @@ public:
   // Return the number of samples in the vertical (latitude) direction
   // guaranteed to cover the given distance in meters
   int numVerticalSamplesForDistance(float distance) const;
+
+  // Nominal arcseconds per data sample
+  float arcsecondsPerSample() const;
   
   // minLat and minLng name the SW corner of the tile, in degrees
   static Tile *loadFromHgtFile(const std::string &directory, int minLat, int minLng);
@@ -126,6 +133,8 @@ private:
   float mMaxLat;
   float mMaxLng;
 
+  float mArcsecondsPerSample;
+  
   // An array with one entry per row of the tile.
   // Each entry is a scale factor in [0, 1] that should be multiplied by
   // any distance in the longitude (x) direction.  This compensates for
