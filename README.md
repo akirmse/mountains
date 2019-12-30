@@ -22,11 +22,7 @@ Release version:
 RELEASE=1 make
 ```
 
-This has been tested under Mac OS 10.12 with clang 802.0.42, and Unbuntu 16.04 with gcc 5.4.
-
-OSX's pthread mutex implementation appears to be extremely slow.  To
-run multithreaded on OSX, an alternative is to use docker to build and
-run an Ubuntu version in a container.
+This has been tested under Mac OS 10.15 with clang 1100.0.33.12, and Unbuntu 16.04 with gcc 5.4.
 
 ### Windows
 
@@ -140,6 +136,12 @@ latitude,longitude,elevation in feet,key saddle latitude,key saddle longitude,pr
 
 A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing).
 
+## Anti-prominence
+
+The "anti-prominence" of low points can be computed by the same algorithm, simply by changing
+the sign of the elevation values.  This can be done by giving the -a option to the 
+"prominence" command.  Then, at the final stage of merging (with the -f flag), add the -a option 
+again to flip the elevation values back to positive.
 
 ## More information
 
