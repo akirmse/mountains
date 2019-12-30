@@ -89,6 +89,16 @@ float Tile::arcsecondsPerSample() const {
   return mArcsecondsPerSample;
 }
 
+void Tile::flipElevations() {
+  for (int i = 0; i < mWidth * mHeight; ++i) {
+    Elevation elev = mSamples[i];
+    if (elev != NODATA_ELEVATION) {
+      mSamples[i] = -elev;
+    }
+  }
+  
+}
+
 Tile *Tile::loadFromHgtFile(const string &directory, int minLat, int minLng) {
   char buf[100];
   sprintf(buf, "%c%02d%c%03d.hgt",

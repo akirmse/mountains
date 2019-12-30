@@ -111,6 +111,10 @@ public:
 
   // Nominal arcseconds per data sample
   float arcsecondsPerSample() const;
+
+  // Flip elevations so that depressions and mountains are swapped.
+  // No-data values are left unchanged.
+  void flipElevations();
   
   // minLat and minLng name the SW corner of the tile, in degrees
   static Tile *loadFromHgtFile(const std::string &directory, int minLat, int minLng);

@@ -94,6 +94,9 @@ public:
   // to be merged with another one.
   void deleteRunoffs();
 
+  // Flip elevations so that depressions and mountains are swapped.
+  void flipElevations();
+
   bool writeToFile(const std::string &filename) const;
 
   static DivideTree *readFromFile(const std::string &filename);

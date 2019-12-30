@@ -65,6 +65,7 @@ static void usage() {
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
   printf("  -p filename       Peakbagger peak database file for matching\n");
   printf("  -t num_threads    Number of threads, default = 1\n");
+  printf("  -a                Compute anti-prominence instead of prominence\n");
   exit(1);
 }
 
@@ -82,8 +83,13 @@ int main(int argc, char **argv) {
   START_EASYLOGGINGPP(argc, argv);
   int ch;
   string str;
-  while ((ch = getopt(argc, argv, "f:i:k:m:o:p:t:")) != -1) {
+  bool antiprominence = false;
+  while ((ch = getopt(argc, argv, "af:i:k:m:o:p:t:")) != -1) {
     switch (ch) {
+    case 'a':
+      antiprominence = true;
+      break;
+      
     case 'f':
       str = optarg;
       if (str == "SRTM") {
@@ -203,6 +209,7 @@ int main(int argc, char **argv) {
       }
 
       ProminenceTask *task = new ProminenceTask(cache, output_directory, bounds, minProminence);
+      task->setAntiprominence(antiprominence);
       results.push_back(threadPool->enqueue([=] {
             return task->run(lat, wrappedLng);
           }));

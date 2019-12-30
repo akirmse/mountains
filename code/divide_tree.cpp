@@ -394,6 +394,18 @@ void DivideTree::deleteRunoffs() {
   mRunoffEdges.clear();
 }
 
+void DivideTree::flipElevations() {
+  for (Peak &peak : mPeaks) {
+    peak.elevation = -peak.elevation;
+  }
+  for (Saddle &saddle : mSaddles) {
+    saddle.elevation = -saddle.elevation;
+  }
+  for (Runoff &runoff : mRunoffs) {
+    runoff.elevation = -runoff.elevation;
+  }
+}
+
 bool DivideTree::writeToFile(const std::string &filename) const {
   FILE *file = fopen(filename.c_str(), "wb");
   if (file == nullptr) {

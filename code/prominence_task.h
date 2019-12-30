@@ -41,6 +41,10 @@ public:
   // Output is written to output_dir.
   bool run(int lat, int lng);
 
+  // Determine whether this task computes prominence (value=false, the default),
+  // or anti-prominence, which is the "prominence" of low points.
+  void setAntiprominence(bool value);
+  
 private:
   TileCache *mCache;
   std::string mOutputDir;
@@ -49,6 +53,8 @@ private:
 
   int mCurrentLatitude;
   int mCurrentLongitude;
+
+  bool mAntiprominence;
 
   std::string getFilenamePrefix() const;
   bool writeStringToOutputFile(const std::string &filename, const std::string &str) const;

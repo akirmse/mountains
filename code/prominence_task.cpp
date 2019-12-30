@@ -45,6 +45,7 @@ ProminenceTask::ProminenceTask(TileCache *cache, const string &output_dir,
   mOutputDir = output_dir;
   mBounds = bounds;
   mMinProminence = minProminence;
+  mAntiprominence = false;
 }
 
 bool ProminenceTask::run(int lat, int lng) {
@@ -56,6 +57,11 @@ bool ProminenceTask::run(int lat, int lng) {
   if (tile.get() == nullptr) {
     VLOG(2) << "Couldn't load tile for " << lat << " " << lng;
     return false;
+  }
+
+  // Flip tile upside down if we're computing anti-prominence
+  if (mAntiprominence) {
+    tile->flipElevations();
   }
 
   // Build divide tree
@@ -95,6 +101,10 @@ bool ProminenceTask::run(int lat, int lng) {
   delete divideTree;
 
   return true;
+}
+
+void ProminenceTask::setAntiprominence(bool value) {
+  mAntiprominence = value;
 }
 
 bool ProminenceTask::writeStringToOutputFile(const string &filename, const string &str) const {

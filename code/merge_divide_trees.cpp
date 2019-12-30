@@ -87,14 +87,19 @@ static bool mergeTrees(DivideTree *tree1, DivideTree *tree2) {
 int main(int argc, char **argv) {
   float minProminence = 300;
   bool finalize = false;
+  bool flipElevations = false;
 
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
 
   int ch;
   string str;
-  while ((ch = getopt(argc, argv, "fm:")) != -1) {
+  while ((ch = getopt(argc, argv, "afm:")) != -1) {
     switch (ch) {
+    case 'a':
+      flipElevations = true;
+      break;
+      
     case 'f':
       finalize = true;
       break;
@@ -185,8 +190,15 @@ int main(int argc, char **argv) {
       if (nodes[i].keySaddleId != IslandTree::Node::Null) {
         colpos = coords.getLatLng(saddles[nodes[i].keySaddleId - 1].location);
       }
+
+      // Flip elevations (if computing anti-prominence)
+      int elevation = peak.elevation;
+      if (flipElevations) {
+        elevation = -elevation;
+      }
+
       fprintf(file, "%.4f,%.4f,%d,%.4f,%.4f,%d\n",
-              peakpos.latitude(), peakpos.longitude(), peak.elevation,
+              peakpos.latitude(), peakpos.longitude(), elevation,
               colpos.latitude(), colpos.longitude(),
               nodes[i].prominence);
     }
