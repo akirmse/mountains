@@ -753,6 +753,7 @@ void DivideTree::removePeak(int peakId, int neighborPeakId) {
           if (elevation > highestSaddleElevation) {
             highestSaddleElevation = elevation;
             neighborPeakId = nodeId;
+            saddleOwnerIsChild = true;
           }
         }
       }
