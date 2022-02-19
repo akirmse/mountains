@@ -106,9 +106,19 @@ FILTER_POINTS_OBJS = \
 	$(OUTDIR)/filter_points.o \
 	$(POINTLIB) \
 
+COMPUTE_PARENTS_OBJS = \
+	$(OUTDIR)/coordinate_system.o \
+	$(OUTDIR)/divide_tree.o \
+	$(OUTDIR)/easylogging++.o \
+	$(OUTDIR)/island_tree.o \
+	$(OUTDIR)/kml_writer.o \
+	$(OUTDIR)/line_tree.o \
+	$(OUTDIR)/compute_parents.o \
+	$(POINTLIB) \
+
 
 all : makedirs $(OUTDIR)/isolation $(OUTDIR)/prominence $(OUTDIR)/merge_divide_trees \
-	 $(OUTDIR)/filter_points
+	 $(OUTDIR)/filter_points $(OUTDIR)/compute_parents
 
 $(POINTLIB) : $(POINTLIB_OBJS)
 	$(AR) $@ $^ 
@@ -123,6 +133,9 @@ $(OUTDIR)/merge_divide_trees: $(MERGE_DIVIDE_TREES_OBJS)
 	$(LINK) $^ -o $@ $(LIBS) $(LINKFLAGS)
 
 $(OUTDIR)/filter_points: $(FILTER_POINTS_OBJS)
+	$(LINK) $^ $(LIBS) -o $@ $(LINKFLAGS)
+
+$(OUTDIR)/compute_parents: $(COMPUTE_PARENTS_OBJS)
 	$(LINK) $^ $(LIBS) -o $@ $(LINKFLAGS)
 
 $(OUTDIR)/%.o : $(SOURCEDIR)/%.cpp
@@ -147,6 +160,8 @@ depend:
 
 # DO NOT DELETE
 
+debug/compute_parents.o: divide_tree.h coordinate_system.h primitives.h
+debug/compute_parents.o: latlng.h island_tree.h line_tree.h easylogging++.h
 debug/coordinate_system.o: coordinate_system.h primitives.h latlng.h
 debug/divide_tree.o: divide_tree.h coordinate_system.h primitives.h latlng.h
 debug/divide_tree.o: easylogging++.h island_tree.h kml_writer.h line_tree.h
@@ -177,6 +192,9 @@ debug/line_tree.o: line_tree.h primitives.h divide_tree.h coordinate_system.h
 debug/line_tree.o: latlng.h easylogging++.h
 debug/merge_divide_trees.o: divide_tree.h coordinate_system.h primitives.h
 debug/merge_divide_trees.o: latlng.h island_tree.h easylogging++.h
+debug/multi_source_loading_policy.o: multi_source_loading_policy.h
+debug/multi_source_loading_policy.o: tile_loading_policy.h tile.h
+debug/multi_source_loading_policy.o: primitives.h latlng.h
 debug/peak_finder.o: peak_finder.h tile.h primitives.h latlng.h
 debug/peakbagger_collection.o: peakbagger_collection.h peakbagger_point.h
 debug/peakbagger_collection.o: point.h quadtree.h

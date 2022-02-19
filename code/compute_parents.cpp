@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 
   // Divide tree should be a "finalized" one with no runoffs.  We
   // don't handle runoffs in this calculation.
-  if (!divide_tree->runoffs().empty()) {
+  if (!divideTree->runoffs().empty()) {
     LOG(ERROR) << "Provide a finalized divide tree that has had all runoffs removed\n"
                << "(the -f option to merge_divide_trees)";
     return 1;
