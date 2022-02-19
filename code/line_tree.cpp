@@ -61,6 +61,26 @@ void LineTree::build() {
   computeOnMapSaddleProminence();
 }
 
+bool LineTree::writeToFile(const std::string &filename) const {
+  FILE *file = fopen(filename.c_str(), "wb");
+  if (file == nullptr) {
+    return false;
+  }
+
+  for (int i = 1; i < (int) mNodes.size(); ++i) {
+    const Node &node = mNodes[i];
+    int elev = getPeak(i).elevation;
+    int parentElev = -1;
+    if (node.parentId != Node::Null) {
+      parentElev = getPeak(node.parentId).elevation;
+    }
+    fprintf(file, "%d,%d,%d,%d\n", i, elev, node.parentId, parentElev);
+  }
+
+  fclose(file);
+  return true;
+}
+
 void LineTree::computeOffMapSaddleProminence() {
   for (int runoffIndex = 0; runoffIndex < (int) mDivideTree.runoffs().size(); ++runoffIndex) {
     const Runoff &runoff = getRunoff(runoffIndex);
@@ -214,8 +234,10 @@ void LineTree::computeOnMapSaddleProminence() {
 
     // Make parent pointers go from lowest saddle up to this peak.  Point
     // our parent at first higher peak.
-    reversePath(startingPeakId, lowestSaddleOwner);
-    mNodes[startingPeakId].parentId = nodeId;
+    if (startingPeakId != nodeId) {  // Can happen if node is top of tree
+      reversePath(startingPeakId, lowestSaddleOwner);
+      mNodes[startingPeakId].parentId = nodeId;
+    }
   }
 }
 
@@ -287,4 +309,8 @@ const Saddle &LineTree::getSaddleForPeakId(int peakId) const {
 
 int LineTree::peakIdForRunoff(int runoffId) const {
   return mDivideTree.runoffEdges()[runoffId];
+}
+
+const vector<LineTree::Node> &LineTree::nodes() const {
+  return mNodes;
 }
