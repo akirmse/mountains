@@ -42,15 +42,6 @@
 
 class LineTree {
 public:
-  explicit LineTree(const DivideTree &divideTree);
-
-  void build();
-
-  // Return true if the saddle has at least the given minimum
-  // prominence.
-  bool saddleHasMinProminence(int saddleId, Elevation minProminence);
-
-private:
   struct Node {
     int parentId;
     int saddleId;  // Saddle between us and line tree parent (not divide tree parent)
@@ -62,6 +53,19 @@ private:
     static const int Null = -1;
   };
 
+  explicit LineTree(const DivideTree &divideTree);
+
+  void build();
+
+  // Return true if the saddle has at least the given minimum
+  // prominence.
+  bool saddleHasMinProminence(int saddleId, Elevation minProminence);
+
+  bool writeToFile(const std::string &filename) const;
+
+  const std::vector<Node> &nodes() const;
+
+private:
   struct SaddleInfo {
     // Upper bound on saddle's prominence (including the possibility
     // of going off the map through a runoff).

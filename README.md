@@ -136,11 +136,28 @@ latitude,longitude,elevation in feet,key saddle latitude,key saddle longitude,pr
 
 A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing).
 
+## Prominence parents
+
+Given a divide tree, it's possible to compute each peak's *prominence parent*, that is, the first more prominent peak that's encountered
+while walking from a peak, then to its key saddle, and then up the ridge up the other side.
+
+```
+Usage:
+  compute_parents divide_tree.dvt output_file
+
+  Options:
+  -m min_prominence Minimum prominence threshold for output, default = 300ft
+```
+
+The input divide tree must be free of runoffs (see the options to ```merge_divide_trees```).  The output will list a peak and its prominence
+parent on each line.  Landmass high points (where the prominence is equal to the elevation) are not included.  Their key saddles are the ocean,
+and there isn't a well-defined way to connect such peaks to other land masses through the divide tree.
+
 ## Anti-prominence
 
 The "anti-prominence" of low points can be computed by the same algorithm, simply by changing
 the sign of the elevation values.  This can be done by giving the -a option to the 
-"prominence" command.  Then, at the final stage of merging (with the -f flag), add the -a option 
+```prominence``` command.  Then, at the final stage of merging (with the -f flag), add the -a option 
 again to flip the elevation values back to positive.
 
 ## More information
