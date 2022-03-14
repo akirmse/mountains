@@ -22,11 +22,20 @@
  * SOFTWARE.
  */
 
-// A tool to compute prominence parents from a divide tree.
+// A tool to compute prominence parents and line parents from a divide tree.
+
+// The output looks like:
+// peak lat,peak lng,peak prominence,pparent lat,pparent lng,pparent prom,lparent lat,lparent lng,lparent elevation
+//
+// Peaks that are landmass high points don't appear in the output, because we
+// don't have well-defined parents for them.
 
 #include "divide_tree.h"
 #include "island_tree.h"
 #include "line_tree.h"
+#include "util.h"
+
+#include <numeric>
 #ifdef PLATFORM_LINUX
 #include <unistd.h>
 #endif
@@ -50,8 +59,20 @@ static void usage() {
   exit(1);
 }
 
+// Return string representing complete command line
+static string argsToString(int argc, char **argv) {
+  string args = 
+    std::accumulate(argv + 1, argv + argc, string(argv[0]),  
+      [](auto&& lhs, auto&& rhs) { 
+        return std::forward<decltype(lhs)>(lhs) + ' ' + rhs; 
+      }); 
+  return args;
+}
+
 int main(int argc, char **argv) {
   int minProminence = 300;
+
+  auto commandLine = argsToString(argc, argv);
 
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -98,6 +119,8 @@ int main(int argc, char **argv) {
   lineTree->build();
 
   FILE *file = fopen(outputFilename.c_str(), "wb");
+  fprintf(file, "# Prominence and line parents generated at %s\n", getTimeString().c_str());
+  fprintf(file, "Command line: %s\n", commandLine.c_str());
   const CoordinateSystem &coords = divideTree->coordinateSystem();
   const vector<DivideTree::Node> &divideNodes = divideTree->nodes();
   const vector<IslandTree::Node> &islandNodes = islandTree->nodes();
@@ -112,6 +135,7 @@ int main(int argc, char **argv) {
 
     auto &childPeak = peaks[i - 1];
     LatLng childPos = coords.getLatLng(childPeak.location);
+    auto elev = childPeak.elevation;
 
     // No output for landmass high points
     if (prom == childPeak.elevation) {
@@ -124,23 +148,44 @@ int main(int argc, char **argv) {
     // Walk up line tree, looking for first peak with higher prominence.
     // (Prominence values are stored in island tree.)
     int parentId = lineNodes[i].parentId;
+    int promParentId = DivideTree::Node::Null;
+    int lineParentId = DivideTree::Node::Null;
     while (parentId != DivideTree::Node::Null) {
       auto parentProm = islandNodes[parentId].prominence;
-      if (parentProm > prom) {
-        auto &parentPeak = peaks[parentId - 1];
-        LatLng parentPos = coords.getLatLng(parentPeak.location);
-        fprintf(file, "%.4f,%.4f,%d,%.4f,%.4f,%d\n",
-                childPos.latitude(), childPos.longitude(), prom,
-                parentPos.latitude(), parentPos.longitude(), parentProm);
+      if (promParentId == DivideTree::Node::Null && parentProm > prom) {
+        promParentId = parentId;
+      }
+
+      auto parentElevation = peaks[parentId - 1].elevation;
+      if (lineParentId == DivideTree::Node::Null && parentElevation >= elev) {
+        lineParentId = parentId;
+      }
+
+      // Found both parents?
+      if (lineParentId != DivideTree::Node::Null &&
+          promParentId != DivideTree::Node::Null) {
         break;
       }
       
       parentId = lineNodes[parentId].parentId;
     }
     
-    if (parentId == DivideTree::Node::Null) {
+    if (promParentId == DivideTree::Node::Null) {
       VLOG(2) << "No prominence parent for peak " <<
         childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
+    } else if (lineParentId == DivideTree::Node::Null) {
+      VLOG(2) << "No line parent for peak " <<
+        childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
+    } else {
+      auto &promParentPeak = peaks[promParentId - 1];
+      LatLng promParentPos = coords.getLatLng(promParentPeak.location);
+      auto parentProm = islandNodes[parentId].prominence;
+      auto &lineParentPeak = peaks[lineParentId - 1];
+      LatLng lineParentPos = coords.getLatLng(lineParentPeak.location);
+      fprintf(file, "%.4f,%.4f,%d,%.4f,%.4f,%d,%.4f,%.4f,%d\n",
+              childPos.latitude(), childPos.longitude(), prom,
+              promParentPos.latitude(), promParentPos.longitude(), parentProm,
+              lineParentPos.latitude(), lineParentPos.longitude(), lineParentPeak.elevation);
     }
   }
   
