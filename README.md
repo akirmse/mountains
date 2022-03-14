@@ -5,7 +5,7 @@ elevation data.
 
 ## Building the code
 
-C++11 support is required to build the code.  Binaries are placed in
+C++14 support is required to build the code.  Binaries are placed in
 the "debug" or "release" subdirectories.
 
 ### OSX and gcc
@@ -22,7 +22,7 @@ Release version:
 RELEASE=1 make
 ```
 
-This has been tested under Mac OS 10.15 with clang 1100.0.33.12, and Unbuntu 16.04 with gcc 5.4.
+This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, and Unbuntu 16.04 with gcc 5.4.
 
 ### Windows
 
