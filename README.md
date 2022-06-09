@@ -5,7 +5,7 @@ elevation data.
 
 ## Building the code
 
-C++11 support is required to build the code.  Binaries are placed in
+C++14 support is required to build the code.  Binaries are placed in
 the "debug" or "release" subdirectories.
 
 ### OSX and gcc
@@ -22,7 +22,7 @@ Release version:
 RELEASE=1 make
 ```
 
-This has been tested under Mac OS 10.15 with clang 1100.0.33.12, and Unbuntu 16.04 with gcc 5.4.
+This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, and Unbuntu 16.04 with gcc 5.4.
 
 ### Windows
 
@@ -136,10 +136,13 @@ latitude,longitude,elevation in feet,key saddle latitude,key saddle longitude,pr
 
 A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing).
 
-## Prominence parents
+## Prominence parents and line parents
 
 Given a divide tree, it's possible to compute each peak's *prominence parent*, that is, the first more prominent peak that's encountered
-while walking from a peak, then to its key saddle, and then up the ridge up the other side.
+while walking from a peak, then to its key saddle, and then up the ridge up the other side; and its *line parent*, which is the first higher
+peak encountered on such a walk.  While prominence parents are parameterless, line parents depend on the prominence threshold chosen to define
+a "peak".  In this implementation, the definition of a line parent is implicit in the prominence threshold defined when
+building the divide tree (that is, any peak in the divide tree can be a line parent).
 
 ```
 Usage:
@@ -149,9 +152,9 @@ Usage:
   -m min_prominence Minimum prominence threshold for output, default = 300ft
 ```
 
-The input divide tree must be free of runoffs (see the options to ```merge_divide_trees```).  The output will list a peak and its prominence
-parent on each line.  Landmass high points (where the prominence is equal to the elevation) are not included.  Their key saddles are the ocean,
-and there isn't a well-defined way to connect such peaks to other land masses through the divide tree.
+The input divide tree must be free of runoffs (see the options to ```merge_divide_trees```).  The output will list a peak, its prominence
+parent, and its line parent on each line.  Landmass high points (where the prominence is equal to the elevation) are not included.  
+Their key saddles are the ocean, and there isn't a well-defined way to connect such peaks to other land masses through the divide tree.
 
 ## Anti-prominence
 

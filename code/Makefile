@@ -26,7 +26,7 @@ endif
 LIBS =
 
 # Disable easylogging++ logging to a file by default
-CCOMMONFLAGS = -DPLATFORM_LINUX -Wall -Werror -Wno-unused-variable -std=c++11 \
+CCOMMONFLAGS = -DPLATFORM_LINUX -Wall -Werror -Wno-unused-variable -std=c++14 \
 	-DELPP_NO_DEFAULT_LOG_FILE -DELPP_THREAD_SAFE -pthread
 CNORMALFLAGS = $(CCOMMONFLAGS) -O3
 CDEBUGFLAGS = $(CCOMMONFLAGS) -g
