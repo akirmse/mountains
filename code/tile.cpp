@@ -119,7 +119,7 @@ Tile *Tile::loadFromHgtFile(const string &directory, int minLat, int minLng) {
   
   Tile *retval = nullptr;
   
-  int samples_read = fread(samples, sizeof(int16), num_samples, infile);
+  int samples_read = static_cast<int>(fread(samples, sizeof(int16), num_samples, infile));
   if (samples_read != num_samples) {
     fprintf(stderr, "Couldn't read tile file: %s, got %d samples expecting %d\n",
             filename.c_str(), samples_read, num_samples);
@@ -142,8 +142,8 @@ Tile *Tile::loadFromHgtFile(const string &directory, int minLat, int minLng) {
     tile->mSamples = samples;
 
     // Tile is 1 square degree
-    tile->mMinLat = minLat;
-    tile->mMinLng = minLng;
+    tile->mMinLat = static_cast<float>(minLat);
+    tile->mMinLng = static_cast<float>(minLng);
     tile->mMaxLat = tile->mMinLat + 1;
     tile->mMaxLng = tile->mMinLng + 1;
 
@@ -175,7 +175,7 @@ Tile *Tile::loadFromFltFile(const string &directory, int minLat, int minLng, Fil
   float *inbuf = new float[num_raw_samples];
   
   Tile *retval = nullptr;
-  int num_read = fread(inbuf, sizeof(float), num_raw_samples, infile);
+  int num_read = static_cast<int>(fread(inbuf, sizeof(float), num_raw_samples, infile));
   if (num_read != num_raw_samples) {
     fprintf(stderr, "Couldn't read tile file: %s, got %d samples expecting %d\n",
             filename.c_str(), num_read, num_raw_samples);
@@ -211,8 +211,8 @@ Tile *Tile::loadFromFltFile(const string &directory, int minLat, int minLng, Fil
     tile->mSamples = samples;
 
     // Tile is 1 square degree
-    tile->mMinLat = minLat;
-    tile->mMinLng = minLng;
+    tile->mMinLat = static_cast<float>(minLat);
+    tile->mMinLng = static_cast<float>(minLng);
     tile->mMaxLat = tile->mMinLat + 1;
     tile->mMaxLng = tile->mMinLng + 1;
 

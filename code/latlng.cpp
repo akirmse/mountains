@@ -39,7 +39,7 @@ float LatLng::distance(const LatLng &other) const {
   a = a * a;
   float term = sinf(deltaLng / 2);
   a += term * term * cosf(lat1) * cosf(lat2);
-  float c = 2 * atan2(sqrtf(a), sqrtf(1-a));
+  float c = 2 * atan2f(sqrtf(a), sqrtf(1-a));
   
   const float earthRadius = 6371000;
   return c * earthRadius;

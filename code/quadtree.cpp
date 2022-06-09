@@ -54,7 +54,7 @@ Quadtree::Quadtree(int max_level) {
    assert(max_level >= 0);
    
    mMaxLevel = max_level;
-   mCells.resize(1 << (2 * max_level));
+   mCells.resize(1ULL << (2 * max_level));
 }
 
 void Quadtree::Insert(const Point &p) {
