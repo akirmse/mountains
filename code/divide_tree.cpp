@@ -370,7 +370,7 @@ void DivideTree::compact() {
       removedIndices.insert(i);
     } else {
       // Saddle IDs are 1-based
-      saddleIdMap.insert(make_pair(i + 1, i + 1 - removedIndices.size()));
+      saddleIdMap.insert(make_pair(i + 1, static_cast<int>(i + 1 - removedIndices.size())));
     }
   }
 

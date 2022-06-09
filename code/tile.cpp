@@ -85,10 +85,6 @@ int Tile::numVerticalSamplesForDistance(float distance) const {
   return (int) (ceil(distance / 111000 * mHeight));
 }
 
-float Tile::arcsecondsPerSample() const {
-  return mArcsecondsPerSample;
-}
-
 void Tile::flipElevations() {
   for (int i = 0; i < mWidth * mHeight; ++i) {
     Elevation elev = mSamples[i];
@@ -144,7 +140,6 @@ Tile *Tile::loadFromHgtFile(const string &directory, int minLat, int minLng) {
     tile->mWidth = HGT_TILE_SIZE;
     tile->mHeight = HGT_TILE_SIZE;
     tile->mSamples = samples;
-    tile->mArcsecondsPerSample = 3.0f;
 
     // Tile is 1 square degree
     tile->mMinLat = minLat;
@@ -214,7 +209,6 @@ Tile *Tile::loadFromFltFile(const string &directory, int minLat, int minLng, Fil
     tile->mWidth = tileSideLength;
     tile->mHeight = tileSideLength;
     tile->mSamples = samples;
-    tile->mArcsecondsPerSample = (format == FileFormat::NED1_ZIP ? 1.0f : (1.0f / 3.0f));
 
     // Tile is 1 square degree
     tile->mMinLat = minLat;

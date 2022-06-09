@@ -109,9 +109,6 @@ public:
   // guaranteed to cover the given distance in meters
   int numVerticalSamplesForDistance(float distance) const;
 
-  // Nominal arcseconds per data sample
-  float arcsecondsPerSample() const;
-
   // Flip elevations so that depressions and mountains are swapped.
   // No-data values are left unchanged.
   void flipElevations();
@@ -137,8 +134,6 @@ private:
   float mMaxLat;
   float mMaxLng;
 
-  float mArcsecondsPerSample;
-  
   // An array with one entry per row of the tile.
   // Each entry is a scale factor in [0, 1] that should be multiplied by
   // any distance in the longitude (x) direction.  This compensates for
