@@ -299,10 +299,10 @@ void DivideTree::prune(int minProminence, const IslandTree &islandTree) {
 }
 
 void DivideTree::merge(const DivideTree &otherTree) {
-  int oldNumPeaks = mPeaks.size();
-  int oldNumSaddles = mSaddles.size();
-  int oldNumNodes = mNodes.size();
-  int oldNumRunoffs = mRunoffs.size();
+  int oldNumPeaks = static_cast<int>(mPeaks.size());
+  int oldNumSaddles = static_cast<int>(mSaddles.size());
+  int oldNumNodes = static_cast<int>(mNodes.size());
+  int oldNumRunoffs = static_cast<int>(mRunoffs.size());
                                     
   // Glue arrays together
   mPeaks.insert(mPeaks.end(), otherTree.mPeaks.begin(), otherTree.peaks().end());
@@ -490,13 +490,13 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
       if (elements.size() != 5) {
         return nullptr;
       }
-      peaks.push_back(Peak(Offsets(stod(elements[2]), stod(elements[3])), stoi(elements[4])));
+      peaks.push_back(Peak(Offsets(stoi(elements[2]), stoi(elements[3])), stoi(elements[4])));
       break;
     case 'S': {
       if (elements.size() != 6) {
         return nullptr;
       }
-      Saddle saddle(Offsets(stod(elements[3]), stod(elements[4])), stoi(elements[5]));
+      Saddle saddle(Offsets(stoi(elements[3]), stoi(elements[4])), stoi(elements[5]));
       saddle.type = Saddle::typeFromChar(elements[2][0]);
       saddles.push_back(saddle);
       break;
@@ -505,7 +505,7 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
       if (elements.size() != 7) {
         return nullptr;
       }
-      Runoff runoff(Offsets(stod(elements[2]), stod(elements[3])), stoi(elements[4]),
+      Runoff runoff(Offsets(stoi(elements[2]), stoi(elements[3])), stoi(elements[4]),
                     stoi(elements[5]));
       runoff.insidePeakArea = (elements[6] == "1");
       runoffs.push_back(runoff);
@@ -690,7 +690,7 @@ void DivideTree::spliceTwoRunoffs(int index1, int index2, unordered_set<int> *re
   if (peak1 != peak2) {
     // Make a new saddle at this location, and add edge to tree
     mSaddles.push_back(Saddle(mRunoffs[index1].location, mRunoffs[index1].elevation));
-    int basinSaddleId = maybeAddEdge(peak1, peak2, mSaddles.size());
+    int basinSaddleId = maybeAddEdge(peak1, peak2, static_cast<int>(mSaddles.size()));
     if (basinSaddleId != DivideTree::Node::Null) {
       mSaddles[basinSaddleId - 1].type = Saddle::Type::BASIN;
     }

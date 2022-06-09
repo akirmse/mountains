@@ -85,7 +85,7 @@ static bool mergeTrees(DivideTree *tree1, DivideTree *tree2) {
 }
 
 int main(int argc, char **argv) {
-  float minProminence = 300;
+  int minProminence = 300;
   bool finalize = false;
   bool flipElevations = false;
 
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
       break;
       
     case 'm':
-      minProminence = static_cast<float>(atof(optarg));
+      minProminence = atoi(optarg);
       break;
     }
   }

@@ -92,7 +92,7 @@ void TreeBuilder::findExtrema() {
 
       // If no higher boundary points, this is a peak
       if (boundary.higherPoints.empty()) {
-        int peakId = mPeaks.size() + 1;
+        int peakId = static_cast<int>(mPeaks.size() + 1);
         mDomainMap.fillFlatArea(x, y, peakId);
         
         // TODO: Pick a point near the middle of the flat region
@@ -172,7 +172,7 @@ void TreeBuilder::findExtrema() {
           
         segmentHighPoints.push_back(highestPointInSegment);
         if (maxHeightInSegment > mTile->get(segmentHighPoints[segmentWithHighestPoint])) {
-          segmentWithHighestPoint = segmentHighPoints.size() - 1;
+          segmentWithHighestPoint = static_cast<int>(segmentHighPoints.size() - 1);
         }
       }
 
@@ -184,7 +184,7 @@ void TreeBuilder::findExtrema() {
       // maps.)  To do this, we find the highest segment, then generate
       // a saddle between this segment and the highest point of
       // each of the other segments.
-      int numSegments = segmentHighPoints.size();
+      int numSegments = static_cast<int>(segmentHighPoints.size());
       if (numSegments < 2) {
         // Flat area, but not a saddle
         VLOG(4) << "Rejecting flat area " << x << " " << y
@@ -197,7 +197,7 @@ void TreeBuilder::findExtrema() {
       for (int i = 0; i < numSegments; ++i) {
         if (i != segmentWithHighestPoint) {
           // Saddles have negative IDs
-          int saddleId = -(mSaddles.size() + 1);
+          int saddleId = -static_cast<int>(mSaddles.size() + 1);
           VLOG(2) << "Saddle " << saddleId << " at " << x << " " << y
                   << " elev " << elev << " multiplicity " << numSegments;
 

@@ -87,7 +87,7 @@ bool Filter::addPolygonsFromKml(const string &filename) {
     } 
   }
 
-  int numPoints = 0;
+  size_t numPoints = 0;
   for (auto &polygon : mPolygons) {
     numPoints += polygon.size();
   }
@@ -119,7 +119,7 @@ bool Filter::isPointInside(const LatLng &latlng) const {
     
     // Horizontal ray cast, check parity of # of polygon intersections.
     // See http://stackoverflow.com/questions/11716268/point-in-polygon-algorithm 
-    for (int i = 0, j = polygon.size() - 1; i < (int) polygon.size(); j = i++) {
+    for (size_t i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
       if ( ((polygon[i].latitude() > testy) != (polygon[j].latitude() > testy)) &&
            (testx < (polygon[j].longitude() - polygon[i].longitude()) *
             (testy - polygon[i].latitude()) / (polygon[j].latitude()-polygon[i].latitude()) + polygon[i].longitude()) )
@@ -167,7 +167,7 @@ bool Filter::intersects(float minLat, float maxLat, float minLng, float maxLng) 
     for (int i = 0; i < 4; ++i) {
       const LatLng &point1 = points[i];
       const LatLng &point2 = points[(i + 1) % 4];
-      for (int j = 0, k = polygon.size() - 1; j < (int) polygon.size(); k = j++) {
+      for (size_t j = 0, k = polygon.size() - 1; j < polygon.size(); k = j++) {
         if (segmentsIntersect(point1.longitude(), point1.latitude(),
                               point2.longitude(), point2.latitude(),
                               polygon[j].longitude(), polygon[j].latitude(),

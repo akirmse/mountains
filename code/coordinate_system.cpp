@@ -47,7 +47,7 @@ LatLng CoordinateSystem::getLatLng(Offsets offsets) const {
 }
 
 Offsets CoordinateSystem::offsetsTo(const CoordinateSystem &that) {
-  int dx = (mMinLongitude - that.mMinLongitude) * mPixelsPerDegreeLongitude;
-  int dy = (that.mMinLatitude - mMinLatitude) * mPixelsPerDegreeLatitude;
+  int dx = (int) (mMinLongitude - that.mMinLongitude) * mPixelsPerDegreeLongitude;
+  int dy = (int) (that.mMinLatitude - mMinLatitude) * mPixelsPerDegreeLatitude;
   return Offsets(dx, dy);
 }

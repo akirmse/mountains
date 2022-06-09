@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   string peakbagger_filename;
   string polygonFilename;
 
-  float minProminence = 300;
+  int minProminence = 300;
   int numThreads = 1;
   FileFormat fileFormat = FileFormat::HGT;
   
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
       break;
 
     case 'm':
-      minProminence = static_cast<float>(atof(optarg));
+      minProminence = atoi(optarg);
       break;
 
     case 'o':
@@ -187,8 +187,8 @@ int main(int argc, char **argv) {
   ThreadPool *threadPool = new ThreadPool(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
-  for (int lat = floor(bounds[0]); lat < ceil(bounds[1]); ++lat) {
-    for (int lng = floor(bounds[2]); lng < ceil(bounds[3]); ++lng) {
+  for (int lat = (int) floor(bounds[0]); lat < (int) ceil(bounds[1]); ++lat) {
+    for (int lng = (int) floor(bounds[2]); lng < (int) ceil(bounds[3]); ++lng) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       int wrappedLng = lng;
       if (wrappedLng >= 180) {
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
       }
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects(lat, lat + 1, lng, lng + 1)) {
+      if (!filter.intersects((float) lat, (float) (lat + 1), (float) lng, (float) (lng + 1))) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
         continue;
       }

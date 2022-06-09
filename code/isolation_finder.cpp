@@ -43,8 +43,8 @@ IsolationFinder::IsolationFinder(TileCache *cache, const Tile *tile) {
 IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
   int elev = mTile->get(peak);
   LatLng peakLocation(mTile->latlng(peak));
-  int peakLat = mTile->minLatitude();
-  int peakLng = mTile->minLongitude();
+  int peakLat = static_cast<int>(mTile->minLatitude());
+  int peakLng = static_cast<int>(mTile->minLongitude());
 
   VLOG(2) << "Considering peak at " << peak.x() << " " << peak.y()
           << " lat/lng " << peakLocation.latitude() << " " << peakLocation.longitude() << " "
@@ -60,7 +60,7 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
   topLat = 89;
   leftLng = -180;
   rightLng = 179;
-  record.distance = 1e20;
+  record.distance = 1e20f;
 
   // Set of all tiles we've already checked
   std::unordered_set<Offsets::Value> checkedTiles;
@@ -135,10 +135,10 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
       vector<Point> corners = peakPoint.GetBoundingBoxForCap(record.distance);
       
       // Rounds towards minus infinity (tiles named by lower left corner)
-      bottomLat = floor(corners[0].latitude());
-      topLat = floor(corners[1].latitude());
-      leftLng = floor(corners[0].longitude());
-      rightLng = floor(corners[1].longitude());
+      bottomLat = static_cast<int>(floor(corners[0].latitude()));
+      topLat = static_cast<int>(floor(corners[1].latitude()));
+      leftLng = static_cast<int>(floor(corners[0].longitude()));
+      rightLng = static_cast<int>(floor(corners[1].longitude()));
       // Deal with antimeridian
       if (leftLng > rightLng) {
         // Right edge will now be > 180
@@ -208,14 +208,14 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const LatLng *p
   // Initial half height of rectangle
   int dy = 20;
   // Compensate for latitude squish
-  int dx = ceilf(dy / tile->distanceScaleForRow(seedy));
+  int dx = static_cast<int>(ceilf(dy / tile->distanceScaleForRow(seedy)));
 
   int outerleftx = std::max(0, seedx - dx);
   int outerrightx = std::min(tile->width(), seedx + dx);
   int outertopy = std::max(0, seedy - dy);
   int outerbottomy = std::min(tile->height(), seedy + dy);
 
-  float successive_rectangle_ratio = sqrt(2);
+  float successive_rectangle_ratio = sqrtf(2);
 
   VLOG(2) << "Searching for peak at " << seedx << " " << seedy << " "
           << "with elevation " << seedElevation;
@@ -252,7 +252,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const LatLng *p
         // sample and the seed.
         int averageY = (y + seedy) / 2;
         float lngScaleFactor = tile->distanceScaleForRow(averageY);
-        float yDistanceComponent = (y - seedy) * (y - seedy);
+        float yDistanceComponent = static_cast<float>((y - seedy) * (y - seedy));
         
         for (int x = outerleftx; x < outerrightx; ++x) {
           if (tile->get(x, y) > seedElevation) {
@@ -310,8 +310,8 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const LatLng *p
     innerbottomy = outerbottomy;
 
     // Expand outer ring
-    dy = ceilf(dy * successive_rectangle_ratio);
-    dx = ceilf(dx * successive_rectangle_ratio);
+    dy = static_cast<int>(ceilf(dy * successive_rectangle_ratio));
+    dx = static_cast<int>(ceilf(dx * successive_rectangle_ratio));
     outerleftx = std::max(0, seedx - dx);
     outerrightx = std::min(tile->width(), seedx + dx);
     outertopy = std::max(0, seedy - dy);
