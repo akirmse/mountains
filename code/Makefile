@@ -70,8 +70,8 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/tile.o \
 	$(OUTDIR)/tile_cache.o \
 	$(OUTDIR)/tile_loading_policy.o \
-	$(POINTLIB) \
 	$(LOADERLIB) \
+	$(POINTLIB) \
 
 PROMINENCE_OBJS = \
 	$(OUTDIR)/coordinate_system.o \
@@ -92,8 +92,8 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/tile_cache.o \
 	$(OUTDIR)/tile_loading_policy.o \
 	$(OUTDIR)/tree_builder.o \
-	$(POINTLIB) \
 	$(LOADERLIB) \
+	$(POINTLIB) \
 
 MERGE_DIVIDE_TREES_OBJS = \
 	$(OUTDIR)/coordinate_system.o \
