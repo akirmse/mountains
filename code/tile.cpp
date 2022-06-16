@@ -30,31 +30,22 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 
-using std::string;
-using std::vector;
-
-static const int HGT_TILE_SIZE = 1201;
-
-// NED FLT files have an overlap of 6 pixels on all sizes.  We want just 1.  To get that,
-// we remove all overlap pixels on the top and left, and leave one on the bottom and right.
-// See https://ca.water.usgs.gov/projects/sandiego/data/gis/dem/ned13/readme.pdf
-static const int FLT_EXTRA_BORDER = 6;
-static const int FLT_13_RAW_SIZE = 10812;
-static const int FLT_1_RAW_SIZE = 3612;
-
-static const float NED_NODATA_ELEVATION = -9999;
-
-static uint16 swapByteOrder16(uint16 us) {
-  return (us >> 8) | (us << 8);
-}
-
-Tile::Tile() {
-  mSamples = nullptr;
+Tile::Tile(int width, int height, Elevation *samples,
+           float minLat, float minLng, float maxLat, float maxLng) {
+  mWidth = width;
+  mHeight = height;
+  mSamples = samples;
+  mMinLat = minLat;
+  mMinLng = minLng;
+  mMaxLat = maxLat;
+  mMaxLng = maxLng;
+  
   mLngDistanceScale = nullptr;
   mMaxElevation = 0;
+
+  precomputeTileAfterLoad();
 }
 
 Tile::~Tile() {
@@ -92,156 +83,17 @@ void Tile::flipElevations() {
       mSamples[i] = -elev;
     }
   }
-  
 }
 
-Tile *Tile::loadFromHgtFile(const string &directory, int minLat, int minLng) {
-  char buf[100];
-  sprintf(buf, "%c%02d%c%03d.hgt",
-          (minLat >= 0) ? 'N' : 'S',
-          abs(minLat),
-          (minLng >= 0) ? 'E' : 'W',
-          abs(minLng));
-  string filename(buf);
-  if (!directory.empty()) {
-    filename = directory + "/" + filename;
-  }
-
-  FILE *infile = fopen(filename.c_str(), "rb");
-  if (infile == nullptr) {
-    VLOG(3) << "Failed to open file " << filename;
-    return nullptr;
-  }
-  
-  int num_samples = HGT_TILE_SIZE * HGT_TILE_SIZE;
-  
-  Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * num_samples);
-  
-  Tile *retval = nullptr;
-  
-  int samples_read = static_cast<int>(fread(samples, sizeof(int16), num_samples, infile));
-  if (samples_read != num_samples) {
-    fprintf(stderr, "Couldn't read tile file: %s, got %d samples expecting %d\n",
-            filename.c_str(), samples_read, num_samples);
-    free(samples);
-  } else {
-    // SRTM data is in big-endian order
-    for (int i = 0; i < num_samples; ++i) {
-      samples[i] = swapByteOrder16(samples[i]);
-
-      if (samples[i] != NODATA_ELEVATION) {
-        // Use feet internally; small unit avoids losing precision with external data
-        samples[i] = (Elevation) metersToFeet(samples[i]);
-      }
-    }
-    
-    retval = new Tile();
-    Tile *tile = retval;
-    tile->mWidth = HGT_TILE_SIZE;
-    tile->mHeight = HGT_TILE_SIZE;
-    tile->mSamples = samples;
-
-    // Tile is 1 square degree
-    tile->mMinLat = static_cast<float>(minLat);
-    tile->mMinLng = static_cast<float>(minLng);
-    tile->mMaxLat = tile->mMinLat + 1;
-    tile->mMaxLng = tile->mMinLng + 1;
-
-    precomputeTileAfterLoad(tile);
-  }
-  
-  fclose(infile);
-
-  return retval;
-}
-
-Tile *Tile::loadFromFltFile(const string &directory, int minLat, int minLng, FileFormat format) {
-  string filename = getFltFilename(minLat, minLng, format);
-  if (!directory.empty()) {
-    filename = directory + "/" + filename;
-  }
-  
-  FILE *infile = fopen(filename.c_str(), "rb");
-  if (infile == nullptr) {
-    VLOG(3) << "Failed to open file " << filename;
-    return nullptr;
-  }
-
-  const int rawSideLength = (format == FileFormat::NED13_ZIP ? FLT_13_RAW_SIZE : FLT_1_RAW_SIZE);
-  const int tileSideLength = rawSideLength - 2 * FLT_EXTRA_BORDER + 1;
-  int num_raw_samples = rawSideLength * rawSideLength;
-  
-  Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * tileSideLength * tileSideLength);
-  float *inbuf = new float[num_raw_samples];
-  
-  Tile *retval = nullptr;
-  int num_read = static_cast<int>(fread(inbuf, sizeof(float), num_raw_samples, infile));
-  if (num_read != num_raw_samples) {
-    fprintf(stderr, "Couldn't read tile file: %s, got %d samples expecting %d\n",
-            filename.c_str(), num_read, num_raw_samples);
-    free(samples);
-    samples = nullptr;
-  } else {
-    // Discard extra overlap so that just 1 pixel remains around the outsides.
-    // Overwrites samples array in-place
-    for (int i = 0; i < rawSideLength; ++i) {
-      for (int j = 0; j < rawSideLength; ++j) {
-        float sample = inbuf[i * rawSideLength + j];
-        
-        // Convert NED nodata to SRTM nodata
-        if (i >= FLT_EXTRA_BORDER && i < tileSideLength + FLT_EXTRA_BORDER &&
-            j >= FLT_EXTRA_BORDER && j < tileSideLength + FLT_EXTRA_BORDER) {
-          int index = ((i - FLT_EXTRA_BORDER) * tileSideLength) + (j - FLT_EXTRA_BORDER);
-          if (fabs(sample - NED_NODATA_ELEVATION) < 0.01) {
-            samples[index] = NODATA_ELEVATION;
-          } else {
-            // Use feet internally; small unit avoids losing precision with external data
-            samples[index] = (Elevation) metersToFeet(sample);
-          }
-        }
-      }
-    }
-  }
-  
-  if (samples != nullptr) {
-    retval = new Tile();
-    Tile *tile = retval;
-    tile->mWidth = tileSideLength;
-    tile->mHeight = tileSideLength;
-    tile->mSamples = samples;
-
-    // Tile is 1 square degree
-    tile->mMinLat = static_cast<float>(minLat);
-    tile->mMinLng = static_cast<float>(minLng);
-    tile->mMaxLat = tile->mMinLat + 1;
-    tile->mMaxLng = tile->mMinLng + 1;
-
-    precomputeTileAfterLoad(tile);
-  }
-
-  delete [] inbuf;
-  fclose(infile);
-
-  return retval;  
-}
-
-Tile *Tile::loadFromNED13ZipFile(const string &directory, int minLat, int minLng) {
-  return loadFromNEDZipFileInternal(directory, minLat, minLng, FileFormat::NED13_ZIP);
-}
-
-Tile *Tile::loadFromNED1ZipFile(const string &directory, int minLat, int minLng) {
-  return loadFromNEDZipFileInternal(directory, minLat, minLng, FileFormat::NED1_ZIP);
-}
-
-void Tile::precomputeTileAfterLoad(Tile *tile) {
+void Tile::precomputeTileAfterLoad() {
   // Precompute max elevation
-  tile->recomputeMaxElevation();
+  recomputeMaxElevation();
   
   // Precompute distance scale factors
-  tile->mLngDistanceScale = (float *) malloc(sizeof(float) * tile->mHeight);
-  for (int y = 0; y < tile->mHeight; ++y) {
-    LatLng latlng(tile->latlng(Offsets(0, y)));
-    tile->mLngDistanceScale[y] = cosf(degToRad(latlng.latitude()));
+  mLngDistanceScale = (float *) malloc(sizeof(float) * mHeight);
+  for (int y = 0; y < mHeight; ++y) {
+    LatLng point(latlng(Offsets(0, y)));
+    mLngDistanceScale[y] = cosf(degToRad(point.latitude()));
   }
 }
 
@@ -271,58 +123,4 @@ Elevation Tile::computeMaxElevation() const {
   }
 
   return max_elevation;
-}
-
-Tile *Tile::loadFromNEDZipFileInternal(const std::string &directory,
-                                       int minLat, int minLng, FileFormat format) {
-  char buf[100];
-  sprintf(buf, "%c%02d%c%03d.zip",
-          (minLat >= 0) ? 'n' : 's',
-          abs(minLat + 1),  // NED uses upper left corner for naming
-          (minLng >= 0) ? 'e' : 'w',
-          abs(minLng));
-  string filename(buf);
-  if (!directory.empty()) {
-    filename = directory + "/" + filename;
-  }
-
-  if (!fileExists(filename)) {
-    VLOG(1) << "Input tile " << filename << " doesn't exist; skipping";
-    return nullptr;
-  }
-  
-  string tempDirectory = getTempDir();
-  string fltFilename = getFltFilename(minLat, minLng, format);
-
-  // Unzip flt file from zip to temp dir
-#ifdef PLATFORM_WINDOWS
-  string command = "7z x \"" + filename + "\" " + fltFilename + " -y -o" + tempDirectory
-    + " > nul";
-#else  
-  string command = "unzip -o \"" + filename + "\" " + fltFilename + " -d " + tempDirectory;
-#endif
-  VLOG(2) << "Unzip command is " << command;
-  int retval = system(command.c_str());
-  if (retval != 0) {
-    LOG(ERROR) << "Command failed: " << command;
-  }
-  
-  Tile *tile = loadFromFltFile(tempDirectory, minLat, minLng, format);
-
-  // Delete temp file
-  string fltFullFilename = tempDirectory + "/" + fltFilename;
-  remove(fltFullFilename.c_str());
-  
-  return tile;  
-}
-
-string Tile::getFltFilename(int minLat, int minLng, FileFormat format) {
-  char buf[100];
-  sprintf(buf, "float%c%02d%c%03d_%s.flt",
-          (minLat >= 0) ? 'n' : 's',
-          abs(minLat + 1),  // NED uses upper left corner for naming
-          (minLng >= 0) ? 'e' : 'w',
-          abs(minLng),
-          format == FileFormat::NED13_ZIP ? "13" : "1");
-  return buf;
 }
