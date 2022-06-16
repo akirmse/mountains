@@ -37,18 +37,16 @@
 
 enum FileFormat {
   HGT,  // SRTM (90m, 3 arcsecond)
-  FLT,  // NED (10m, 1/3 arcsecond)
   NED13_ZIP, // ZIP file containing FLT NED 1/3 arcsecond data
   NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
-};
-
-enum DataType {
-  SRTM, NED,
 };
 
 class Tile {
 public:
 
+  // Tile takes ownership of samples, which will be deallocated later via free().
+  Tile(int width, int height, Elevation *samples,
+       float minLat, float minLng, float maxLat, float maxLng);
   ~Tile();
   
   int width() const { return mWidth; }
@@ -112,13 +110,6 @@ public:
   // Flip elevations so that depressions and mountains are swapped.
   // No-data values are left unchanged.
   void flipElevations();
-  
-  // minLat and minLng name the SW corner of the tile, in degrees
-  static Tile *loadFromHgtFile(const std::string &directory, int minLat, int minLng);
-  // NED 1/3 arcsecond zip file containing a .flt file
-  static Tile *loadFromNED13ZipFile(const std::string &directory, int minLat, int minLng);
-  // NED 1 arcsecond zip file containing a .flt file
-  static Tile *loadFromNED1ZipFile(const std::string &directory, int minLat, int minLng);
 
   // Missing data in source
   static const Elevation NODATA_ELEVATION = -32768;
@@ -146,19 +137,9 @@ private:
   Elevation *mSamples;
 
   // Precompute some internal values after tile is loaded with samples
-  static void precomputeTileAfterLoad(Tile *tile);
+  void precomputeTileAfterLoad();
   
   Elevation computeMaxElevation() const;
-
-  static Tile *loadFromNEDZipFileInternal(const std::string &directory, int minLat, int minLng,
-                                          FileFormat format);
-
-  // format gives the resolution of the NED data
-  static Tile *loadFromFltFile(const std::string &directory, int minLat, int minLng,
-                               FileFormat format);
-  
-  // Return the filename for the .flt file for the given coordinates
-  static std::string getFltFilename(int minLat, int minLng, FileFormat format);
 };
 
 
