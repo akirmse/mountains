@@ -45,11 +45,16 @@ LINKFLAGS = $(LINKNORMALFLAGS)
 endif
 
 POINTLIB = $(OUTDIR)/pointlib.a
+LOADERLIB = $(OUTDIR)/loaderlib.a
 
 POINTLIB_OBJS = \
 	$(OUTDIR)/point.o \
 	$(OUTDIR)/quadtree.o \
 	$(OUTDIR)/util.o \
+
+LOADERLIB_OBJS = \
+	$(OUTDIR)/flt_loader.o \
+	$(OUTDIR)/hgt_loader.o \
 
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.o \
@@ -66,6 +71,7 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/tile_cache.o \
 	$(OUTDIR)/tile_loading_policy.o \
 	$(POINTLIB) \
+	$(LOADERLIB) \
 
 PROMINENCE_OBJS = \
 	$(OUTDIR)/coordinate_system.o \
@@ -87,6 +93,7 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/tile_loading_policy.o \
 	$(OUTDIR)/tree_builder.o \
 	$(POINTLIB) \
+	$(LOADERLIB) \
 
 MERGE_DIVIDE_TREES_OBJS = \
 	$(OUTDIR)/coordinate_system.o \
@@ -121,6 +128,9 @@ all : makedirs $(OUTDIR)/isolation $(OUTDIR)/prominence $(OUTDIR)/merge_divide_t
 	 $(OUTDIR)/filter_points $(OUTDIR)/compute_parents
 
 $(POINTLIB) : $(POINTLIB_OBJS)
+	$(AR) $@ $^ 
+
+$(LOADERLIB): $(LOADERLIB_OBJS)
 	$(AR) $@ $^ 
 
 $(OUTDIR)/isolation: $(ISOLATION_OBJS)
