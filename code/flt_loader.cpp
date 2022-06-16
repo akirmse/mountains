@@ -24,6 +24,7 @@
 
 #include "flt_loader.h"
 
+#include <math.h>
 #include <stdio.h>
 
 using std::string;
