@@ -36,6 +36,8 @@
 
 using std::string;
 
+static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
+
 Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) {
   char buf[100];
   sprintf(buf, "Copernicus_DSM_COG_10_%c%02d_00_%c%03d_00_DEM.flt",
@@ -54,9 +56,9 @@ Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) 
     return nullptr;
   }
 
-  const int width = getWidthForLatitude(minLat);
-  const int height = 3600;
-  int num_raw_samples = width * height;
+  const int inputWidth = getWidthForLatitude(minLat);
+  const int inputHeight = 3600;
+  int num_raw_samples = inputWidth * inputHeight;
   
   float *inbuf = new float[num_raw_samples];
   
@@ -72,17 +74,36 @@ Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) 
   // At high latitudes, tiles are shrunk horizontally.  In order to be able to span
   // "seams" between latitudes where the resolution changes, we always expand the
   // tile to "full" resolution.
-  float expansionRatio = static_cast<float>(height) / width;
+  const int outputWidth = 3600;
+  const int outputHeight = 3600;
+  float expansionRatio = static_cast<float>(inputHeight) / inputWidth;
   if (expansionRatio > 1) {
-    // XXX 1.5
-    float *square = new float[height * height];
-    int ratio = static_cast<int>(expansionRatio);
-    for (int row = 0; row < height; ++row) {
-      int pos = row * height;
-      for (int col = 0; col < width; ++col) {
-        float value = inbuf[row * width + col];
-        for (int i = 0; i < ratio; ++i) {
+    float *square = new float[outputWidth * outputHeight];
+    // Special case for expansionRatio == 1.5: we convert 2 input pixels
+    // to 3 output pixels.  AB -> AAB.
+    if (inputWidth * 3 / 2 == outputWidth) {
+      for (int row = 0; row < inputHeight; ++row) {
+        int pos = row * outputWidth;
+        for (int col = 0; col < inputWidth; ) {
+          float value = inbuf[row * inputWidth + col];
           square[pos++] = value;
+          square[pos++] = value;
+          ++col;
+          value = inbuf[row * inputWidth + col];
+          square[pos++] = value;
+          ++col;
+        }
+      }
+    } else {
+      // Copy input pixel to N consecutive horizontal output pixels
+      int ratio = static_cast<int>(expansionRatio);
+      for (int row = 0; row < inputHeight; ++row) {
+        int pos = row * outputWidth;
+        for (int col = 0; col < inputWidth; ++col) {
+          float value = inbuf[row * inputWidth + col];
+          for (int i = 0; i < ratio; ++i) {
+            square[pos++] = value;
+          }
         }
       }
     }
@@ -90,25 +111,29 @@ Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) 
     delete [] inbuf;
     inbuf = square;
   }
-  
-  Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * width * height);
+
+  Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * outputWidth * outputHeight);
   // Discard extra overlap so that just 1 pixel remains around the outsides.
   // Overwrites samples array in-place
-  for (int i = 0; i < height; ++i) {
-    for (int j = 0; j < width; ++j) {
-      int index = i * width + j;
+  for (int i = 0; i < outputHeight; ++i) {
+    for (int j = 0; j < outputWidth; ++j) {
+      int index = i * outputWidth + j;
       float sample = inbuf[index];
-      
-      // XXX NODATA?
-      // Use feet internally; small unit avoids losing precision with external data
-      samples[index] = (Elevation) metersToFeet(sample);
+
+      // Convert Copernicus NODATA to our NODATA
+      if (fabs(sample - COPERNICUS_NODATA_ELEVATION) < 0.01) {
+        samples[index] = Tile::NODATA_ELEVATION;
+      } else {
+        // Use feet internally; small unit avoids losing precision with external data
+        samples[index] = (Elevation) metersToFeet(sample);
+      }
     }
   }
   
   // Tile is 1 square degree
   float fMinLat = static_cast<float>(minLat);
   float fMinLng = static_cast<float>(minLng);
-  Tile *tile = new Tile(width, height, samples,
+  Tile *tile = new Tile(outputWidth, outputHeight, samples,
                         fMinLat, fMinLng, fMinLat + 1, fMinLng + 1);
 
   delete [] inbuf;
@@ -118,19 +143,19 @@ Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) 
 int GloLoader::getWidthForLatitude(int minLat) const {
   // See table at
   // https://copernicus-dem-30m.s3.amazonaws.com/readme.html
-  if (minLat >= 85) {
+  if (minLat >= 85 || minLat < -85) {
     return 360;
   }
-  if (minLat >= 80) {
+  if (minLat >= 80 || minLat < -80) {
     return 720;
   }
-  if (minLat >= 70) {
+  if (minLat >= 70 || minLat < -70) {
     return 1200;
   }
-  if (minLat >= 60) {
+  if (minLat >= 60 || minLat < -60) {
     return 1800;
   }
-  if (minLat >= 50) {
+  if (minLat >= 50 || minLat < -50) {
     return 2400;
   }
   return 3600;

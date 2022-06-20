@@ -54,6 +54,7 @@ POINTLIB_OBJS = \
 
 LOADERLIB_OBJS = \
 	$(OUTDIR)/flt_loader.o \
+	$(OUTDIR)/glo_loader.o \
 	$(OUTDIR)/hgt_loader.o \
 
 ISOLATION_OBJS = \
@@ -171,7 +172,8 @@ depend:
 # DO NOT DELETE
 
 debug/compute_parents.o: divide_tree.h coordinate_system.h primitives.h
-debug/compute_parents.o: latlng.h island_tree.h line_tree.h easylogging++.h
+debug/compute_parents.o: latlng.h island_tree.h line_tree.h util.h
+debug/compute_parents.o: easylogging++.h
 debug/coordinate_system.o: coordinate_system.h primitives.h latlng.h
 debug/divide_tree.o: divide_tree.h coordinate_system.h primitives.h latlng.h
 debug/divide_tree.o: easylogging++.h island_tree.h kml_writer.h line_tree.h
@@ -180,6 +182,12 @@ debug/domain_map.o: domain_map.h tile.h primitives.h latlng.h pixel_array.h
 debug/domain_map.o: easylogging++.h
 debug/filter.o: easylogging++.h filter.h latlng.h util.h
 debug/filter_points.o: easylogging++.h filter.h latlng.h util.h
+debug/flt_loader.o: flt_loader.h tile_loader.h tile.h primitives.h latlng.h
+debug/flt_loader.o: util.h easylogging++.h
+debug/glo_loader.o: glo_loader.h tile_loader.h tile.h primitives.h latlng.h
+debug/glo_loader.o: util.h easylogging++.h
+debug/hgt_loader.o: hgt_loader.h tile_loader.h tile.h primitives.h latlng.h
+debug/hgt_loader.o: util.h easylogging++.h
 debug/island_tree.o: island_tree.h primitives.h divide_tree.h
 debug/island_tree.o: coordinate_system.h latlng.h easylogging++.h
 debug/island_tree.o: kml_writer.h
@@ -230,7 +238,8 @@ debug/tile_cache.o: tile_cache.h lock.h lrucache.h point_map.h point.h tile.h
 debug/tile_cache.o: primitives.h latlng.h tile_loading_policy.h
 debug/tile_cache.o: peakbagger_point.h easylogging++.h
 debug/tile_loading_policy.o: tile_loading_policy.h tile.h primitives.h
-debug/tile_loading_policy.o: latlng.h easylogging++.h
+debug/tile_loading_policy.o: latlng.h flt_loader.h tile_loader.h util.h
+debug/tile_loading_policy.o: easylogging++.h glo_loader.h hgt_loader.h
 debug/tree_builder.o: tree_builder.h primitives.h domain_map.h tile.h
 debug/tree_builder.o: latlng.h pixel_array.h divide_tree.h
 debug/tree_builder.o: coordinate_system.h easylogging++.h
