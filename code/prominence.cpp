@@ -98,8 +98,8 @@ int main(int argc, char **argv) {
         fileFormat = FileFormat::NED1_ZIP;
       } else if (str == "NED13-ZIP") {
         fileFormat = FileFormat::NED13_ZIP;
-      } else if (str == "GLO10") {
-        fileFormat = FileFormat::GLO10;
+      } else if (str == "GLO30") {
+        fileFormat = FileFormat::GLO30;
       } else {
         printf("Unknown file format %s\n", optarg);
         usage();
