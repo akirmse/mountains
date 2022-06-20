@@ -25,6 +25,7 @@
 #include "tile_loading_policy.h"
 
 #include "flt_loader.h"
+#include "glo_loader.h"
 #include "hgt_loader.h"
 #include "tile.h"
 #include "easylogging++.h"
@@ -82,26 +83,29 @@ Tile *BasicTileLoadingPolicy::loadTile(int minLat, int minLng) const {
 }
 
 Tile *BasicTileLoadingPolicy::loadInternal(int minLat, int minLng) const {
-  Tile *tile = nullptr;
+  TileLoader *loader = nullptr;
 
   switch (mFileFormat) {
-  case FileFormat::HGT: {
-    HgtLoader loader;
-    tile = loader.loadTile(mDirectory, minLat, minLng);
+  case FileFormat::HGT:
+    loader = new HgtLoader();
     break;
-  }
 
   case FileFormat::NED13_ZIP:  // fall through
-  case FileFormat::NED1_ZIP: {
-    FltLoader loader(mFileFormat);
-    tile = loader.loadTile(mDirectory, minLat, minLng);
+  case FileFormat::NED1_ZIP:
+    loader = new FltLoader(mFileFormat);
     break;
-  }
+    
+  case FileFormat::GLO10: 
+    loader = new GloLoader();
+    break;    
 
   default:
     LOG(ERROR) << "Unsupported tile file format";
-    break;
+    return nullptr;
   }
-
+    
+  Tile *tile = loader->loadTile(mDirectory, minLat, minLng);
+  
+  delete loader;
   return tile;
 }

@@ -60,7 +60,7 @@ static void usage() {
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"GLO10\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
   printf("  -p filename       Peakbagger peak database file for matching\n");
@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
         fileFormat = FileFormat::NED1_ZIP;
       } else if (str == "NED13-ZIP") {
         fileFormat = FileFormat::NED13_ZIP;
+      } else if (str == "GLO10") {
+        fileFormat = FileFormat::GLO10;
       } else {
         printf("Unknown file format %s\n", optarg);
         usage();

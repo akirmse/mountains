@@ -39,6 +39,7 @@ enum FileFormat {
   HGT,  // SRTM (90m, 3 arcsecond)
   NED13_ZIP, // ZIP file containing FLT NED 1/3 arcsecond data
   NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
+  GLO10,  // Copernicus GLO-10 10 arcsecond data
 };
 
 class Tile {
