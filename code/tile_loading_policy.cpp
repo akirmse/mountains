@@ -95,7 +95,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(int minLat, int minLng) const {
     loader = new FltLoader(mFileFormat);
     break;
     
-  case FileFormat::GLO10: 
+  case FileFormat::GLO30: 
     loader = new GloLoader();
     break;    
 

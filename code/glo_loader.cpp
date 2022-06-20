@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <string>
 
-// TODO: Resample up to 3600x3600
 // TODO: Read right and bottom pixels from neighbor tiles
 
 using std::string;

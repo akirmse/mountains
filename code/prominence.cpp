@@ -60,7 +60,7 @@ static void usage() {
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"GLO10\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
   printf("  -p filename       Peakbagger peak database file for matching\n");
