@@ -22,21 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef _TILE_LOADER_H_
-#define _TILE_LOADER_H_
+#ifndef _GLO_LOADER_H_
+#define _GLO_LOADER_H_
 
-#include <string>
+#include "tile_loader.h"
 
-class Tile;
 
-// Abstract interface for loading a Tile from disk.
+// Load a GLO tif tile.  This is the format used by the Copernicus DEM.
+// See https://copernicus-dem-30m.s3.amazonaws.com/readme.html
 
-class TileLoader {
+class GloLoader : public TileLoader {
 public:
-  // Load the given tile from the given directory.
-  virtual Tile *loadTile(const std::string &directory, int minLat, int minLng) = 0;
+  // minLat and minLng name the SW corner of the tile, in degrees
+  virtual Tile *loadTile(const std::string &directory, int minLat, int minLng);
 
-  virtual ~TileLoader() {}
+private:
+  int getWidthForLatitude(int minLat) const;
 };
 
-#endif  // _TILE_LOADER_H_
+#endif  // _GLO_LOADER_H_

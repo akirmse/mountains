@@ -62,6 +62,13 @@ private:
 
   // Load tile without modifications
   Tile *loadInternal(int minLat, int minLng) const;
+
+  // Copy pixels from south and east neighbors into this tile, and return it.
+  Tile *copyPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const;
+
+  // Create a new tile by appending the first row and column from south
+  // and east neighbors to this tile, and return the new tile.
+  Tile *appendPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const;
 };
 
 #endif  // _TILE_LOADING_POLICY_H_

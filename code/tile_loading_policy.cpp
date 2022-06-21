@@ -25,6 +25,7 @@
 #include "tile_loading_policy.h"
 
 #include "flt_loader.h"
+#include "glo_loader.h"
 #include "hgt_loader.h"
 #include "tile.h"
 #include "easylogging++.h"
@@ -62,19 +63,25 @@ Tile *BasicTileLoadingPolicy::loadTile(int minLat, int minLng) const {
   // fixing it isn't necessary.
   //
   if (mNeighborEdgeLoadingEnabled) {
-    Tile *neighbor = loadInternal(minLat - 1, minLng);  // bottom neighbor
-    if (neighbor != nullptr) {
-      for (int i = 0; i < tile->width(); ++i) {
-        tile->set(i, tile->height() - 1, neighbor->get(i, 0));
-      }
-    }
+    switch (mFileFormat) {
+    case FileFormat::HGT:  // Fall through
+    case FileFormat::NED13_ZIP:
+    case FileFormat::NED1_ZIP:
+      copyPixelsFromNeighbors(tile, minLat, minLng);
+      break;
 
-    int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
-    neighbor = loadInternal(minLat, rightLng);  // right neighbor
-    if (neighbor != nullptr) {
-      for (int i = 0; i < tile->height(); ++i) {
-        tile->set(tile->width() - 1, i, neighbor->get(0, i));
-      }
+    case FileFormat::GLO30: {
+      // GLO30 "helpfully" removes the last row and column from each tile,
+      // so we need to stick them back on.
+      Tile *newTile = appendPixelsFromNeighbors(tile, minLat, minLng);
+      delete tile;
+      tile = newTile;
+      break;
+    }
+      
+    default:
+      LOG(ERROR) << "Unsupported tile file format";
+      return nullptr;
     }
   }
 
@@ -82,26 +89,101 @@ Tile *BasicTileLoadingPolicy::loadTile(int minLat, int minLng) const {
 }
 
 Tile *BasicTileLoadingPolicy::loadInternal(int minLat, int minLng) const {
-  Tile *tile = nullptr;
+  TileLoader *loader = nullptr;
 
   switch (mFileFormat) {
-  case FileFormat::HGT: {
-    HgtLoader loader;
-    tile = loader.loadTile(mDirectory, minLat, minLng);
+  case FileFormat::HGT:
+    loader = new HgtLoader();
     break;
-  }
 
   case FileFormat::NED13_ZIP:  // fall through
-  case FileFormat::NED1_ZIP: {
-    FltLoader loader(mFileFormat);
-    tile = loader.loadTile(mDirectory, minLat, minLng);
+  case FileFormat::NED1_ZIP:
+    loader = new FltLoader(mFileFormat);
     break;
-  }
+    
+  case FileFormat::GLO30: 
+    loader = new GloLoader();
+    break;    
 
   default:
     LOG(ERROR) << "Unsupported tile file format";
-    break;
+    return nullptr;
+  }
+    
+  Tile *tile = loader->loadTile(mDirectory, minLat, minLng);
+  
+  delete loader;
+  return tile;
+}
+
+Tile *BasicTileLoadingPolicy::copyPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const {
+  Tile *neighbor = loadInternal(minLat - 1, minLng);  // bottom neighbor
+  if (neighbor != nullptr) {
+    for (int i = 0; i < tile->width(); ++i) {
+      tile->set(i, tile->height() - 1, neighbor->get(i, 0));
+    }
+  }
+  
+  int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
+  neighbor = loadInternal(minLat, rightLng);  // right neighbor
+  if (neighbor != nullptr) {
+    for (int i = 0; i < tile->height(); ++i) {
+      tile->set(tile->width() - 1, i, neighbor->get(0, i));
+    }
+  }
+  return tile;
+}
+
+Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const {
+  // First copy over existing samples
+  int oldWidth = tile->width();
+  int oldHeight = tile->height();
+  int newWidth = oldWidth + 1;
+  int newHeight = oldHeight + 1;
+
+  Elevation *samples = new Elevation[newWidth * newHeight];
+
+  // Fill in with NODATA in case there aren't neighbors
+  for (int i = 0; i < newWidth * newHeight; ++i) {
+    samples[i] = Tile::NODATA_ELEVATION;
   }
 
-  return tile;
+  // Copy over existing values
+  for (int row = 0; row < oldHeight; ++row) {
+    int rowStart = row * newWidth;
+    for (int col = 0; col < oldWidth; ++col) {
+      samples[rowStart + col] = tile->get(col, row);
+    }
+  }
+
+  int bottomLat = minLat - 1;
+  Tile *neighbor = loadInternal(bottomLat, minLng);  // bottom neighbor
+  if (neighbor != nullptr) {
+    for (int i = 0; i < oldWidth; ++i) {
+      samples[oldHeight * newWidth + i] = neighbor->get(i, 0);
+    }
+  }
+  
+  int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
+  neighbor = loadInternal(minLat, rightLng);  // right neighbor
+  if (neighbor != nullptr) {
+    for (int i = 0; i < oldHeight; ++i) {
+      samples[i * newWidth + oldWidth] = neighbor->get(0, i);
+    }
+  }
+
+  // Have to get a single corner pixel from the SE neighbor--annoying
+  neighbor = loadInternal(bottomLat, rightLng);
+  if (neighbor != nullptr) {
+    samples[newHeight * newWidth - 1] = neighbor->get(0, 0);
+  }
+  
+  // TODO: This actually changes the extents a little bit
+  Tile *newTile = new Tile(newWidth, newHeight, samples,
+                           tile->minLatitude(),
+                           tile->minLongitude(),
+                           tile->maxLatitude(),
+                           tile->maxLongitude());
+  
+  return newTile;
 }

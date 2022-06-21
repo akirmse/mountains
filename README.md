@@ -50,8 +50,39 @@ available from NASA (SRTM), or improved void-filled data is at
 Higher resolution data for North America is available at [The National
 Map](https://viewer.nationalmap.gov/).
 
-Note that SRTM filenames reference the southwest corner of the tile,
+Copernicus 30m GLO30 data can be downloaded from [here](https://registry.opendata.aws/copernicus-dem/). 
+
+Note that SRTM and GLO30 filenames reference the southwest corner of the tile,
 while NED filenames reference the northwest corner.
+
+Because tiles need to reference their neighbors when computing prominence, all tiles must reside
+in a single directory and have specific names.
+
+#### SRTM
+
+SRTM or the data from Viewfinderpanoramas is delivered as HGT files, with names like this:
+
+```
+N59E006.hgt
+```
+
+#### NED
+
+NED (National Elevation Dataset) data is delivered as zip files with names like:
+
+```
+n59e006.zip
+```
+
+The prominence code will extract the FLT file from the zip (using 7z on Windows or unzip on Mac/Linux).
+
+#### GLO30
+
+The data is delivered as TIFF files.  Convert them to FLT using ```gdal_translate```, for example:
+
+```
+gdal_translate -of EHdr Copernicus_DSM_COG_10_N59_00_E006_00_DEM.tif Copernicus_DSM_COG_10_N59_00_E006_00_DEM.flt 
+```
 
 ### Isolation
 
@@ -80,7 +111,7 @@ prominence -- <min latitude> <max latitude> <min longitude> <max longitude>
   Options:
   -i directory      Directory with terrain data
   -o directory      Directory for output data
-  -f format         "SRTM", "NED13-ZIP", "NED1-ZIP" input files
+  -f format         "SRTM", "NED13-ZIP", "NED1-ZIP", "GLO30" input files
   -k filename       File with KML polygon to filter input tiles
   -m min_prominence Minimum prominence threshold for output, default = 300ft
   -t num_threads    Number of threads, default = 1

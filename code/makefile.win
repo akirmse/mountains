@@ -55,6 +55,7 @@ POINTLIB_OBJS = \
 
 LOADERLIB_OBJS = \
 	$(OUTDIR)/flt_loader.obj \
+	$(OUTDIR)/glo_loader.obj \
 	$(OUTDIR)/hgt_loader.obj \
 
 ISOLATION_OBJS = \
@@ -89,8 +90,6 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/domain_map.obj \
 	$(OUTDIR)/easylogging++.obj \
 	$(OUTDIR)/filter.obj \
-	$(OUTDIR)/flt_loader.obj \
-	$(OUTDIR)/hgt_loader.obj \
 	$(OUTDIR)/island_tree.obj \
 	$(OUTDIR)/kml_writer.obj \
 	$(OUTDIR)/latlng.obj \
