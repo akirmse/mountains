@@ -178,12 +178,16 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, 
     samples[newHeight * newWidth - 1] = neighbor->get(0, 0);
   }
   
-  // TODO: This actually changes the extents a little bit
+  // We've made the tile a little bigger in extents.
+  float minLatitude = tile->minLatitude() - 1.0f / tile->height();
+  float maxLatitude = tile->maxLatitude();
+  float minLongitude = tile->minLongitude();
+  float maxLongitude = tile->maxLongitude() + 1.0f / tile->width();
   Tile *newTile = new Tile(newWidth, newHeight, samples,
-                           tile->minLatitude(),
-                           tile->minLongitude(),
-                           tile->maxLatitude(),
-                           tile->maxLongitude());
+                           minLatitude,
+                           minLongitude,
+                           maxLatitude,
+                           maxLongitude);
   
   return newTile;
 }
