@@ -22,7 +22,7 @@ Release version:
 RELEASE=1 make
 ```
 
-This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, and Unbuntu 16.04 with gcc 5.4.
+This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, and Unbuntu 20.04 with gcc 9.
 
 ### Windows
 
@@ -38,7 +38,7 @@ Release version:
 nmake RELEASE=1 -f makefile.win
 ```
 
-This has been tested under Windows 10 with Microsoft Visual Studio 2017.
+This has been tested under Windows 10 with Microsoft Visual Studio 2022.
 
 ## Running the code
 
@@ -83,6 +83,9 @@ The data is delivered as TIFF files.  Convert them to FLT using ```gdal_translat
 ```
 gdal_translate -of EHdr Copernicus_DSM_COG_10_N59_00_E006_00_DEM.tif Copernicus_DSM_COG_10_N59_00_E006_00_DEM.flt 
 ```
+
+There is a script in the ```scripts``` subdirectory that can automate the downloading and conversion of tiles,
+followed by running the prominence program on them.
 
 ### Isolation
 
