@@ -122,6 +122,7 @@ Tile *BasicTileLoadingPolicy::copyPixelsFromNeighbors(Tile *tile, int minLat, in
     for (int i = 0; i < tile->width(); ++i) {
       tile->set(i, tile->height() - 1, neighbor->get(i, 0));
     }
+    delete neighbor;
   }
   
   int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
@@ -130,6 +131,7 @@ Tile *BasicTileLoadingPolicy::copyPixelsFromNeighbors(Tile *tile, int minLat, in
     for (int i = 0; i < tile->height(); ++i) {
       tile->set(tile->width() - 1, i, neighbor->get(0, i));
     }
+    delete neighbor;
   }
   return tile;
 }
@@ -162,6 +164,7 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, 
     for (int i = 0; i < oldWidth; ++i) {
       samples[oldHeight * newWidth + i] = neighbor->get(i, 0);
     }
+    delete neighbor;
   }
   
   int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
@@ -170,12 +173,14 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, 
     for (int i = 0; i < oldHeight; ++i) {
       samples[i * newWidth + oldWidth] = neighbor->get(0, i);
     }
+    delete neighbor;
   }
 
   // Have to get a single corner pixel from the SE neighbor--annoying
   neighbor = loadInternal(bottomLat, rightLng);
   if (neighbor != nullptr) {
     samples[newHeight * newWidth - 1] = neighbor->get(0, 0);
+    delete neighbor;
   }
   
   // We've made the tile a little bigger in extents.
