@@ -22,23 +22,42 @@
  * SOFTWARE.
  */
 
-#ifndef _GLO_LOADER_H_
-#define _GLO_LOADER_H_
+#ifndef _FILE_FORMAT_H_
+#define _FILE_FORMAT_H_
 
-#include "tile_loader.h"
+#include <string>
 
-
-// Load a GLO tif tile.  This is the format used by the Copernicus DEM.
-// See https://copernicus-dem-30m.s3.amazonaws.com/readme.html
-
-class GloLoader : public TileLoader {
+// Defines the types of input tiles we can read, and their properties.
+class FileFormat {
 public:
-  // minLat and minLng name the SW corner of the tile, in degrees
-  virtual Tile *loadTile(const std::string &directory, float minLat, float minLng);
+  enum class Value {
+    HGT,  // SRTM (90m, 3 arcsecond)
+    NED19,     // FLT file containing NED 1/9 arcsecond data
+    NED13_ZIP, // ZIP file containing FLT NED 1/3 arcsecond data
+    NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
+    GLO30,  // Copernicus GLO-30 30m data
+  };
 
+  FileFormat() = default;
+  constexpr FileFormat(Value v) : mValue(v) {}
+
+  Value value() const { return mValue; }
+
+  // Return the number of samples in one row or column of the file format,
+  // including any border samples.
+  int samplesAcross() const;
+
+  // Return the degrees in lat or lng covered by one tile.
+  // Note that this is the logical value (1 degree, 0.25 degree), not necessarily
+  // the precise value covered, including border samples.
+  float degreesAcross() const;
+
+  // Return a FileFormat object for the given human-readable string,
+  // or nullptr if none.
+  static FileFormat *fromName(const std::string &name);
+  
 private:
-  // Width in samples for a tile at the given latitude
-  int getWidthForLatitude(float minLat) const;
+  Value mValue;
 };
 
-#endif  // _GLO_LOADER_H_
+#endif  // _FILE_FORMAT_H_

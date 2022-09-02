@@ -46,7 +46,7 @@ IsolationTask::IsolationTask(TileCache *cache, const string &output_dir,
   mMinIsolationKm = minIsolationKm;
 }
 
-bool IsolationTask::run(int lat, int lng, const PointMap *forcedPeaks) {
+bool IsolationTask::run(float lat, float lng, const PointMap *forcedPeaks) {
   // Load the main tile manually; cache could delete it if we allow it to be cached
   std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng));
   if (tile.get() == nullptr) {

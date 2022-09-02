@@ -35,13 +35,6 @@
 #include <vector>
 #include <string>
 
-enum FileFormat {
-  HGT,  // SRTM (90m, 3 arcsecond)
-  NED13_ZIP, // ZIP file containing FLT NED 1/3 arcsecond data
-  NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
-  GLO30,  // Copernicus GLO-30 30m data
-};
-
 class Tile {
 public:
 

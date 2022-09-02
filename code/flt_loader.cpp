@@ -33,21 +33,32 @@ using std::string;
 // we remove all overlap pixels on the top and left, and leave one on the bottom and right.
 // See https://ca.water.usgs.gov/projects/sandiego/data/gis/dem/ned13/readme.pdf
 static const int FLT_EXTRA_BORDER = 6;
-static const int FLT_13_RAW_SIZE = 10812;
-static const int FLT_1_RAW_SIZE = 3612;
 
-static const float NED_NODATA_ELEVATION = -9999;
+// Anything less than this value is considered NODATA.  NED1 and NED13 use -9999,
+// while NED19 uses some very negative value (< -1e38).
+static const float NED_NODATA_MIN_ELEVATION = -9998;
 
-FltLoader::FltLoader(FileFormat format) {
+FltLoader::FltLoader(const FileFormat &format) {
   mFormat = format;
 }
 
-Tile *FltLoader::loadTile(const std::string &directory, int minLat, int minLng) {
-  return loadFromNEDZipFileInternal(directory, minLat, minLng, mFormat);
+Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minLng) {
+  switch (mFormat.value()) {
+  case FileFormat::Value::NED13_ZIP:  // fall through
+  case FileFormat::Value::NED1_ZIP:
+    return loadFromNEDZipFileInternal(directory, minLat, minLng);
+
+  case FileFormat::Value::NED19:
+    return loadFromFltFile(directory, minLat, minLng);
+
+  default:
+    printf("Got unknown tile file format in FltLoader");
+    return nullptr;
+  }
 }
 
-Tile *FltLoader::loadFromFltFile(const string &directory, int minLat, int minLng, FileFormat format) {
-  string filename = getFltFilename(minLat, minLng, format);
+Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float minLng) {
+  string filename = getFltFilename(minLat, minLng, mFormat);
   if (!directory.empty()) {
     filename = directory + "/" + filename;
   }
@@ -58,7 +69,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, int minLat, int minLng
     return nullptr;
   }
 
-  const int rawSideLength = (format == FileFormat::NED13_ZIP ? FLT_13_RAW_SIZE : FLT_1_RAW_SIZE);
+  const int rawSideLength = mFormat.samplesAcross();
   const int tileSideLength = rawSideLength - 2 * FLT_EXTRA_BORDER + 1;
   int num_raw_samples = rawSideLength * rawSideLength;
   
@@ -83,7 +94,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, int minLat, int minLng
         if (i >= FLT_EXTRA_BORDER && i < tileSideLength + FLT_EXTRA_BORDER &&
             j >= FLT_EXTRA_BORDER && j < tileSideLength + FLT_EXTRA_BORDER) {
           int index = ((i - FLT_EXTRA_BORDER) * tileSideLength) + (j - FLT_EXTRA_BORDER);
-          if (fabs(sample - NED_NODATA_ELEVATION) < 0.01) {
+          if (sample < NED_NODATA_MIN_ELEVATION) {
             samples[index] = Tile::NODATA_ELEVATION;
           } else {
             // Use feet internally; small unit avoids losing precision with external data
@@ -95,11 +106,9 @@ Tile *FltLoader::loadFromFltFile(const string &directory, int minLat, int minLng
   }
   
   if (samples != nullptr) {
-    // Tile is 1 square degree
-    float fMinLat = static_cast<float>(minLat);
-    float fMinLng = static_cast<float>(minLng);
+    float tileSpan = mFormat.degreesAcross();
     retval = new Tile(tileSideLength, tileSideLength, samples,
-                      fMinLat, fMinLng, fMinLat + 1, fMinLng + 1);
+                      minLat, minLng, minLat + tileSpan, minLng + tileSpan);
   }
 
   delete [] inbuf;
@@ -109,13 +118,15 @@ Tile *FltLoader::loadFromFltFile(const string &directory, int minLat, int minLng
 }
 
 Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
-                                            int minLat, int minLng, FileFormat format) {
+                                            float minLat, float minLng) {
+  // ZIP formats come only in 1x1 degree formats, so OK to cast lat/lng to int.
+  // NED uses upper left corner for naming.
   char buf[100];
   sprintf(buf, "%c%02d%c%03d.zip",
           (minLat >= 0) ? 'n' : 's',
-          abs(minLat + 1),  // NED uses upper left corner for naming
+          abs(static_cast<int>(minLat + mFormat.degreesAcross())),
           (minLng >= 0) ? 'e' : 'w',
-          abs(minLng));
+          abs(static_cast<int>(minLng)));
   string filename(buf);
   if (!directory.empty()) {
     filename = directory + "/" + filename;
@@ -127,7 +138,7 @@ Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
   }
   
   string tempDirectory = getTempDir();
-  string fltFilename = getFltFilename(minLat, minLng, format);
+  string fltFilename = getFltFilename(minLat, minLng, mFormat);
 
   // Unzip flt file from zip to temp dir
 #ifdef PLATFORM_WINDOWS
@@ -142,7 +153,7 @@ Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
     LOG(ERROR) << "Command failed: " << command;
   }
   
-  Tile *tile = loadFromFltFile(tempDirectory, minLat, minLng, format);
+  Tile *tile = loadFromFltFile(tempDirectory, minLat, minLng);
 
   // Delete temp file
   string fltFullFilename = tempDirectory + "/" + fltFilename;
@@ -151,13 +162,40 @@ Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
   return tile;  
 }
 
-string FltLoader::getFltFilename(int minLat, int minLng, FileFormat format) {
+string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &format) {
   char buf[100];
-  sprintf(buf, "float%c%02d%c%03d_%s.flt",
-          (minLat >= 0) ? 'n' : 's',
-          abs(minLat + 1),  // NED uses upper left corner for naming
-          (minLng >= 0) ? 'e' : 'w',
-          abs(minLng),
-          format == FileFormat::NED13_ZIP ? "13" : "1");
+  // NED uses upper left corner for naming
+  float upperLat = minLat + format.degreesAcross();
+  switch (format.value()) {
+  case FileFormat::Value::NED13_ZIP:  // fall through
+  case FileFormat::Value::NED1_ZIP:
+    snprintf(buf, sizeof(buf), "float%c%02d%c%03d_%s.flt",
+             (minLat >= 0) ? 'n' : 's',
+             abs(static_cast<int>(upperLat)),
+             (minLng >= 0) ? 'e' : 'w',
+             abs(static_cast<int>(minLng)),
+             format.value() == FileFormat::Value::NED13_ZIP ? "13" : "1");
+    break;
+    
+  case FileFormat::Value::NED19:
+    snprintf(buf, sizeof(buf), "ned19_%c%02dx%02d_%c%03dx%02d.flt",
+             (minLat >= 0) ? 'n' : 's',
+             abs(static_cast<int>(upperLat)),
+             fractionalDegree(upperLat),
+             (minLng >= 0) ? 'e' : 'w',
+             abs(static_cast<int>(minLng)),
+             fractionalDegree(minLng));
+    break;
+    
+  default:
+    printf("Couldn't compute filename for unknown FLT file format");
+    exit(1);
+  }
+  
   return buf;
+}
+
+int FltLoader::fractionalDegree(float degree) const {
+  float excess = fabs(degree - static_cast<int>(degree));
+  return static_cast<int>(100 * excess);
 }

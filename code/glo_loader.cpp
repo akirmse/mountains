@@ -32,19 +32,17 @@
 #include <stdio.h>
 #include <string>
 
-// TODO: Read right and bottom pixels from neighbor tiles
-
 using std::string;
 
 static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
 
-Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) {
+Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minLng) {
   char buf[100];
   sprintf(buf, "Copernicus_DSM_COG_10_%c%02d_00_%c%03d_00_DEM.flt",
           (minLat >= 0) ? 'N' : 'S',
-          abs(minLat),
+          abs(static_cast<int>(minLat)),
           (minLng >= 0) ? 'E' : 'W',
-          abs(minLng));
+          abs(static_cast<int>(minLng)));
   string filename(buf);
   if (!directory.empty()) {
     filename = directory + "/" + filename;
@@ -143,7 +141,7 @@ Tile *GloLoader::loadTile(const std::string &directory, int minLat, int minLng) 
   return tile;  
 }
 
-int GloLoader::getWidthForLatitude(int minLat) const {
+int GloLoader::getWidthForLatitude(float minLat) const {
   // See table at
   // https://copernicus-dem-30m.s3.amazonaws.com/readme.html
   if (minLat >= 85 || minLat < -85) {

@@ -113,8 +113,9 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
         if (lat != peakLat || lng != peakLng) {
           locationToUse = &peakLocation;
         }
-        IsolationRecord neighborRecord = checkNeighboringTile(lat, neighborLng, locationToUse,
-                                                              Offsets(seedx, seedy), elev);
+        IsolationRecord neighborRecord = checkNeighboringTile(
+          static_cast<float>(lat), static_cast<float>(neighborLng), locationToUse,
+          Offsets(seedx, seedy), elev);
         // Distance in record is distance to seed; we want distance to peak
         if (neighborRecord.foundHigherGround) {
           neighborRecord.distance = peakLocation.distance(neighborRecord.closestHigherGround);
@@ -328,7 +329,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const LatLng *p
   return record;
 }
 
-IsolationRecord IsolationFinder::checkNeighboringTile(int lat, int lng, const LatLng *peakLocation,
+IsolationRecord IsolationFinder::checkNeighboringTile(float lat, float lng, const LatLng *peakLocation,
                                                       Offsets seedCoords, Elevation elev) const {
   VLOG(2) << "Possibly considering neighbor tile " << lat << " " << lng;
   

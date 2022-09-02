@@ -33,7 +33,7 @@
 class CoordinateSystem {
 public:
 
-  CoordinateSystem(float minLat, float minLng,
+  CoordinateSystem(float minLat, float minLng, float maxLat, float maxLng,
                    int pixelsPerDegreeLat, int pixelsPerDegreeLng);
   
   // true if the two systems have the same number of pixels per degree
@@ -46,12 +46,16 @@ public:
   
   float minLatitude() const { return mMinLatitude; }
   float minLongitude() const { return mMinLongitude; }
+  float maxLatitude() const { return mMaxLatitude; }
+  float maxLongitude() const { return mMaxLongitude; }
   int pixelsPerDegreeLatitude() const { return mPixelsPerDegreeLatitude; }
   int pixelsPerDegreeLongitude() const { return mPixelsPerDegreeLongitude; }
   
 private:
   float mMinLatitude;
   float mMinLongitude;
+  float mMaxLatitude;
+  float mMaxLongitude;
   int mPixelsPerDegreeLatitude;
   int mPixelsPerDegreeLongitude;
 };

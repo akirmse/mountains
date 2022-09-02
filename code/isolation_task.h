@@ -44,7 +44,7 @@ public:
   // should have their isolation calculation and output, even if the isolation
   // is < minIsolationKm.  This can be used to generate isolation for a list of
   // peaks that comes from an external database.
-  bool run(int lat, int lng, const PointMap *forcedPeaks);
+  bool run(float lat, float lng, const PointMap *forcedPeaks);
 
 private:
   TileCache *mCache;

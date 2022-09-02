@@ -41,7 +41,7 @@ public:
 
   void insert(const Point *point);
 
-  Bucket *lookup(int lat, int lng) const;
+  Bucket *lookup(float lat, float lng) const;
   
 private:
   Bucket *mBuckets[180][360];

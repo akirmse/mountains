@@ -54,13 +54,13 @@ INITIALIZE_EASYLOGGINGPP
 
 static void usage() {
   printf("Usage:\n");
-  printf("  prominence min_lat max_lat min_lng max_lng\n");
+  printf("  prominence [options] min_lat max_lat min_lng max_lng\n");
   printf("  where coordinates are integer degrees\n");
   printf("\n");
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"GLO30\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
   printf("  -p filename       Peakbagger peak database file for matching\n");
@@ -77,8 +77,8 @@ int main(int argc, char **argv) {
 
   int minProminence = 300;
   int numThreads = 1;
-  FileFormat fileFormat = FileFormat::HGT;
-  
+  FileFormat fileFormat = FileFormat(FileFormat::Value::HGT);
+
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
   int ch;
@@ -90,21 +90,16 @@ int main(int argc, char **argv) {
       antiprominence = true;
       break;
       
-    case 'f':
-      str = optarg;
-      if (str == "SRTM") {
-        fileFormat = FileFormat::HGT;
-      } else if (str == "NED1-ZIP") {
-        fileFormat = FileFormat::NED1_ZIP;
-      } else if (str == "NED13-ZIP") {
-        fileFormat = FileFormat::NED13_ZIP;
-      } else if (str == "GLO30") {
-        fileFormat = FileFormat::GLO30;
-      } else {
+    case 'f': {
+      auto format = FileFormat::fromName(optarg);
+      if (format == nullptr) {
         printf("Unknown file format %s\n", optarg);
         usage();
       }
+
+      fileFormat = *format;
       break;
+    }
 
     case 'i':
       terrain_directory = optarg;
@@ -189,33 +184,39 @@ int main(int argc, char **argv) {
   ThreadPool *threadPool = new ThreadPool(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
-  for (int lat = (int) floor(bounds[0]); lat < (int) ceil(bounds[1]); ++lat) {
-    for (int lng = (int) floor(bounds[2]); lng < (int) ceil(bounds[3]); ++lng) {
+  float lat = bounds[0];
+  while (lat < bounds[1]) {
+    float lng = bounds[2];
+    while (lng < bounds[3]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
-      int wrappedLng = lng;
+      auto wrappedLng = lng;
       if (wrappedLng >= 180) {
         wrappedLng -= 360;
       }
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects((float) lat, (float) (lat + 1), (float) lng, (float) (lng + 1))) {
+      if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
+                             lng, lng + fileFormat.degreesAcross())) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
-        continue;
+      } else {
+        // Skip some very slow tiles known to have no peaks
+        Offsets coords(static_cast<int>(lat), static_cast<int>(lng));
+        if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
+          VLOG(1) << "Skipping slow tile " << lat << " " << lng;
+        } else {
+          // Actually calculate prominence
+          ProminenceTask *task = new ProminenceTask(
+            cache, output_directory, minProminence);
+          task->setAntiprominence(antiprominence);
+          results.push_back(threadPool->enqueue([=] {
+                return task->run(lat, wrappedLng);
+              }));
+        }
       }
 
-      // Skip some very slow tiles known to have no peaks
-      Offsets coords(lat, lng);
-      if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
-        VLOG(1) << "Skipping slow tile " << lat << " " << lng;
-        continue;
-      }
-
-      ProminenceTask *task = new ProminenceTask(cache, output_directory, bounds, minProminence);
-      task->setAntiprominence(antiprominence);
-      results.push_back(threadPool->enqueue([=] {
-            return task->run(lat, wrappedLng);
-          }));
+      lng += fileFormat.degreesAcross();
     }
+    lat += fileFormat.degreesAcross();
   }
 
   for (auto && result : results) {

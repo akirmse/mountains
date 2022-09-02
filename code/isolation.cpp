@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  BasicTileLoadingPolicy policy(terrain_directory, FileFormat::HGT);
+  BasicTileLoadingPolicy policy(terrain_directory, FileFormat(FileFormat::Value::HGT));
   const int CACHE_SIZE = 50;
   TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
 
@@ -156,7 +156,8 @@ int main(int argc, char **argv) {
 
       IsolationTask *task = new IsolationTask(cache, output_directory, bounds, minIsolation);
       results.push_back(threadPool->enqueue([=] {
-            return task->run(lat, lng, peakbagger_peaks);
+            return task->run(static_cast<float>(lat), static_cast<float>(lng),
+                             peakbagger_peaks);
           }));
     }
   }

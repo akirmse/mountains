@@ -46,14 +46,14 @@ public:
   ~TileCache();
 
   // Retrieve the tile with the given minimum lat/lng, loading it from disk if necessary
-  Tile *getOrLoad(int minLat, int minLng);
+  Tile *getOrLoad(float minLat, float minLng);
 
   // Load the tile from disk without caching it
-  Tile *loadWithoutCaching(int minLat, int minLng);
+  Tile *loadWithoutCaching(float minLat, float minLng);
 
   // If we've ever loaded the tile with the given minimum lat/lng, set elev to its maximum
   // elevation and return true, otherwise return false.
-  bool getMaxElevation(int lat, int lng, int *elev);
+  bool getMaxElevation(float lat, float lng, int *elev);
   
 private:
 
@@ -65,9 +65,9 @@ private:
   // External peak elevations, written into tiles as they're loaded
   PointMap *mExternalPeaks;
 
-  Tile *loadInternal(int minLat, int minLng) const;
+  Tile *loadInternal(float minLat, float minLng) const;
   
-  int makeCacheKey(int minLat, int minLng) const;
+  int makeCacheKey(float minLat, float minLng) const;
 };
 
 #endif  // _TILE_CACHE_H_

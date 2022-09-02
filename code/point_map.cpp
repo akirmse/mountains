@@ -75,7 +75,7 @@ void PointMap::insert(const Point *point) {
   mBuckets[lat][lng]->push_back(point);
 }
 
-PointMap::Bucket *PointMap::lookup(int lat, int lng) const {
+PointMap::Bucket *PointMap::lookup(float lat, float lng) const {
   if (lat < -90 || lat >= 90 || lng < -180 || lng >= 180) {
     return nullptr;
   }
@@ -83,5 +83,5 @@ PointMap::Bucket *PointMap::lookup(int lat, int lng) const {
   lat += 90;
   lng += 180;
   
-  return mBuckets[lat][lng];
+  return mBuckets[(int) lat][(int) lng];
 }

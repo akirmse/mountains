@@ -39,9 +39,9 @@ public:
   void addResult(const LatLng &peakLocation, int elevationMeters, const LatLng &higherLocation,
                  float isolationKm);
 
-  bool save(const std::string &directory, int lat, int lng) const;
+  bool save(const std::string &directory, float lat, float lng) const;
 
-  static IsolationResults *loadFromFile(const std::string &directory, int lat, int lng);
+  static IsolationResults *loadFromFile(const std::string &directory, float lat, float lng);
 
 private:
   struct IsolationResult {
@@ -53,7 +53,7 @@ private:
   
   std::vector<IsolationResult> mResults;
   
-  static std::string filenameForCoordinates(int lat, int lng);
+  static std::string filenameForCoordinates(float lat, float lng);
 };
 
 #endif  // _ISOLATION_RESULTS_H_
