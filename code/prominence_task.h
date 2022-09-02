@@ -34,12 +34,12 @@
 class ProminenceTask {
 public:
   ProminenceTask(TileCache *cache, const std::string &output_dir,
-                 float bounds[], int minProminence);
+                 int minProminence);
 
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
-  bool run(int lat, int lng);
+  bool run(float lat, float lng);
 
   // Determine whether this task computes prominence (value=false, the default),
   // or anti-prominence, which is the "prominence" of low points.
@@ -48,15 +48,16 @@ public:
 private:
   TileCache *mCache;
   std::string mOutputDir;
-  float *mBounds;
   int mMinProminence;
 
-  int mCurrentLatitude;
-  int mCurrentLongitude;
+  float mCurrentLatitude;
+  float mCurrentLongitude;
 
   bool mAntiprominence;
 
   std::string getFilenamePrefix() const;
+  // Return hundredths of a degree from the given value
+  int fractionalDegree(float degree) const;
   bool writeStringToOutputFile(const std::string &filename, const std::string &str) const;
 };
 

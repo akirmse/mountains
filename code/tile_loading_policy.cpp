@@ -42,7 +42,7 @@ void BasicTileLoadingPolicy::enableNeighborEdgeLoading(bool enabled) {
   mNeighborEdgeLoadingEnabled = enabled;
 }
 
-Tile *BasicTileLoadingPolicy::loadTile(int minLat, int minLng) const {
+Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
   Tile *tile = loadInternal(minLat, minLng);
   if (tile == nullptr) {
     return nullptr;
@@ -65,6 +65,7 @@ Tile *BasicTileLoadingPolicy::loadTile(int minLat, int minLng) const {
   if (mNeighborEdgeLoadingEnabled) {
     switch (mFileFormat) {
     case FileFormat::HGT:  // Fall through
+    case FileFormat::NED19:
     case FileFormat::NED13_ZIP:
     case FileFormat::NED1_ZIP:
       copyPixelsFromNeighbors(tile, minLat, minLng);
@@ -88,7 +89,7 @@ Tile *BasicTileLoadingPolicy::loadTile(int minLat, int minLng) const {
   return tile;
 }
 
-Tile *BasicTileLoadingPolicy::loadInternal(int minLat, int minLng) const {
+Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
   TileLoader *loader = nullptr;
 
   switch (mFileFormat) {
@@ -97,6 +98,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(int minLat, int minLng) const {
     break;
 
   case FileFormat::NED13_ZIP:  // fall through
+  case FileFormat::NED19:
   case FileFormat::NED1_ZIP:
     loader = new FltLoader(mFileFormat);
     break;
@@ -116,16 +118,21 @@ Tile *BasicTileLoadingPolicy::loadInternal(int minLat, int minLng) const {
   return tile;
 }
 
-Tile *BasicTileLoadingPolicy::copyPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const {
-  Tile *neighbor = loadInternal(minLat - 1, minLng);  // bottom neighbor
+Tile *BasicTileLoadingPolicy::copyPixelsFromNeighbors(Tile *tile, float minLat, float minLng) const {
+  // Bottom neighbor
+  float bottomLat = minLat - (tile->maxLatitude() - tile->minLatitude());
+  Tile *neighbor = loadInternal(bottomLat, minLng);
   if (neighbor != nullptr) {
     for (int i = 0; i < tile->width(); ++i) {
       tile->set(i, tile->height() - 1, neighbor->get(i, 0));
     }
     delete neighbor;
   }
-  
-  int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
+
+  float rightLng = minLng + (tile->maxLongitude() - tile->minLongitude());
+  if (rightLng == 180) {
+    rightLng = -180;  // antimeridian
+  }
   neighbor = loadInternal(minLat, rightLng);  // right neighbor
   if (neighbor != nullptr) {
     for (int i = 0; i < tile->height(); ++i) {
@@ -136,7 +143,7 @@ Tile *BasicTileLoadingPolicy::copyPixelsFromNeighbors(Tile *tile, int minLat, in
   return tile;
 }
 
-Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const {
+Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, float minLat, float minLng) const {
   // First copy over existing samples
   int oldWidth = tile->width();
   int oldHeight = tile->height();
@@ -158,7 +165,7 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, 
     }
   }
 
-  int bottomLat = minLat - 1;
+  float bottomLat = minLat - (tile->maxLatitude() - tile->minLatitude());
   Tile *neighbor = loadInternal(bottomLat, minLng);  // bottom neighbor
   if (neighbor != nullptr) {
     for (int i = 0; i < oldWidth; ++i) {
@@ -167,7 +174,10 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, int minLat, 
     delete neighbor;
   }
   
-  int rightLng = (minLng == 179) ? -180 : (minLng + 1);  // antimeridian
+  float rightLng = minLng + (tile->maxLongitude() - tile->minLongitude());
+  if (rightLng == 180) {
+    rightLng = -180;  // antimeridian
+  }
   neighbor = loadInternal(minLat, rightLng);  // right neighbor
   if (neighbor != nullptr) {
     for (int i = 0; i < oldHeight; ++i) {

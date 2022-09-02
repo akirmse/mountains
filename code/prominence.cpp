@@ -42,10 +42,12 @@
 #include "getopt-win.h"
 #endif
 #include <cmath>
+#include <map>
 #include <set>
 
 using std::ceil;
 using std::floor;
+using std::map;
 using std::set;
 using std::string;
 using std::vector;
@@ -54,13 +56,13 @@ INITIALIZE_EASYLOGGINGPP
 
 static void usage() {
   printf("Usage:\n");
-  printf("  prominence min_lat max_lat min_lng max_lng\n");
+  printf("  prominence [options] min_lat max_lat min_lng max_lng\n");
   printf("  where coordinates are integer degrees\n");
   printf("\n");
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"GLO30\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
   printf("  -p filename       Peakbagger peak database file for matching\n");
@@ -78,6 +80,14 @@ int main(int argc, char **argv) {
   int minProminence = 300;
   int numThreads = 1;
   FileFormat fileFormat = FileFormat::HGT;
+
+  const map<string, FileFormat> fileFormatNames = {
+    { "SRTM", FileFormat::HGT, },
+    { "NED1-ZIP", FileFormat::NED1_ZIP, },
+    { "NED13-ZIP", FileFormat::NED13_ZIP, },
+    { "NED19", FileFormat::NED19, },
+    { "GLO30", FileFormat::GLO30, },
+  };
   
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -90,21 +100,16 @@ int main(int argc, char **argv) {
       antiprominence = true;
       break;
       
-    case 'f':
-      str = optarg;
-      if (str == "SRTM") {
-        fileFormat = FileFormat::HGT;
-      } else if (str == "NED1-ZIP") {
-        fileFormat = FileFormat::NED1_ZIP;
-      } else if (str == "NED13-ZIP") {
-        fileFormat = FileFormat::NED13_ZIP;
-      } else if (str == "GLO30") {
-        fileFormat = FileFormat::GLO30;
-      } else {
+    case 'f': {
+      auto it = fileFormatNames.find(optarg);
+      if (it == fileFormatNames.end()) {
         printf("Unknown file format %s\n", optarg);
         usage();
       }
+
+      fileFormat = it->second;
       break;
+    }
 
     case 'i':
       terrain_directory = optarg;
@@ -210,10 +215,11 @@ int main(int argc, char **argv) {
         continue;
       }
 
-      ProminenceTask *task = new ProminenceTask(cache, output_directory, bounds, minProminence);
+      ProminenceTask *task = new ProminenceTask(cache, output_directory, minProminence);
       task->setAntiprominence(antiprominence);
       results.push_back(threadPool->enqueue([=] {
-            return task->run(lat, wrappedLng);
+            // XXX Need fractional degrees
+            return task->run(static_cast<float>(lat), static_cast<float>(wrappedLng));
           }));
     }
   }

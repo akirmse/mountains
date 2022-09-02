@@ -38,13 +38,13 @@ static uint16 swapByteOrder16(uint16 us) {
   return (us >> 8) | (us << 8);
 }
 
-Tile *HgtLoader::loadTile(const std::string &directory, int minLat, int minLng) {
+Tile *HgtLoader::loadTile(const std::string &directory, float minLat, float minLng) {
   char buf[100];
   sprintf(buf, "%c%02d%c%03d.hgt",
           (minLat >= 0) ? 'N' : 'S',
-          abs(minLat),
+          abs(static_cast<int>(minLat)),
           (minLng >= 0) ? 'E' : 'W',
-          abs(minLng));
+          abs(static_cast<int>(minLng)));
   string filename(buf);
   if (!directory.empty()) {
     filename = directory + "/" + filename;
@@ -79,10 +79,8 @@ Tile *HgtLoader::loadTile(const std::string &directory, int minLat, int minLng) 
     }
 
     // Tile is 1 square degree
-    float fMinLat = static_cast<float>(minLat);
-    float fMinLng = static_cast<float>(minLng);
     retval = new Tile(HGT_TILE_SIZE, HGT_TILE_SIZE, samples,
-                      fMinLat, fMinLng, fMinLat + 1, fMinLng + 1);
+                      minLat, minLng, minLat + 1, minLng + 1);
   }
   
   fclose(infile);

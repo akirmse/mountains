@@ -36,20 +36,29 @@ class FltLoader : public TileLoader {
 public:
   explicit FltLoader(FileFormat format);
   
-  virtual Tile *loadTile(const std::string &directory, int minLat, int minLng);
+  virtual Tile *loadTile(const std::string &directory, float minLat, float minLng);
 
 private:
   FileFormat mFormat;
   
-  Tile *loadFromNEDZipFileInternal(const std::string &directory, int minLat, int minLng,
+  Tile *loadFromNEDZipFileInternal(const std::string &directory, float minLat, float minLng,
                                    FileFormat format);
 
   // format gives the resolution of the NED data
-  Tile *loadFromFltFile(const std::string &directory, int minLat, int minLng,
+  Tile *loadFromFltFile(const std::string &directory, float minLat, float minLng,
                         FileFormat format);
   
   // Return the filename for the .flt file for the given coordinates
-  std::string getFltFilename(int minLat, int minLng, FileFormat format);
+  std::string getFltFilename(float minLat, float minLng, FileFormat format);
+
+  // Return the number of samples along one edge of a tile with the given format
+  int rawSideLengthForFormat(FileFormat format) const;
+
+  // Return the size of a tile in degrees
+  float tileSpanForFormat(FileFormat format) const;
+
+  // Return hundredths of a degree from the given value
+  int fractionalDegree(float degree) const;
 };
 
 #endif  // _FLOT_LOADER_H_

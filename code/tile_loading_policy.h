@@ -34,7 +34,7 @@
 
 class TileLoadingPolicy {
 public:
-  virtual Tile *loadTile(int minLat, int minLng) const = 0;
+  virtual Tile *loadTile(float minLat, float minLng) const = 0;
 };
 
 
@@ -53,7 +53,7 @@ public:
   // This is disabled by default.
   void enableNeighborEdgeLoading(bool enabled);
 
-  virtual Tile *loadTile(int minLat, int minLng) const;
+  virtual Tile *loadTile(float minLat, float minLng) const;
 
 private:
   std::string mDirectory;  // Directory for loading tiles
@@ -61,14 +61,14 @@ private:
   bool mNeighborEdgeLoadingEnabled;
 
   // Load tile without modifications
-  Tile *loadInternal(int minLat, int minLng) const;
+  Tile *loadInternal(float minLat, float minLng) const;
 
   // Copy pixels from south and east neighbors into this tile, and return it.
-  Tile *copyPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const;
+  Tile *copyPixelsFromNeighbors(Tile *tile, float minLat, float minLng) const;
 
   // Create a new tile by appending the first row and column from south
   // and east neighbors to this tile, and return the new tile.
-  Tile *appendPixelsFromNeighbors(Tile *tile, int minLat, int minLng) const;
+  Tile *appendPixelsFromNeighbors(Tile *tile, float minLat, float minLng) const;
 };
 
 #endif  // _TILE_LOADING_POLICY_H_

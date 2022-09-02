@@ -34,10 +34,11 @@
 class GloLoader : public TileLoader {
 public:
   // minLat and minLng name the SW corner of the tile, in degrees
-  virtual Tile *loadTile(const std::string &directory, int minLat, int minLng);
+  virtual Tile *loadTile(const std::string &directory, float minLat, float minLng);
 
 private:
-  int getWidthForLatitude(int minLat) const;
+  // Width in samples for a tile at the given latitude
+  int getWidthForLatitude(float minLat) const;
 };
 
 #endif  // _GLO_LOADER_H_

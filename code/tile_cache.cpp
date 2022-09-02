@@ -40,7 +40,7 @@ TileCache::TileCache(TileLoadingPolicy *policy, PointMap *externalPeaks, int max
 TileCache::~TileCache() {
 }
 
-Tile *TileCache::getOrLoad(int minLat, int minLng) {
+Tile *TileCache::getOrLoad(float minLat, float minLng) {
   // In cache?
   int key = makeCacheKey(minLat, minLng);
   Tile *tile = nullptr;
@@ -73,7 +73,7 @@ Tile *TileCache::getOrLoad(int minLat, int minLng) {
   return tile;
 }
 
-Tile *TileCache::loadWithoutCaching(int minLat, int minLng) {
+Tile *TileCache::loadWithoutCaching(float minLat, float minLng) {
   Tile *tile = mLoadingPolicy->loadTile(minLat, minLng);
   if (tile == nullptr) {
     return nullptr;
@@ -134,8 +134,8 @@ Tile *TileCache::loadWithoutCaching(int minLat, int minLng) {
     int numPeaksWritten = 0;
     for (int deltaX = -1; deltaX <= 1; deltaX += 1) {
       for (int deltaY = -1; deltaY <= 1; deltaY += 1) {
-        int lng = minLng + deltaX;
-        int lat = minLat + deltaY;
+        float lng = minLng + deltaX;
+        float lat = minLat + deltaY;
         PointMap::Bucket *bucket = mExternalPeaks->lookup(lat, lng);
         if (bucket != nullptr) {
           for (auto it : *bucket) {
@@ -163,7 +163,7 @@ Tile *TileCache::loadWithoutCaching(int minLat, int minLng) {
   return tile;
 }
 
-bool TileCache::getMaxElevation(int lat, int lng, int *elev) {
+bool TileCache::getMaxElevation(float lat, float lng, int *elev) {
   assert(elev != nullptr);
 
   bool retval = true;
@@ -182,6 +182,9 @@ bool TileCache::getMaxElevation(int lat, int lng, int *elev) {
 }
 
 
-int TileCache::makeCacheKey(int minLat, int minLng) const {
-  return minLat * 1000 + minLng;
+int TileCache::makeCacheKey(float minLat, float minLng) const {
+  // Round to some reasonable precision
+  int latKey = static_cast<int>(minLat * 1000);
+  int lngKey = static_cast<int>(minLng * 1000);
+  return latKey * 1000000 + lngKey;
 }

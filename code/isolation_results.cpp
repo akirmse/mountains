@@ -41,7 +41,7 @@ void IsolationResults::addResult(const LatLng &peakLocation, int elevation, cons
   mResults.push_back(result);
 }
 
-bool IsolationResults::save(const string &directory, int lat, int lng) const {
+bool IsolationResults::save(const string &directory, float lat, float lng) const {
   string filename = directory + "/" + filenameForCoordinates(lat, lng);
   FILE *file = fopen(filename.c_str(), "w");
   if (file == nullptr) {
@@ -60,7 +60,7 @@ bool IsolationResults::save(const string &directory, int lat, int lng) const {
   return true;
 }
 
-IsolationResults *IsolationResults::loadFromFile(const string &directory, int lat, int lng) {
+IsolationResults *IsolationResults::loadFromFile(const string &directory, float lat, float lng) {
   string filename = directory + "/" + filenameForCoordinates(lat, lng);
   FILE *file = fopen(filename.c_str(), "r");
   if (file == nullptr) {
@@ -89,8 +89,10 @@ IsolationResults *IsolationResults::loadFromFile(const string &directory, int la
   return obj;
 }
 
-string IsolationResults::filenameForCoordinates(int lat, int lng) {
+string IsolationResults::filenameForCoordinates(float lat, float lng) {
   char filename[PATH_MAX];
-  sprintf(filename, "isolation-%02d-%03d.txt", lat, lng);
+  // TODO: Maybe support sub-degree tiles one day, if anyone cares
+  sprintf(filename, "isolation-%02d-%03d.txt",
+          static_cast<int>(lat), static_cast<int>(lng));
   return filename;
 }

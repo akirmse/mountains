@@ -40,15 +40,14 @@ using std::vector;
 
 // bounds is an array of min_lat, max_lat, min_lng, max_lng
 ProminenceTask::ProminenceTask(TileCache *cache, const string &output_dir,
-                               float bounds[], int minProminence) {
+                               int minProminence) {
   mCache = cache;
   mOutputDir = output_dir;
-  mBounds = bounds;
   mMinProminence = minProminence;
   mAntiprominence = false;
 }
 
-bool ProminenceTask::run(int lat, int lng) {
+bool ProminenceTask::run(float lat, float lng) {
   mCurrentLatitude = lat;
   mCurrentLongitude = lng;
   
@@ -120,6 +119,21 @@ bool ProminenceTask::writeStringToOutputFile(const string &filename, const strin
 
 string ProminenceTask::getFilenamePrefix() const {
   char filename[PATH_MAX];
-  sprintf(filename, "prominence-%02d-%03d", mCurrentLatitude, mCurrentLongitude);
+  int latHundredths = fractionalDegree(mCurrentLatitude);
+  int lngHundredths = fractionalDegree(mCurrentLongitude);
+  // If both 0, leave off fraction, as we're probably dealing with whole degrees
+  if (latHundredths == 0 && lngHundredths == 0) {
+    sprintf(filename, "prominence-%02d-%03d",
+            static_cast<int>(mCurrentLatitude), static_cast<int>(mCurrentLongitude));
+  } else {
+    sprintf(filename, "prominence-%02dx%02d-%03dx%02d",
+            static_cast<int>(mCurrentLatitude), latHundredths,
+            static_cast<int>(mCurrentLongitude), lngHundredths);
+  }
   return mOutputDir + "/" + filename;
+}
+
+int ProminenceTask::fractionalDegree(float degree) const {
+  float excess = fabs(degree - static_cast<int>(degree));
+  return static_cast<int>(100 * excess);
 }

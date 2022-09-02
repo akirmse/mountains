@@ -74,7 +74,7 @@ private:
   // Check the neighboring tile with the given lat/lng, where seedCoords give the closest point
   // in the neighboring tile to the peak, and elev is the height of the peak.
   // peakLocation has the same meaning as in findIsolation
-  IsolationRecord checkNeighboringTile(int lat, int lng, const LatLng *peakLocation,
+  IsolationRecord checkNeighboringTile(float lat, float lng, const LatLng *peakLocation,
                                        Offsets seedCoords, Elevation elev) const;
 };
 
