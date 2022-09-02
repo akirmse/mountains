@@ -68,13 +68,38 @@ N59E006.hgt
 
 #### NED
 
-NED (National Elevation Dataset) data is delivered as zip files with names like:
+The National Elevation Dataset (NED) covers the U.S. at various resolutions:
+- NED1 has 1-arcsecond (~90 foot) samples
+- NED13 has 1/3-arcsecond (~30 foot) samples
+- NED19 has 1/9 arcsecond (~10 foot) samples. 
+
+##### NED1 and NED13
+
+NED data is delivered as zip files, one per square degree, with names like:
 
 ```
 n59e006.zip
 ```
 
-The prominence code will extract the FLT file from the zip (using 7z on Windows or unzip on Mac/Linux).
+The prominence code will extract the FLT file from the zip (using ```7z``` on Windows or ```unzip``` on Mac/Linux).
+
+##### NED19
+
+NED19 data is based on LIDAR.  As of this writing, it covers only part of the U.S.  Data is delivered
+as zip files that are 1/4 of a degree on each side.  The zip files containing
+the data contain the LIDAR collection name in the filename, making them difficult to discover.  There
+is a Python script in the ```scripts``` subdirectory that will discover the tiles for a given lat/lng, 
+download them, covert them to FLT format, and run the prominence code on them.
+
+```
+usage: run_ned19_prominence.py [-h] --tile_dir TILE_DIR --output_dir
+                               OUTPUT_DIR
+                               [--prominence_command PROMINENCE_COMMAND]
+                               [--threads THREADS]
+                               min_lat max_lat min_lng max_lng
+```
+
+Multiple LIDAR collections can cover the same tile.  In this case, the script picks one arbitrarily.
 
 #### GLO30
 
@@ -86,6 +111,14 @@ gdal_translate -of EHdr Copernicus_DSM_COG_10_N59_00_E006_00_DEM.tif Copernicus_
 
 There is a script in the ```scripts``` subdirectory that can automate the downloading and conversion of tiles,
 followed by running the prominence program on them.
+
+```
+usage: run_glo_prominence.py [-h] [--tile_dir TILE_DIR]
+                             [--output_dir OUTPUT_DIR]
+                             [--prominence_command PROMINENCE_COMMAND]
+                             [--threads THREADS]
+                             min_lat max_lat min_lng max_lng
+```
 
 ### Isolation
 
