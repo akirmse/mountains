@@ -194,33 +194,39 @@ int main(int argc, char **argv) {
   ThreadPool *threadPool = new ThreadPool(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
-  for (int lat = (int) floor(bounds[0]); lat < (int) ceil(bounds[1]); ++lat) {
-    for (int lng = (int) floor(bounds[2]); lng < (int) ceil(bounds[3]); ++lng) {
+  float lat = bounds[0];
+  float lng = bounds[2];
+  while (lat <= bounds[1]) {
+    while (lng <= bounds[3]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
-      int wrappedLng = lng;
+      auto wrappedLng = lng;
       if (wrappedLng >= 180) {
         wrappedLng -= 360;
       }
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects((float) lat, (float) (lat + 1), (float) lng, (float) (lng + 1))) {
+      // XXX Use tile size
+      if (!filter.intersects(lat, lat + 1, lng, lng + 1)) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
-        continue;
+      } else {
+        // Skip some very slow tiles known to have no peaks
+        Offsets coords(static_cast<int>(lat), static_cast<int>(lng));
+        if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
+          VLOG(1) << "Skipping slow tile " << lat << " " << lng;
+        } else {
+          // Actually calculate prominence
+          ProminenceTask *task = new ProminenceTask(
+            cache, output_directory, minProminence);
+          task->setAntiprominence(antiprominence);
+          results.push_back(threadPool->enqueue([=] {
+                return task->run(lat, wrappedLng);
+              }));
+        }
       }
 
-      // Skip some very slow tiles known to have no peaks
-      Offsets coords(lat, lng);
-      if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
-        VLOG(1) << "Skipping slow tile " << lat << " " << lng;
-        continue;
-      }
-
-      ProminenceTask *task = new ProminenceTask(cache, output_directory, minProminence);
-      task->setAntiprominence(antiprominence);
-      results.push_back(threadPool->enqueue([=] {
-            // XXX Need fractional degrees
-            return task->run(static_cast<float>(lat), static_cast<float>(wrappedLng));
-          }));
+      // XXX Use tile size
+      lat += 1;
+      lng += 1;
     }
   }
 
