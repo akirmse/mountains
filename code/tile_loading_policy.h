@@ -26,6 +26,7 @@
 #ifndef _TILE_LOADING_POLICY_H_
 #define _TILE_LOADING_POLICY_H_
 
+#include "file_format.h"
 #include "tile.h"
 
 #include <string>
@@ -43,7 +44,7 @@ public:
 
 class BasicTileLoadingPolicy : public TileLoadingPolicy {
 public:
-  BasicTileLoadingPolicy(const std::string &directory, FileFormat fileFormat);
+  BasicTileLoadingPolicy(const std::string &directory, const FileFormat &fileFormat);
 
   // Prominence calculations require that pixels along the edges of
   // tiles are exactly identical.  To enforce this, it turns out to be

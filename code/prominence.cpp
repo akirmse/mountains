@@ -42,12 +42,10 @@
 #include "getopt-win.h"
 #endif
 #include <cmath>
-#include <map>
 #include <set>
 
 using std::ceil;
 using std::floor;
-using std::map;
 using std::set;
 using std::string;
 using std::vector;
@@ -79,16 +77,8 @@ int main(int argc, char **argv) {
 
   int minProminence = 300;
   int numThreads = 1;
-  FileFormat fileFormat = FileFormat::HGT;
+  FileFormat fileFormat = FileFormat(FileFormat::Value::HGT);
 
-  const map<string, FileFormat> fileFormatNames = {
-    { "SRTM", FileFormat::HGT, },
-    { "NED1-ZIP", FileFormat::NED1_ZIP, },
-    { "NED13-ZIP", FileFormat::NED13_ZIP, },
-    { "NED19", FileFormat::NED19, },
-    { "GLO30", FileFormat::GLO30, },
-  };
-  
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
   int ch;
@@ -101,13 +91,13 @@ int main(int argc, char **argv) {
       break;
       
     case 'f': {
-      auto it = fileFormatNames.find(optarg);
-      if (it == fileFormatNames.end()) {
+      auto format = FileFormat::fromName(optarg);
+      if (format == nullptr) {
         printf("Unknown file format %s\n", optarg);
         usage();
       }
 
-      fileFormat = it->second;
+      fileFormat = *format;
       break;
     }
 
@@ -195,9 +185,9 @@ int main(int argc, char **argv) {
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
   float lat = bounds[0];
-  float lng = bounds[2];
-  while (lat <= bounds[1]) {
-    while (lng <= bounds[3]) {
+  while (lat < bounds[1]) {
+    float lng = bounds[2];
+    while (lng < bounds[3]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
       if (wrappedLng >= 180) {
@@ -205,8 +195,8 @@ int main(int argc, char **argv) {
       }
 
       // Skip tiles that don't intersect filtering polygon
-      // XXX Use tile size
-      if (!filter.intersects(lat, lat + 1, lng, lng + 1)) {
+      if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
+                             lng, lng + fileFormat.degreesAcross())) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Skip some very slow tiles known to have no peaks
@@ -224,10 +214,9 @@ int main(int argc, char **argv) {
         }
       }
 
-      // XXX Use tile size
-      lat += 1;
-      lng += 1;
+      lng += fileFormat.degreesAcross();
     }
+    lat += fileFormat.degreesAcross();
   }
 
   for (auto && result : results) {

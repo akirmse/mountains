@@ -38,7 +38,7 @@ static const int FLT_EXTRA_BORDER = 6;
 // while NED19 uses some very negative value (< -1e38).
 static const float NED_NODATA_MIN_ELEVATION = -9998;
 
-FltLoader::FltLoader(FileFormat format) {
+FltLoader::FltLoader(const FileFormat &format) {
   mFormat = format;
 }
 
@@ -46,7 +46,8 @@ Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minL
   return loadFromNEDZipFileInternal(directory, minLat, minLng, mFormat);
 }
 
-Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float minLng, FileFormat format) {
+Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float minLng,
+                                 const FileFormat &format) {
   string filename = getFltFilename(minLat, minLng, format);
   if (!directory.empty()) {
     filename = directory + "/" + filename;
@@ -58,7 +59,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
     return nullptr;
   }
 
-  const int rawSideLength = rawSideLengthForFormat(format);
+  const int rawSideLength = format.samplesAcross();
   const int tileSideLength = rawSideLength - 2 * FLT_EXTRA_BORDER + 1;
   int num_raw_samples = rawSideLength * rawSideLength;
   
@@ -95,7 +96,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
   }
   
   if (samples != nullptr) {
-    float tileSpan = tileSpanForFormat(format);
+    float tileSpan = format.degreesAcross();
     retval = new Tile(tileSideLength, tileSideLength, samples,
                       minLat, minLng, minLat + tileSpan, minLng + tileSpan);
   }
@@ -107,7 +108,8 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
 }
 
 Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
-                                            float minLat, float minLng, FileFormat format) {
+                                            float minLat, float minLng,
+                                            const FileFormat &format) {
   // ZIP formats come only in 1x1 degree formats, so OK to cast lat/lng to int
   char buf[100];
   sprintf(buf, "%c%02d%c%03d.zip",
@@ -150,20 +152,20 @@ Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
   return tile;  
 }
 
-string FltLoader::getFltFilename(float minLat, float minLng, FileFormat format) {
+string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &format) {
   char buf[100];
-  switch (format) {
-  case FileFormat::NED13_ZIP:  // fall through
-  case FileFormat::NED1_ZIP:
+  switch (format.value()) {
+  case FileFormat::Value::NED13_ZIP:  // fall through
+  case FileFormat::Value::NED1_ZIP:
     snprintf(buf, sizeof(buf), "float%c%02d%c%03d_%s.flt",
              (minLat >= 0) ? 'n' : 's',
              abs(static_cast<int>(minLat) + 1),  // NED uses upper left corner for naming
              (minLng >= 0) ? 'e' : 'w',
              abs(static_cast<int>(minLng)),
-             format == FileFormat::NED13_ZIP ? "13" : "1");
+             format.value() == FileFormat::Value::NED13_ZIP ? "13" : "1");
     break;
     
-  case FileFormat::NED19:
+  case FileFormat::Value::NED19:
     snprintf(buf, sizeof(buf), "ned19_%c%02dx%02d_%c%03dx%02d.flt",
              (minLat >= 0) ? 'n' : 's',
              abs(static_cast<int>(minLat) + 1),  // NED uses upper left corner for naming
@@ -179,28 +181,6 @@ string FltLoader::getFltFilename(float minLat, float minLng, FileFormat format) 
   }
   
   return buf;
-}
-
-int FltLoader::rawSideLengthForFormat(FileFormat format) const {
-  switch (format) {
-  case FileFormat::NED13_ZIP:  return 10812;
-  case FileFormat::NED1_ZIP: return 3612;
-  case FileFormat::NED19: return 8112;
-  default:
-    printf("Couldn't compute tile size of unknown FLT file format");
-    exit(1);
-  }
-}
-
-float FltLoader::tileSpanForFormat(FileFormat format) const {
-  switch (format) {
-  case FileFormat::NED13_ZIP:  return 1.0f;
-  case FileFormat::NED1_ZIP: return 1.0f;
-  case FileFormat::NED19: return 0.25f;
-  default:
-    printf("Couldn't compute tile span of unknown FLT file format");
-    exit(1);
-  }
 }
 
 int FltLoader::fractionalDegree(float degree) const {

@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  BasicTileLoadingPolicy policy(terrain_directory, FileFormat::HGT);
+  BasicTileLoadingPolicy policy(terrain_directory, FileFormat(FileFormat::Value::HGT));
   const int CACHE_SIZE = 50;
   TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
 

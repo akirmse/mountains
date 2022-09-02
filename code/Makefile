@@ -59,6 +59,7 @@ LOADERLIB_OBJS = \
 
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.o \
+	$(OUTDIR)/file_format.o \
 	$(OUTDIR)/isolation.o \
 	$(OUTDIR)/isolation_finder.o \
 	$(OUTDIR)/isolation_results.o \
@@ -80,6 +81,7 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/domain_map.o \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/filter.o \
+	$(OUTDIR)/file_format.o \
 	$(OUTDIR)/island_tree.o \
 	$(OUTDIR)/kml_writer.o \
 	$(OUTDIR)/latlng.o \

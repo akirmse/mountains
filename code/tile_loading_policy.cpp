@@ -32,7 +32,8 @@
 
 using std::string;
 
-BasicTileLoadingPolicy::BasicTileLoadingPolicy(const string &directory, FileFormat format)
+BasicTileLoadingPolicy::BasicTileLoadingPolicy(const string &directory,
+                                               const FileFormat &format)
     : mDirectory(directory),
       mFileFormat(format),
       mNeighborEdgeLoadingEnabled(false) {
@@ -63,15 +64,15 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
   // fixing it isn't necessary.
   //
   if (mNeighborEdgeLoadingEnabled) {
-    switch (mFileFormat) {
-    case FileFormat::HGT:  // Fall through
-    case FileFormat::NED19:
-    case FileFormat::NED13_ZIP:
-    case FileFormat::NED1_ZIP:
+    switch (mFileFormat.value()) {
+    case FileFormat::Value::HGT:  // Fall through
+    case FileFormat::Value::NED19:
+    case FileFormat::Value::NED13_ZIP:
+    case FileFormat::Value::NED1_ZIP:
       copyPixelsFromNeighbors(tile, minLat, minLng);
       break;
 
-    case FileFormat::GLO30: {
+    case FileFormat::Value::GLO30: {
       // GLO30 "helpfully" removes the last row and column from each tile,
       // so we need to stick them back on.
       Tile *newTile = appendPixelsFromNeighbors(tile, minLat, minLng);
@@ -92,18 +93,18 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
 Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
   TileLoader *loader = nullptr;
 
-  switch (mFileFormat) {
-  case FileFormat::HGT:
+  switch (mFileFormat.value()) {
+  case FileFormat::Value::HGT:
     loader = new HgtLoader();
     break;
 
-  case FileFormat::NED13_ZIP:  // fall through
-  case FileFormat::NED19:
-  case FileFormat::NED1_ZIP:
+  case FileFormat::Value::NED13_ZIP:  // fall through
+  case FileFormat::Value::NED19:
+  case FileFormat::Value::NED1_ZIP:
     loader = new FltLoader(mFileFormat);
     break;
     
-  case FileFormat::GLO30: 
+  case FileFormat::Value::GLO30:
     loader = new GloLoader();
     break;    
 
