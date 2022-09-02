@@ -42,12 +42,9 @@ public:
 private:
   FileFormat mFormat;
   
-  Tile *loadFromNEDZipFileInternal(const std::string &directory, float minLat, float minLng,
-                                   const FileFormat &format);
+  Tile *loadFromNEDZipFileInternal(const std::string &directory, float minLat, float minLng);
 
-  // format gives the resolution of the NED data
-  Tile *loadFromFltFile(const std::string &directory, float minLat, float minLng,
-                        const FileFormat &format);
+  Tile *loadFromFltFile(const std::string &directory, float minLat, float minLng);
   
   // Return the filename for the .flt file for the given coordinates
   std::string getFltFilename(float minLat, float minLng, const FileFormat &format);

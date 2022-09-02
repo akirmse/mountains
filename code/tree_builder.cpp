@@ -310,9 +310,14 @@ void TreeBuilder::findRunoffs() {
 }
 
 DivideTree *TreeBuilder::generateDivideTree() {
+  float latDegrees = mTile->maxLatitude() - mTile->minLatitude();
+  float lngDegrees = mTile->maxLongitude() - mTile->minLongitude();
+  // The -1 removes overlap with neighbors
+  int samplesPerDegreeLat = static_cast<int>((mTile->height() - 1) / latDegrees);
+  int samplesPerDegreeLng = static_cast<int>((mTile->width() - 1) / lngDegrees);
   CoordinateSystem coordinateSystem(mTile->minLatitude(), mTile->minLongitude(),
-                                    mTile->height() - 1,  // Remove overlap with neighbors
-                                    mTile->width() - 1);
+                                    mTile->maxLatitude(), mTile->maxLongitude(),
+                                    samplesPerDegreeLat, samplesPerDegreeLng);
   DivideTree *tree = new DivideTree(coordinateSystem, mPeaks, mSaddles, mRunoffs);
   
   int saddleIndex = 0;

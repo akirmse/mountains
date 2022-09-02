@@ -72,8 +72,11 @@ static bool mergeTrees(DivideTree *tree1, DivideTree *tree2) {
   CoordinateSystem newCoords(
     std::min(coords1.minLatitude(), coords2.minLatitude()),
     std::min(coords1.minLongitude(), coords2.minLongitude()),
+    std::max(coords1.maxLatitude(), coords2.maxLatitude()),
+    std::max(coords1.maxLongitude(), coords2.maxLongitude()),
     coords1.pixelsPerDegreeLatitude(),
-    coords1.pixelsPerDegreeLongitude());
+    coords1.pixelsPerDegreeLongitude()
+    );
 
   if (!tree1->setOrigin(newCoords) || !tree2->setOrigin(newCoords)) {
     return false;

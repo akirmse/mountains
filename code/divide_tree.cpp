@@ -414,10 +414,13 @@ bool DivideTree::writeToFile(const std::string &filename) const {
 
   fprintf(file, "# Prominence divide tree generated at %s\n", getTimeString().c_str());
           
-  fprintf(file, "G,%f,%f,%d,%d\n", mCoordinateSystem.minLatitude(),
+  fprintf(file, "G,%f,%f,%d,%d,%f,%f\n",
+          mCoordinateSystem.minLatitude(),
           mCoordinateSystem.minLongitude(),
           mCoordinateSystem.pixelsPerDegreeLatitude(),
-          mCoordinateSystem.pixelsPerDegreeLongitude());
+          mCoordinateSystem.pixelsPerDegreeLongitude(),
+          mCoordinateSystem.maxLatitude(),
+          mCoordinateSystem.maxLongitude());
   int index = 1;
   for (const Peak &peak : mPeaks) {
     fprintf(file, "P,%d,%d,%d,%d\n", index++, peak.location.x(), peak.location.y(), peak.elevation);
@@ -462,7 +465,7 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
   vector<Node> nodes;
   vector<int> runoffEdges;
   Node node;
-  float minLat = 0, minLng = 0;
+  float minLat = 0, minLng = 0, maxLat = 0, maxLng = 0;
   int pixelsPerLat = 0, pixelsPerLng = 0;
 
   string line;
@@ -477,13 +480,22 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
     split(line, ',', elements);
     switch (elements[0][0]) {
     case 'G':
-      if (elements.size() != 5) {
+      if (elements.size() < 5) {
         return nullptr;
       }
       minLat = stof(elements[1]);
       minLng = stof(elements[2]);
       pixelsPerLat = stoi(elements[3]);
       pixelsPerLng = stoi(elements[4]);
+      // Max lat/lng was added later for non-1x1 tile support
+      if (elements.size() >= 7) {
+        maxLat = stof(elements[5]);
+        maxLng = stof(elements[6]);
+      } else {
+        // Assume 1x1 tile for old DVT files
+        maxLat = minLat + 1;
+        maxLng = minLng + 1;
+      }
       VLOG(2) << "Got min lat/lng " << minLat << " " << minLng;
       break;
     case 'P':
@@ -536,7 +548,8 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
     return nullptr;
   }
   
-  CoordinateSystem coordinateSystem(minLat, minLng, pixelsPerLat, pixelsPerLng);
+  CoordinateSystem coordinateSystem(minLat, minLng, maxLat, maxLng,
+                                    pixelsPerLat, pixelsPerLng);
   DivideTree *tree = new DivideTree(coordinateSystem, peaks, saddles, runoffs);
   tree->mNodes = nodes;
   tree->mRunoffEdges = runoffEdges;
