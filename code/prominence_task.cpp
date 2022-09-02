@@ -31,6 +31,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <cmath>
 #include <memory>
 #include <set>
 
