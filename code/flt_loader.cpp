@@ -104,15 +104,14 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
       }
     }
   }
-  
+  delete [] inbuf;
+  fclose(infile);
+
   if (samples != nullptr) {
     float tileSpan = mFormat.degreesAcross();
     retval = new Tile(tileSideLength, tileSideLength, samples,
                       minLat, minLng, minLat + tileSpan, minLng + tileSpan);
   }
-
-  delete [] inbuf;
-  fclose(infile);
 
   return retval;  
 }

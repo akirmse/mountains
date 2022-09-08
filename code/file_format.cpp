@@ -34,6 +34,7 @@ int FileFormat::samplesAcross() const {
   case Value::NED1_ZIP:   return 3612;
   case Value::NED19:      return 8112;
   case Value::HGT:        return 1201;
+  case Value::THREEDEP_1M:  return 10012;
   default:
     // In particular, fail on GLO, because this number is variable with latitude.
     printf("Couldn't compute tile size of unknown file format");
@@ -48,6 +49,10 @@ float FileFormat::degreesAcross() const {
   case Value::NED19:      return 0.25f;
   case Value::HGT:        return 1.0f;
   case Value::GLO30:      return 1.0f;
+  case Value::THREEDEP_1M:
+    // This is a misnomer, as these tiles are in UTM coordinates.  The "degrees" across
+    // means one x or y unit per tile (where each tile is 10000m in UTM).
+    return 1.0f;
   default:
     printf("Couldn't compute degree span of unknown file format");
     exit(1);
@@ -61,6 +66,7 @@ FileFormat *FileFormat::fromName(const string &name) {
     { "NED13-ZIP", Value::NED13_ZIP, },
     { "NED19",     Value::NED19, },
     { "GLO30",     Value::GLO30, },
+    { "3DEP-1M",   Value::THREEDEP_1M, },
   };
 
   auto it = fileFormatNames.find(name);

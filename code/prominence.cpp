@@ -42,11 +42,9 @@
 #include "getopt-win.h"
 #endif
 #include <cmath>
-#include <set>
 
 using std::ceil;
 using std::floor;
-using std::set;
 using std::string;
 using std::vector;
 
@@ -60,7 +58,7 @@ static void usage() {
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"GLO30\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
   printf("  -p filename       Peakbagger peak database file for matching\n");
@@ -84,7 +82,8 @@ int main(int argc, char **argv) {
   int ch;
   string str;
   bool antiprominence = false;
-  while ((ch = getopt(argc, argv, "af:i:k:m:o:p:t:")) != -1) {
+  int utmZone = -1;
+  while ((ch = getopt(argc, argv, "af:i:k:m:o:p:t:z:")) != -1) {
     switch (ch) {
     case 'a':
       antiprominence = true;
@@ -123,6 +122,10 @@ int main(int argc, char **argv) {
 
     case 't':
       numThreads = atoi(optarg);
+      break;
+
+    case 'z':
+      utmZone = atoi(optarg);
       break;
     }
   }
@@ -176,9 +179,6 @@ int main(int argc, char **argv) {
   const int CACHE_SIZE = 2;
   TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
   
-  set<Offsets::Value> tilesToSkip;
-  tilesToSkip.insert(Offsets(47, -87).value());  // in Lake Superior; lots of fake peaks
-
   VLOG(2) << "Using " << numThreads << " threads";
   
   ThreadPool *threadPool = new ThreadPool(numThreads);
@@ -199,19 +199,13 @@ int main(int argc, char **argv) {
                              lng, lng + fileFormat.degreesAcross())) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
-        // Skip some very slow tiles known to have no peaks
-        Offsets coords(static_cast<int>(lat), static_cast<int>(lng));
-        if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
-          VLOG(1) << "Skipping slow tile " << lat << " " << lng;
-        } else {
-          // Actually calculate prominence
-          ProminenceTask *task = new ProminenceTask(
-            cache, output_directory, minProminence);
-          task->setAntiprominence(antiprominence);
-          results.push_back(threadPool->enqueue([=] {
-                return task->run(lat, wrappedLng);
-              }));
-        }
+        // Actually calculate prominence
+        ProminenceTask *task = new ProminenceTask(
+          cache, output_directory, minProminence);
+        task->setAntiprominence(antiprominence);
+        results.push_back(threadPool->enqueue([=] {
+              return task->run(lat, wrappedLng);
+            }));
       }
 
       lng += fileFormat.degreesAcross();

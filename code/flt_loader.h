@@ -31,7 +31,8 @@
 #include "util.h"
 #include "easylogging++.h"
 
-// Load a .flt tile. This is the format used in National Elevation Dataset (NED) data.
+// Load a .flt tile. This is the format used some USGS data. Other data
+// would need to be converted to .flt externally (e.g. with gdal_translate).
 
 class FltLoader : public TileLoader {
 public:
@@ -41,6 +42,7 @@ public:
 
 private:
   FileFormat mFormat;
+  int mUtmZone;  // For data in UTM coordinates
   
   Tile *loadFromNEDZipFileInternal(const std::string &directory, float minLat, float minLng);
 
