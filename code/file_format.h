@@ -53,6 +53,9 @@ public:
   // the precise value covered, including border samples.
   float degreesAcross() const;
 
+  // Does this format use UTM coordinates rather than lat/lng?
+  bool isUtm() const;
+  
   // Return a FileFormat object for the given human-readable string,
   // or nullptr if none.
   static FileFormat *fromName(const std::string &name);

@@ -41,6 +41,7 @@
 #ifdef PLATFORM_WINDOWS
 #include "getopt-win.h"
 #endif
+#include <cassert>
 #include <cmath>
 
 using std::ceil;
@@ -49,6 +50,8 @@ using std::string;
 using std::vector;
 
 INITIALIZE_EASYLOGGINGPP
+
+static const int NO_UTM_ZONE = -1;
 
 static void usage() {
   printf("Usage:\n");
@@ -82,7 +85,7 @@ int main(int argc, char **argv) {
   int ch;
   string str;
   bool antiprominence = false;
-  int utmZone = -1;
+  int utmZone = NO_UTM_ZONE;
   while ((ch = getopt(argc, argv, "af:i:k:m:o:p:t:z:")) != -1) {
     switch (ch) {
     case 'a':
@@ -126,6 +129,7 @@ int main(int argc, char **argv) {
 
     case 'z':
       utmZone = atoi(optarg);
+      assert((utmZone > 0 && utmZone <= 60) && "UTM zone out of range");
       break;
     }
   }
@@ -135,6 +139,11 @@ int main(int argc, char **argv) {
 
   if (argc < 4) {
     usage();
+  }
+
+  if (fileFormat.isUtm() && utmZone == NO_UTM_ZONE) {
+    printf("You must specify a UTM zone with this format");
+    exit(1);
   }
 
   // Load Peakbagger database?
@@ -176,6 +185,9 @@ int main(int argc, char **argv) {
   // Caching doesn't do anything for our calculation and the tiles are huge
   BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
   policy.enableNeighborEdgeLoading(true);
+  if (utmZone != NO_UTM_ZONE) {
+    policy.setUtmZone(utmZone);
+  }
   const int CACHE_SIZE = 2;
   TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
   

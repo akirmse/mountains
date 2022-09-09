@@ -23,6 +23,7 @@
  */
 
 #include "flt_loader.h"
+#include "utm.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -38,8 +39,9 @@ static const int FLT_EXTRA_BORDER = 6;
 // while NED19 uses some very negative value (< -1e38).
 static const float NED_NODATA_MIN_ELEVATION = -9998;
 
-FltLoader::FltLoader(const FileFormat &format) {
+FltLoader::FltLoader(const FileFormat &format, int utmZone) {
   mFormat = format;
+  mUtmZone = utmZone;
 }
 
 Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minLng) {
@@ -49,6 +51,7 @@ Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minL
     return loadFromNEDZipFileInternal(directory, minLat, minLng);
 
   case FileFormat::Value::NED19:
+  case FileFormat::Value::THREEDEP_1M:
     return loadFromFltFile(directory, minLat, minLng);
 
   default:
@@ -108,9 +111,31 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
   fclose(infile);
 
   if (samples != nullptr) {
+    // Compute lat/lng bounds of tile
     float tileSpan = mFormat.degreesAcross();
+    float maxLat = minLat + tileSpan;
+    float maxLng = minLng + tileSpan;
+    // Convert from UTM to lat/lng if necessary
+    if (mFormat.isUtm()) {
+      // XXX Extra logs
+      VLOG(1) << "Regular tile origin is " << minLat << " " << maxLng;
+      double minNorthing = minLat * 10000;
+      double maxNorthing = maxLat * 10000;
+      double minEasting = minLng * 10000;
+      double maxEasting = maxLng * 10000;
+      double resultLat, resultLng;
+      char compositeZone[10];  // Like "10Q" -- we assume N hemisphere
+      snprintf(compositeZone, sizeof(compositeZone), "%dQ", mUtmZone);  
+      UTM::UTMtoLL(minNorthing, minEasting, compositeZone, resultLat, resultLng);
+      minLat = static_cast<float>(resultLat);
+      minLng = static_cast<float>(resultLng);
+      UTM::UTMtoLL(maxNorthing, maxEasting, compositeZone, resultLat, resultLng);
+      maxLat = static_cast<float>(resultLat);
+      maxLng = static_cast<float>(resultLng);
+    }
+
     retval = new Tile(tileSideLength, tileSideLength, samples,
-                      minLat, minLng, minLat + tileSpan, minLng + tileSpan);
+                      minLat, minLng, maxLat, maxLng);
   }
 
   return retval;  
@@ -184,6 +209,12 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
              (minLng >= 0) ? 'e' : 'w',
              abs(static_cast<int>(minLng)),
              fractionalDegree(minLng));
+    break;
+
+  case FileFormat::Value::THREEDEP_1M:
+    // Note order: X (lng), then Y (lat)
+    snprintf(buf, sizeof(buf), "USGS_1M_%02d_x%02dy%03d.flt",
+             mUtmZone, static_cast<int>(minLng), static_cast<int>(upperLat));
     break;
     
   default:

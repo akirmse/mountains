@@ -59,6 +59,10 @@ float FileFormat::degreesAcross() const {
   }
 }
 
+bool FileFormat::isUtm() const {
+  return mValue == Value::THREEDEP_1M;
+}
+
 FileFormat *FileFormat::fromName(const string &name) {
   const std::map<string, FileFormat> fileFormatNames = {
     { "SRTM",      Value::HGT, },

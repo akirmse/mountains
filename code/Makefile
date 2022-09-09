@@ -56,7 +56,6 @@ LOADERLIB_OBJS = \
 	$(OUTDIR)/flt_loader.o \
 	$(OUTDIR)/glo_loader.o \
 	$(OUTDIR)/hgt_loader.o \
-	$(OUTDIR)/utm.o \
 
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.o \

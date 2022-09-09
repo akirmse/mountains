@@ -36,7 +36,9 @@
 
 class FltLoader : public TileLoader {
 public:
-  explicit FltLoader(const FileFormat &format);
+  // The UTM zone is used when loading UTM-based tiles.  In such cases,
+  // the latitude will be treated as northing, and the longitude as easting.
+  explicit FltLoader(const FileFormat &format, int utmZone);
   
   virtual Tile *loadTile(const std::string &directory, float minLat, float minLng);
 

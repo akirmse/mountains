@@ -1,206 +1,240 @@
-// UTM.h
+/* -*- mode: C++ -*-
+ *
+ *  Conversions between Latitude/Longitude and UTM
+ *              (Universal Transverse Mercator) coordinates.
+ *
+ *  License: Modified BSD Software License Agreement
+ *
+ *  $Id$
+ */
 
-// Original Javascript by Chuck Taylor
-// Port to C++ by Alex Hajnal
-//
-// *** THIS CODE USES 32-BIT FLOATS BY DEFAULT ***
-// *** For 64-bit double-precision edit this file: undefine FLOAT_32 and define FLOAT_64 (see below)
-// 
-// This is a simple port of the code on the Geographic/UTM Coordinate Converter (1) page from Javascript to C++.
-// Using this you can easily convert between UTM and WGS84 (latitude and longitude).
-// Accuracy seems to be around 50cm (I suspect rounding errors are limiting precision).
-// This code is provided as-is and has been minimally tested; enjoy but use at your own risk!
-// The license for UTM.cpp and UTM.h is the same as the original Javascript: 
-// "The C++ source code in UTM.cpp and UTM.h may be copied and reused without restriction."
-// 
-// 1) http://home.hiwaay.net/~taylorc/toolbox/geography/geoutm.html
+#ifndef _UTM_H
+#define _UTM_H
 
-#ifndef UTM_H
-#define UTM_H
+/**  @file
 
-// Choose floating point precision:
+ @brief Universal Transverse Mercator transforms.
 
-// 32-bit (for Teensy 3.5/3.6 ARM boards, etc.)
-//#define FLOAT_32
+ Functions to convert (spherical) latitude and longitude to and
+ from (Euclidean) UTM coordinates.
 
-// 64-bit (for desktop/server use)
-#define FLOAT_64
+ @author Chuck Gantz- chuck.gantz@globalstar.com
+ */
 
-#ifdef FLOAT_64
-#define FLOAT double
-#define SIN sin
-#define COS cos
-#define TAN tan
-#define POW pow
-#define SQRT sqrt
-#define FLOOR floor
+#include <cmath>
+#include <stdio.h>
+#include <stdlib.h>
 
-#else
-#ifdef FLOAT_32
-#define FLOAT float
-#define SIN sinf
-#define COS cosf
-#define TAN tanf
-#define POW powf
-#define SQRT sqrtf
-#define FLOOR floorf
+#define DEG_TO_RAD (3.1415926535 / 180)
+#define RAD_TO_DEG (180.0 / 3.1415926535)
 
-#endif
-#endif
+namespace UTM
+{
+    // Grid granularity for rounding UTM coordinates to generate MapXY.
+    const double grid_size = 100000.0;    ///< 100 km grid
 
+// WGS84 Parameters
+#define WGS84_A		6378137.0		///< major axis
+#define WGS84_B		6356752.31424518	///< minor axis
+#define WGS84_F		0.0033528107		///< ellipsoid flattening
+#define WGS84_E		0.0818191908		///< first eccentricity
+#define WGS84_EP	0.0820944379		///< second eccentricity
 
-#include <math.h>
+    // UTM Parameters
+#define UTM_K0		0.9996			///< scale factor
+#define UTM_FE		500000.0		///< false easting
+#define UTM_FN_N	0.0           ///< false northing, northern hemisphere
+#define UTM_FN_S	10000000.0    ///< false northing, southern hemisphere
+#define UTM_E2		(WGS84_E*WGS84_E)	///< e^2
+#define UTM_E4		(UTM_E2*UTM_E2)		///< e^4
+#define UTM_E6		(UTM_E4*UTM_E2)		///< e^6
+#define UTM_EP2		(UTM_E2/(1-UTM_E2))	///< e'^2
 
-#define pi 3.14159265358979
+    /**
+     * Determine the correct UTM letter designator for the
+     * given latitude
+     *
+     * @returns 'Z' if latitude is outside the UTM limits of 84N to 80S
+     *
+     * Written by Chuck Gantz- chuck.gantz@globalstar.com
+     */
+    static inline char UTMLetterDesignator(double Lat)
+    {
+        char LetterDesignator;
 
-/* Ellipsoid model constants (actual values here are for WGS84) */
-#define sm_a 6378137.0
-#define sm_b 6356752.314
-#define sm_EccSquared 6.69437999013e-03
+        if     ((84 >= Lat) && (Lat >= 72))  LetterDesignator = 'X';
+        else if ((72 > Lat) && (Lat >= 64))  LetterDesignator = 'W';
+        else if ((64 > Lat) && (Lat >= 56))  LetterDesignator = 'V';
+        else if ((56 > Lat) && (Lat >= 48))  LetterDesignator = 'U';
+        else if ((48 > Lat) && (Lat >= 40))  LetterDesignator = 'T';
+        else if ((40 > Lat) && (Lat >= 32))  LetterDesignator = 'S';
+        else if ((32 > Lat) && (Lat >= 24))  LetterDesignator = 'R';
+        else if ((24 > Lat) && (Lat >= 16))  LetterDesignator = 'Q';
+        else if ((16 > Lat) && (Lat >= 8))   LetterDesignator = 'P';
+        else if (( 8 > Lat) && (Lat >= 0))   LetterDesignator = 'N';
+        else if (( 0 > Lat) && (Lat >= -8))  LetterDesignator = 'M';
+        else if ((-8 > Lat) && (Lat >= -16)) LetterDesignator = 'L';
+        else if((-16 > Lat) && (Lat >= -24)) LetterDesignator = 'K';
+        else if((-24 > Lat) && (Lat >= -32)) LetterDesignator = 'J';
+        else if((-32 > Lat) && (Lat >= -40)) LetterDesignator = 'H';
+        else if((-40 > Lat) && (Lat >= -48)) LetterDesignator = 'G';
+        else if((-48 > Lat) && (Lat >= -56)) LetterDesignator = 'F';
+        else if((-56 > Lat) && (Lat >= -64)) LetterDesignator = 'E';
+        else if((-64 > Lat) && (Lat >= -72)) LetterDesignator = 'D';
+        else if((-72 > Lat) && (Lat >= -80)) LetterDesignator = 'C';
+        // 'Z' is an error flag, the Latitude is outside the UTM limits
+        else LetterDesignator = 'Z';
+        return LetterDesignator;
+    }
 
-#define UTMScaleFactor 0.9996
+    /**
+     * Convert lat/long to UTM coords.  Equations from USGS Bulletin 1532
+     *
+     * East Longitudes are positive, West longitudes are negative.
+     * North latitudes are positive, South latitudes are negative
+     * Lat and Long are in fractional degrees
+     *
+     * Written by Chuck Gantz- chuck.gantz@globalstar.com
+     */
+    static inline void LLtoUTM(const double Lat, const double Long,
+                               double &UTMNorthing, double &UTMEasting,
+                               char* UTMZone)
+    {
+        double a = WGS84_A;
+        double eccSquared = UTM_E2;
+        double k0 = UTM_K0;
 
-// DegToRad
-// Converts degrees to radians.
-FLOAT DegToRad(FLOAT deg);
+        double LongOrigin;
+        double eccPrimeSquared;
+        double N, T, C, A, M;
 
-// RadToDeg
-// Converts radians to degrees.
-FLOAT RadToDeg(FLOAT rad);
+        //Make sure the longitude is between -180.00 .. 179.9
+        double LongTemp = (Long+180)-int((Long+180)/360)*360-180;
 
-// ArcLengthOfMeridian
-// Computes the ellipsoidal distance from the equator to a point at a
-// given latitude.
-// 
-// Reference: Hoffmann-Wellenhof, B., Lichtenegger, H., and Collins, J.,
-// GPS: Theory and Practice, 3rd ed.  New York: Springer-Verlag Wien, 1994.
-// 
-// Inputs:
-//     phi - Latitude of the point, in radians.
-// 
-// Globals:
-//     sm_a - Ellipsoid model major axis.
-//     sm_b - Ellipsoid model minor axis.
-// 
-// Returns:
-//     The ellipsoidal distance of the point from the equator, in meters.
-FLOAT ArcLengthOfMeridian (FLOAT phi);
+        double LatRad = Lat*DEG_TO_RAD;
+        double LongRad = LongTemp*DEG_TO_RAD;
+        double LongOriginRad;
+        int    ZoneNumber;
 
-// UTMCentralMeridian
-// Determines the central meridian for the given UTM zone.
-//
-// Inputs:
-//     zone - An integer value designating the UTM zone, range [1,60].
-//
-// Returns:
-//   The central meridian for the given UTM zone, in radians
-//   Range of the central meridian is the radian equivalent of [-177,+177].
-FLOAT UTMCentralMeridian(int zone);
+        ZoneNumber = int((LongTemp + 180)/6) + 1;
 
-// FootpointLatitude
-//
-// Computes the footpoint latitude for use in converting transverse
-// Mercator coordinates to ellipsoidal coordinates.
-//
-// Reference: Hoffmann-Wellenhof, B., Lichtenegger, H., and Collins, J.,
-//   GPS: Theory and Practice, 3rd ed.  New York: Springer-Verlag Wien, 1994.
-//
-// Inputs:
-//   y - The UTM northing coordinate, in meters.
-//
-// Returns:
-//   The footpoint latitude, in radians.
-FLOAT FootpointLatitude(FLOAT y);
+        if( Lat >= 56.0 && Lat < 64.0 && LongTemp >= 3.0 && LongTemp < 12.0 )
+            ZoneNumber = 32;
 
-// MapLatLonToXY
-// Converts a latitude/longitude pair to x and y coordinates in the
-// Transverse Mercator projection.  Note that Transverse Mercator is not
-// the same as UTM; a scale factor is required to convert between them.
-//
-// Reference: Hoffmann-Wellenhof, B., Lichtenegger, H., and Collins, J.,
-// GPS: Theory and Practice, 3rd ed.  New York: Springer-Verlag Wien, 1994.
-//
-// Inputs:
-//    phi - Latitude of the point, in radians.
-//    lambda - Longitude of the point, in radians.
-//    lambda0 - Longitude of the central meridian to be used, in radians.
-//
-// Outputs:
-//    x - The x coordinate of the computed point.
-//    y - The y coordinate of the computed point.
-//
-// Returns:
-//    The function does not return a value.
-void MapLatLonToXY (FLOAT phi, FLOAT lambda, FLOAT lambda0, FLOAT &x, FLOAT &y);
+        // Special zones for Svalbard
+        if( Lat >= 72.0 && Lat < 84.0 )
+        {
+            if(      LongTemp >= 0.0  && LongTemp <  9.0 ) ZoneNumber = 31;
+            else if( LongTemp >= 9.0  && LongTemp < 21.0 ) ZoneNumber = 33;
+            else if( LongTemp >= 21.0 && LongTemp < 33.0 ) ZoneNumber = 35;
+            else if( LongTemp >= 33.0 && LongTemp < 42.0 ) ZoneNumber = 37;
+        }
+        // +3 puts origin in middle of zone
+        LongOrigin = (ZoneNumber - 1)*6 - 180 + 3;
+        LongOriginRad = LongOrigin * DEG_TO_RAD;
 
-// MapXYToLatLon
-// Converts x and y coordinates in the Transverse Mercator projection to
-// a latitude/longitude pair.  Note that Transverse Mercator is not
-// the same as UTM; a scale factor is required to convert between them.
-//
-// Reference: Hoffmann-Wellenhof, B., Lichtenegger, H., and Collins, J.,
-//   GPS: Theory and Practice, 3rd ed.  New York: Springer-Verlag Wien, 1994.
-//
-// Inputs:
-//   x - The easting of the point, in meters.
-//   y - The northing of the point, in meters.
-//   lambda0 - Longitude of the central meridian to be used, in radians.
-//
-// Outputs:
-//   phi    - Latitude in radians.
-//   lambda - Longitude in radians.
-//
-// Returns:
-//   The function does not return a value.
-//
-// Remarks:
-//   The local variables Nf, nuf2, tf, and tf2 serve the same purpose as
-//   N, nu2, t, and t2 in MapLatLonToXY, but they are computed with respect
-//   to the footpoint latitude phif.
-//
-//   x1frac, x2frac, x2poly, x3poly, etc. are to enhance readability and
-//   to optimize computations.
-void MapXYToLatLon (FLOAT x, FLOAT y, FLOAT lambda0, FLOAT& phi, FLOAT& lambda);
+        //compute the UTM Zone from the latitude and longitude
+        sprintf(UTMZone, "%d%c", ZoneNumber, UTMLetterDesignator(Lat));
 
-// LatLonToUTMXY
-// Converts a latitude/longitude pair to x and y coordinates in the
-// Universal Transverse Mercator projection.
-//
-// Inputs:
-//   lat - Latitude of the point, in radians.
-//   lon - Longitude of the point, in radians.
-//   zone - UTM zone to be used for calculating values for x and y.
-//          If zone is less than 1 or greater than 60, the routine
-//          will determine the appropriate zone from the value of lon.
-//
-// Outputs:
-//   x - The x coordinate (easting) of the computed point. (in meters)
-//   y - The y coordinate (northing) of the computed point. (in meters)
-//
-// Returns:
-//   The UTM zone used for calculating the values of x and y.
-int LatLonToUTMXY (FLOAT lat, FLOAT lon, int zone, FLOAT& x, FLOAT& y);
+        eccPrimeSquared = (eccSquared)/(1-eccSquared);
 
-// UTMXYToLatLon
-//
-// Converts x and y coordinates in the Universal Transverse Mercator//   The UTM zone parameter should be in the range [1,60].
+        N = a/sqrt(1-eccSquared*sin(LatRad)*sin(LatRad));
+        T = tan(LatRad)*tan(LatRad);
+        C = eccPrimeSquared*cos(LatRad)*cos(LatRad);
+        A = cos(LatRad)*(LongRad-LongOriginRad);
 
-// projection to a latitude/longitude pair.
-//
-// Inputs:
-// x - The easting of the point, in meters.
-// y - The northing of the point, in meters.
-// zone - The UTM zone in which the point lies.
-// southhemi - True if the point is in the southern hemisphere;
-//               false otherwise.
-//
-// Outputs:
-// lat - The latitude of the point, in radians.
-// lon - The longitude of the point, in radians.
-// 
-// Returns:
-// The function does not return a value.
-void UTMXYToLatLon (FLOAT x, FLOAT y, int zone, bool southhemi, FLOAT& lat, FLOAT& lon);
+        M = a*((1 - eccSquared/4 - 3*eccSquared*eccSquared/64
+                - 5*eccSquared*eccSquared*eccSquared/256) * LatRad
+               - (3*eccSquared/8 + 3*eccSquared*eccSquared/32
+                  + 45*eccSquared*eccSquared*eccSquared/1024)*sin(2*LatRad)
+               + (15*eccSquared*eccSquared/256
+                  + 45*eccSquared*eccSquared*eccSquared/1024)*sin(4*LatRad)
+               - (35*eccSquared*eccSquared*eccSquared/3072)*sin(6*LatRad));
 
-#endif
+        UTMEasting = (double)
+        (k0*N*(A+(1-T+C)*A*A*A/6
+               + (5-18*T+T*T+72*C-58*eccPrimeSquared)*A*A*A*A*A/120)
+         + 500000.0);
 
+        UTMNorthing = (double)
+        (k0*(M+N*tan(LatRad)
+             *(A*A/2+(5-T+9*C+4*C*C)*A*A*A*A/24
+               + (61-58*T+T*T+600*C-330*eccPrimeSquared)*A*A*A*A*A*A/720)));
+
+        if(Lat < 0)
+        {
+            //10000000 meter offset for southern hemisphere
+            UTMNorthing += 10000000.0;
+        }
+    }
+
+    /**
+     * Converts UTM coords to lat/long.  Equations from USGS Bulletin 1532
+     *
+     * East Longitudes are positive, West longitudes are negative.
+     * North latitudes are positive, South latitudes are negative
+     * Lat and Long are in fractional degrees.
+     *
+     * Written by Chuck Gantz- chuck.gantz@globalstar.com
+     */
+    static inline void UTMtoLL(const double UTMNorthing, const double UTMEasting,
+                               const char* UTMZone, double& Lat, double& Long )
+    {
+        double k0 = UTM_K0;
+        double a = WGS84_A;
+        double eccSquared = UTM_E2;
+        double eccPrimeSquared;
+        double e1 = (1-sqrt(1-eccSquared))/(1+sqrt(1-eccSquared));
+        double N1, T1, C1, R1, D, M;
+        double LongOrigin;
+        double mu, phi1Rad;
+        double x, y;
+        int ZoneNumber;
+        char* ZoneLetter;
+
+        x = UTMEasting - 500000.0; //remove 500,000 meter offset for longitude
+        y = UTMNorthing;
+
+        ZoneNumber = strtoul(UTMZone, &ZoneLetter, 10);
+        if((*ZoneLetter - 'N') < 0)
+        {
+            //remove 10,000,000 meter offset used for southern hemisphere
+            y -= 10000000.0;
+        }
+
+        //+3 puts origin in middle of zone
+        LongOrigin = (ZoneNumber - 1)*6 - 180 + 3;
+        eccPrimeSquared = (eccSquared)/(1-eccSquared);
+        
+        M = y / k0;
+        mu = M/(a*(1-eccSquared/4-3*eccSquared*eccSquared/64
+                   -5*eccSquared*eccSquared*eccSquared/256));
+        
+        phi1Rad = mu + ((3*e1/2-27*e1*e1*e1/32)*sin(2*mu) 
+                        + (21*e1*e1/16-55*e1*e1*e1*e1/32)*sin(4*mu)
+                        + (151*e1*e1*e1/96)*sin(6*mu));
+        
+        N1 = a/sqrt(1-eccSquared*sin(phi1Rad)*sin(phi1Rad));
+        T1 = tan(phi1Rad)*tan(phi1Rad);
+        C1 = eccPrimeSquared*cos(phi1Rad)*cos(phi1Rad);
+        R1 = a*(1-eccSquared)/pow(1-eccSquared*sin(phi1Rad)*sin(phi1Rad), 1.5);
+        D = x/(N1*k0);
+        
+        Lat = phi1Rad - ((N1*tan(phi1Rad)/R1)
+                         *(D*D/2
+                           -(5+3*T1+10*C1-4*C1*C1-9*eccPrimeSquared)*D*D*D*D/24
+                           +(61+90*T1+298*C1+45*T1*T1-252*eccPrimeSquared
+                             -3*C1*C1)*D*D*D*D*D*D/720));
+        
+        Lat = Lat * RAD_TO_DEG;
+        
+        Long = ((D-(1+2*T1+C1)*D*D*D/6
+                 +(5-2*C1+28*T1-3*C1*C1+8*eccPrimeSquared+24*T1*T1)
+                 *D*D*D*D*D/120)
+                / cos(phi1Rad));
+        Long = LongOrigin + Long * RAD_TO_DEG;
+        
+    }
+} // end namespace UTM
+
+#endif // _UTM_H
