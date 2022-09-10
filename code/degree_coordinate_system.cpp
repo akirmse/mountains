@@ -42,6 +42,9 @@ DegreeCoordinateSystem::DegreeCoordinateSystem(float minLat, float minLng, float
   mSamplesPerDegreeLongitude = pixelsPerDegreeLng;
 }
 
+DegreeCoordinateSystem::~DegreeCoordinateSystem() {
+}
+
 CoordinateSystem *DegreeCoordinateSystem::clone() const {
   return new DegreeCoordinateSystem(mMinLatitude, mMinLongitude,
                                     mMaxLatitude, mMaxLongitude,

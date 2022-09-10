@@ -35,7 +35,8 @@ public:
 
   DegreeCoordinateSystem(float minLat, float minLng, float maxLat, float maxLng,
                          int pixelsPerDegreeLat, int pixelsPerDegreeLng);
-  
+  virtual ~DegreeCoordinateSystem();
+
   virtual CoordinateSystem *clone() const;
 
   virtual LatLng getLatLng(Offsets offsets) const;

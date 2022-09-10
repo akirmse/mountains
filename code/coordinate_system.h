@@ -35,6 +35,8 @@
 
 class CoordinateSystem {
 public:
+  virtual ~CoordinateSystem() = default;
+  
   virtual CoordinateSystem *clone() const = 0;
   
   virtual LatLng getLatLng(Offsets offsets) const = 0;
