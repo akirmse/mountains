@@ -23,33 +23,20 @@
  */
 
 #include "coordinate_system.h"
+#include "degree_coordinate_system.h"
 
-CoordinateSystem::CoordinateSystem(float minLat, float minLng, float maxLat, float maxLng,
-                                   int pixelsPerDegreeLat, int pixelsPerDegreeLng) {
-  mMinLatitude = minLat;
-  mMinLongitude = minLng;
-  mMaxLatitude = maxLat;
-  mMaxLongitude = maxLng;
-  mPixelsPerDegreeLatitude = pixelsPerDegreeLat;
-  mPixelsPerDegreeLongitude = pixelsPerDegreeLng;
-}
+using std::string;
 
-bool CoordinateSystem::compatibleWith(const CoordinateSystem &that) const {
-  return mPixelsPerDegreeLatitude == that.mPixelsPerDegreeLatitude &&
-    mPixelsPerDegreeLongitude == that.mPixelsPerDegreeLongitude;
-}
+CoordinateSystem *CoordinateSystem::fromString(const string &str) {
+  if (str.empty()) {
+    return nullptr;
+  }
 
-LatLng CoordinateSystem::getLatLng(Offsets offsets) const {
-  // Positive y is south
-  float latitude = mMaxLatitude -
-    ((float) offsets.y()) / mPixelsPerDegreeLatitude;
-  float longitude = mMinLongitude +
-    ((float) offsets.x()) / mPixelsPerDegreeLongitude;
-  return LatLng(latitude, longitude);
-}
+  switch (str[0]) {
+  case 'G':
+    return DegreeCoordinateSystem::fromString(str);
 
-Offsets CoordinateSystem::offsetsTo(const CoordinateSystem &that) {
-  int dx = static_cast<int>((mMinLongitude - that.mMinLongitude) * mPixelsPerDegreeLongitude);
-  int dy = static_cast<int>((that.mMaxLatitude - mMaxLatitude) * mPixelsPerDegreeLatitude);
-  return Offsets(dx, dy);
+  default:
+    return nullptr;
+  }
 }

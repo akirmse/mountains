@@ -39,7 +39,6 @@ using std::set;
 using std::string;
 using std::vector;
 
-// bounds is an array of min_lat, max_lat, min_lng, max_lng
 ProminenceTask::ProminenceTask(TileCache *cache, const string &output_dir,
                                int minProminence) {
   mCache = cache;

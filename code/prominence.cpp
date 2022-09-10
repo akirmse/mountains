@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     case 'f': {
       auto format = FileFormat::fromName(optarg);
       if (format == nullptr) {
-        printf("Unknown file format %s\n", optarg);
+        LOG(ERROR) << "Unknown file format " << optarg;
         usage();
       }
 
@@ -142,24 +142,23 @@ int main(int argc, char **argv) {
   }
 
   if (fileFormat.isUtm() && utmZone == NO_UTM_ZONE) {
-    printf("You must specify a UTM zone with this format");
+    LOG(ERROR) << "You must specify a UTM zone with this format";
     exit(1);
   }
 
   // Load Peakbagger database?
   PeakbaggerCollection pb_collection;
-  PointMap *peakbagger_peaks = new PointMap();
+  auto peakbagger_peaks = std::make_unique<PointMap>();
   if (!peakbagger_filename.empty()) {
     printf("Loading peakbagger database\n");
     if (!pb_collection.Load(peakbagger_filename)) {
-      printf("Couldn't load peakbagger database from %s\n", peakbagger_filename.c_str());
+      LOG(ERROR) << "Couldn't load peakbagger database from " << peakbagger_filename;
       exit(1);
     }
 
     // Put Peakbagger peaks in spatial structure
-    const vector<PeakbaggerPoint> &pb_peaks = pb_collection.points();
-    for (int i = 0; i < (int) pb_peaks.size(); ++i) {
-      peakbagger_peaks->insert(&pb_peaks[i]);
+    for (auto peak : pb_collection.points()) {
+      peakbagger_peaks->insert(&peak);
     }
   }
   
@@ -168,7 +167,7 @@ int main(int argc, char **argv) {
     char *endptr;
     bounds[i] = strtof(argv[i], &endptr);
     if (*endptr != 0) {
-      printf("Couldn't parse argument %d as number: %s\n", i + 1, argv[i]);
+      LOG(ERROR) << "Couldn't parse argument " << i + 1 << " as number: " << argv[i];
       usage();
     }
   }
@@ -176,8 +175,13 @@ int main(int argc, char **argv) {
   // Load filtering polygon
   Filter filter;
   if (!polygonFilename.empty()) {
+    if (fileFormat.isUtm()) {
+      LOG(ERROR) << "Can't specify a filter polygon with UTM data";
+      exit(1);
+    }
+    
     if (!filter.addPolygonsFromKml(polygonFilename)) {
-      printf("Couldn't load KML polygon from %s\n",polygonFilename.c_str());
+      LOG(ERROR) << "Couldn't load KML polygon from " << polygonFilename;
       exit(1);
     }
   }
@@ -189,11 +193,11 @@ int main(int argc, char **argv) {
     policy.setUtmZone(utmZone);
   }
   const int CACHE_SIZE = 2;
-  TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
+  auto cache = std::make_unique<TileCache>(&policy, peakbagger_peaks.get(), CACHE_SIZE);
   
   VLOG(2) << "Using " << numThreads << " threads";
   
-  ThreadPool *threadPool = new ThreadPool(numThreads);
+  auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
   float lat = bounds[0];
@@ -213,7 +217,7 @@ int main(int argc, char **argv) {
       } else {
         // Actually calculate prominence
         ProminenceTask *task = new ProminenceTask(
-          cache, output_directory, minProminence);
+          cache.get(), output_directory, minProminence);
         task->setAntiprominence(antiprominence);
         results.push_back(threadPool->enqueue([=] {
               return task->run(lat, wrappedLng);
@@ -232,10 +236,6 @@ int main(int argc, char **argv) {
   }
     
   printf("Tiles processed = %d\n", num_tiles_processed);
-
-  delete threadPool;
-  delete cache;
-  delete peakbagger_peaks;
 
   return 0;
 }

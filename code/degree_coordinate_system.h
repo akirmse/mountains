@@ -22,43 +22,45 @@
  * SOFTWARE.
  */
 
-#ifndef _COORDINATE_SYSTEM_H_
-#define _COORDINATE_SYSTEM_H_
+#ifndef _DEGREE_COORDINATE_SYSTEM_H_
+#define _DEGREE_COORDINATE_SYSTEM_H_
 
-// Helps convert a location (like an Offsets) into a point on the Earth.
+#include "coordinate_system.h"
 
-#include "primitives.h"
-#include "latlng.h"
+// A coordinate system where the corners are specified in lat/lng,
+// and samples are assumed to be linearly spaced in lat/lng.
 
-#include <memory>
-#include <string>
-
-class CoordinateSystem {
+class DegreeCoordinateSystem : public CoordinateSystem {
 public:
-  virtual CoordinateSystem *clone() const = 0;
+
+  DegreeCoordinateSystem(float minLat, float minLng, float maxLat, float maxLng,
+                         int pixelsPerDegreeLat, int pixelsPerDegreeLng);
   
-  virtual LatLng getLatLng(Offsets offsets) const = 0;
+  virtual CoordinateSystem *clone() const;
+
+  virtual LatLng getLatLng(Offsets offsets) const;
 
   // true if the two systems have the same number of pixels per degree
-  virtual bool compatibleWith(const CoordinateSystem &that) const = 0;
+  virtual bool compatibleWith(const CoordinateSystem &that) const;
 
-  // Return a new CoordinateSystem that's the result of merging this one
-  // and another one, by expanding the bounds.
-  virtual std::unique_ptr<CoordinateSystem> mergeWith(const CoordinateSystem &that) const = 0;
+  virtual Offsets offsetsTo(const CoordinateSystem &that);
 
-  // Return the offsets to go from our coordinate system to the given one.
-  virtual Offsets offsetsTo(const CoordinateSystem &that) = 0;
+  virtual std::unique_ptr<CoordinateSystem> mergeWith(const CoordinateSystem &that) const;
 
-  // Return the number of samples required to go around the equator
-  virtual int samplesAroundEquator() const = 0;
-  
-  // Return a string completely describing the CoordinateSystem
-  virtual std::string toString() const = 0;
+  virtual int samplesAroundEquator() const;
 
-  // Return a new CoordinateSystem object from the given string, which must
-  // have been previously returned by toString(),
-  // or nullptr if not possible.
+  virtual std::string toString() const;
+
   static CoordinateSystem *fromString(const std::string &str);
-};
 
-#endif  // _COORDINATE_SYSTEM_H_
+private:
+  float mMinLatitude;
+  float mMinLongitude;
+  float mMaxLatitude;
+  float mMaxLongitude;
+  int mSamplesPerDegreeLatitude;
+  int mSamplesPerDegreeLongitude;
+};
+  
+#endif  // _DEGREE_COORDINATE_SYSTEM_H_
+

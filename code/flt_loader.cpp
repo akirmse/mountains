@@ -117,8 +117,6 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
     float maxLng = minLng + tileSpan;
     // Convert from UTM to lat/lng if necessary
     if (mFormat.isUtm()) {
-      // XXX Extra logs
-      VLOG(1) << "Regular tile origin is " << minLat << " " << maxLng;
       double minNorthing = minLat * 10000;
       double maxNorthing = maxLat * 10000;
       double minEasting = minLng * 10000;

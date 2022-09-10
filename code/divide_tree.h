@@ -27,6 +27,7 @@
 
 #include "coordinate_system.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <unordered_set>
@@ -153,7 +154,7 @@ private:
   // Convert pixel offsets to LatLng
   LatLng getLatLng(Offsets offsets) const;
 
-  CoordinateSystem mCoordinateSystem;
+  std::unique_ptr<CoordinateSystem> mCoordinateSystem;
   std::vector<Peak> mPeaks;
   std::vector<Saddle> mSaddles;
   std::vector<Runoff> mRunoffs;

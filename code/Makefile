@@ -44,8 +44,9 @@ CFLAGS = $(CNORMALFLAGS)
 LINKFLAGS = $(LINKNORMALFLAGS)
 endif
 
-POINTLIB = $(OUTDIR)/pointlib.a
+COORDLIB = $(OUTDIR)/coordlib.a
 LOADERLIB = $(OUTDIR)/loaderlib.a
+POINTLIB = $(OUTDIR)/pointlib.a
 
 POINTLIB_OBJS = \
 	$(OUTDIR)/point.o \
@@ -56,6 +57,10 @@ LOADERLIB_OBJS = \
 	$(OUTDIR)/flt_loader.o \
 	$(OUTDIR)/glo_loader.o \
 	$(OUTDIR)/hgt_loader.o \
+
+COORDLIB_OBJS = \
+	$(OUTDIR)/coordinate_system.o \
+	$(OUTDIR)/degree_coordinate_system.o \
 
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.o \
@@ -76,7 +81,6 @@ ISOLATION_OBJS = \
 	$(POINTLIB) \
 
 PROMINENCE_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
 	$(OUTDIR)/divide_tree.o \
 	$(OUTDIR)/domain_map.o \
 	$(OUTDIR)/easylogging++.o \
@@ -97,9 +101,9 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/tree_builder.o \
 	$(LOADERLIB) \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 MERGE_DIVIDE_TREES_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
 	$(OUTDIR)/divide_tree.o \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/island_tree.o \
@@ -109,6 +113,7 @@ MERGE_DIVIDE_TREES_OBJS = \
 	$(OUTDIR)/merge_divide_trees.o \
 	$(OUTDIR)/tile.o \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 FILTER_POINTS_OBJS = \
 	$(OUTDIR)/easylogging++.o \
@@ -117,7 +122,6 @@ FILTER_POINTS_OBJS = \
 	$(POINTLIB) \
 
 COMPUTE_PARENTS_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
 	$(OUTDIR)/divide_tree.o \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/island_tree.o \
@@ -125,6 +129,7 @@ COMPUTE_PARENTS_OBJS = \
 	$(OUTDIR)/line_tree.o \
 	$(OUTDIR)/compute_parents.o \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 
 all : makedirs $(OUTDIR)/isolation $(OUTDIR)/prominence $(OUTDIR)/merge_divide_trees \
@@ -134,6 +139,9 @@ $(POINTLIB) : $(POINTLIB_OBJS)
 	$(AR) $@ $^ 
 
 $(LOADERLIB): $(LOADERLIB_OBJS)
+	$(AR) $@ $^ 
+
+$(COORDLIB): $(COORDLIB_OBJS)
 	$(AR) $@ $^ 
 
 $(OUTDIR)/isolation: $(ISOLATION_OBJS)

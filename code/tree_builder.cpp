@@ -25,6 +25,8 @@
 #include "tree_builder.h"
 #include "divide_tree.h"
 #include "easylogging++.h"
+// XXX
+#include "degree_coordinate_system.h"
 
 #include <math.h>
 #include <memory.h>
@@ -310,14 +312,15 @@ void TreeBuilder::findRunoffs() {
 }
 
 DivideTree *TreeBuilder::generateDivideTree() {
+  // XXX Pass coordinate system in to constructor; move this to caller
   float latDegrees = mTile->maxLatitude() - mTile->minLatitude();
   float lngDegrees = mTile->maxLongitude() - mTile->minLongitude();
   // The -1 removes overlap with neighbors
   int samplesPerDegreeLat = static_cast<int>((mTile->height() - 1) / latDegrees);
   int samplesPerDegreeLng = static_cast<int>((mTile->width() - 1) / lngDegrees);
-  CoordinateSystem coordinateSystem(mTile->minLatitude(), mTile->minLongitude(),
-                                    mTile->maxLatitude(), mTile->maxLongitude(),
-                                    samplesPerDegreeLat, samplesPerDegreeLng);
+  DegreeCoordinateSystem coordinateSystem(mTile->minLatitude(), mTile->minLongitude(),
+                                          mTile->maxLatitude(), mTile->maxLongitude(),
+                                          samplesPerDegreeLat, samplesPerDegreeLng);
   DivideTree *tree = new DivideTree(coordinateSystem, mPeaks, mSaddles, mRunoffs);
   
   int saddleIndex = 0;
@@ -380,6 +383,7 @@ DivideTree *TreeBuilder::generateDivideTree() {
   }
   
   // Count saddle types, for debugging
+  // TODO: Use std::count_if instead.
   int basin_saddle_count = 0;
   int prom_saddle_count = 0;
   for (const Saddle &saddle : mSaddles) {

@@ -117,9 +117,8 @@ int main(int argc, char **argv) {
     }
 
     // Put Peakbagger peaks in spatial structure
-    const vector<PeakbaggerPoint> &pb_peaks = pb_collection.points();
-    for (int i = 0; i < (int) pb_peaks.size(); ++i) {
-      peakbagger_peaks->insert(&pb_peaks[i]);
+    for (auto peak : pb_collection.points()) {
+      peakbagger_peaks->insert(&peak);
     }
   }
   
@@ -135,14 +134,14 @@ int main(int argc, char **argv) {
 
   BasicTileLoadingPolicy policy(terrain_directory, FileFormat(FileFormat::Value::HGT));
   const int CACHE_SIZE = 50;
-  TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
+  auto cache = std::make_unique<TileCache>(&policy, peakbagger_peaks, CACHE_SIZE);
 
   set<Offsets::Value> tilesToSkip;
   tilesToSkip.insert(Offsets(47, -87).value());  // in Lake Superior; lots of fake peaks
 
   VLOG(2) << "Using " << numThreads << " threads";
   
-  ThreadPool *threadPool = new ThreadPool(numThreads);
+  auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
   for (int lat = (int) floor(bounds[0]); lat < (int) ceil(bounds[1]); ++lat) {
@@ -154,7 +153,8 @@ int main(int argc, char **argv) {
         continue;
       }
 
-      IsolationTask *task = new IsolationTask(cache, output_directory, bounds, minIsolation);
+      IsolationTask *task = new IsolationTask(
+        cache.get(), output_directory, bounds, minIsolation);
       results.push_back(threadPool->enqueue([=] {
             return task->run(static_cast<float>(lat), static_cast<float>(lng),
                              peakbagger_peaks);
@@ -170,8 +170,6 @@ int main(int argc, char **argv) {
     
   printf("Tiles processed = %d\n", num_tiles_processed);
 
-  delete threadPool;
-  delete cache;
   delete peakbagger_peaks;
 
   return 0;
