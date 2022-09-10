@@ -383,23 +383,14 @@ DivideTree *TreeBuilder::generateDivideTree() {
   }
   
   // Count saddle types, for debugging
-  // TODO: Use std::count_if instead.
-  int basin_saddle_count = 0;
-  int prom_saddle_count = 0;
-  for (const Saddle &saddle : mSaddles) {
-    switch (saddle.type) {
-    case Saddle::Type::PROM:
-      prom_saddle_count += 1;
-      break;
-
-    case Saddle::Type::BASIN:
-      basin_saddle_count += 1;
-      break;
-
-    default:
-      break;
-    }
-  }
+  auto basin_saddle_count = std::count_if(mSaddles.begin(), mSaddles.end(),
+                                          [](const Saddle &saddle) {
+                                            return saddle.type == Saddle::Type::BASIN;
+                                          });
+  auto prom_saddle_count = std::count_if(mSaddles.begin(), mSaddles.end(),
+                                         [](const Saddle &saddle) {
+                                           return saddle.type == Saddle::Type::PROM;
+                                         });
     
   VLOG(1) << "Found " << mPeaks.size() << " peaks, " << prom_saddle_count << " prom saddles, "
           << basin_saddle_count << " basin saddles, " << mRunoffs.size() << " runoffs";
