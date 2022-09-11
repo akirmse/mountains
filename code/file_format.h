@@ -27,6 +27,9 @@
 
 #include <string>
 
+class CoordinateSystem;
+class Tile;
+
 // Defines the types of input tiles we can read, and their properties.
 class FileFormat {
 public:
@@ -46,8 +49,12 @@ public:
 
   // Return the number of samples in one row or column of the file format,
   // including any border samples.
-  int samplesAcross() const;
+  int rawSamplesAcross() const;
 
+  // Return the number of samples in a tile after its loaded and the borders
+  // have been modified.
+  int inMemorySamplesAcross() const;
+  
   // Return the degrees in lat or lng covered by one tile.
   // Note that this is the logical value (1 degree, 0.25 degree), not necessarily
   // the precise value covered, including border samples.
@@ -55,6 +62,10 @@ public:
 
   // Does this format use UTM coordinates rather than lat/lng?
   bool isUtm() const;
+
+  // Return a new CoordinateSystem describing the section of the Earth that
+  // the given tile with the given origin (lower-left corner) covers.
+  CoordinateSystem *coordinateSystemForOrigin(float lat, float lng, int utmZone = 0);
   
   // Return a FileFormat object for the given human-readable string,
   // or nullptr if none.

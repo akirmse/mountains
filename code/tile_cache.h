@@ -28,7 +28,6 @@
 
 #include "lock.h"
 #include "lrucache.h"
-#include "point_map.h"
 #include "tile.h"
 #include "tile_loading_policy.h"
 
@@ -38,18 +37,17 @@
 class TileCache {
 public:
   // policy determines how to load a tile.
-  // externalPeaks is a set of peaks whose elevations are written into tiles as
-  // they're loaded; they're "ground truth" elevations.  May be nullptr.
   // maxEntries is the size of the cache.
-  explicit TileCache(TileLoadingPolicy *policy, PointMap *externalPeaks, int maxEntries);
+  explicit TileCache(TileLoadingPolicy *policy, int maxEntries);
 
   ~TileCache();
 
   // Retrieve the tile with the given minimum lat/lng, loading it from disk if necessary
-  Tile *getOrLoad(float minLat, float minLng);
+  Tile *getOrLoad(float minLat, float minLng, const CoordinateSystem &coordinateSystem);
 
   // Load the tile from disk without caching it
-  Tile *loadWithoutCaching(float minLat, float minLng);
+  Tile *loadWithoutCaching(float minLat, float minLng,
+                           const CoordinateSystem &coordinateSystem);
 
   // If we've ever loaded the tile with the given minimum lat/lng, set elev to its maximum
   // elevation and return true, otherwise return false.
@@ -62,8 +60,6 @@ private:
   TileLoadingPolicy *mLoadingPolicy;
   // Map of encoded lat/lng to max elevation in that tile
   std::unordered_map<int, int> mMaxElevations;
-  // External peak elevations, written into tiles as they're loaded
-  PointMap *mExternalPeaks;
 
   Tile *loadInternal(float minLat, float minLng) const;
   

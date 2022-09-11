@@ -62,6 +62,7 @@ LOADERLIB_OBJS = \
 COORDLIB_OBJS = \
 	$(OUTDIR)/coordinate_system.obj \
 	$(OUTDIR)/degree_coordinate_system.obj \
+	$(OUTDIR)/utm_coordinate_system.obj \
 
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.obj \
@@ -72,23 +73,13 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/isolation_task.obj \
 	$(OUTDIR)/latlng.obj \
 	$(OUTDIR)/peak_finder.obj \
-	$(OUTDIR)/peakbagger_collection.obj \
-	$(OUTDIR)/peakbagger_point.obj \
 	$(OUTDIR)/point_map.obj \
 	$(OUTDIR)/tile.obj \
 	$(OUTDIR)/tile_cache.obj \
 	$(OUTDIR)/tile_loading_policy.obj \
 	$(POINTLIB) \
 	$(LOADERLIB) \
-
-PEAKBAGGER_ISOLATION_MAPPER_OBJS = \
-	$(OUTDIR)/isolation_collection.obj \
-	$(OUTDIR)/isolation_point.obj \
-	$(OUTDIR)/latlng.obj \
-	$(OUTDIR)/peakbagger_collection.obj \
-	$(OUTDIR)/peakbagger_isolation_mapper.obj \
-	$(OUTDIR)/peakbagger_point.obj \
-	$(POINTLIB) \
+	$(COORDLIB) \
 
 PROMINENCE_OBJS = \
 	$(OUTDIR)/divide_tree.obj \
@@ -100,8 +91,6 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/kml_writer.obj \
 	$(OUTDIR)/latlng.obj \
 	$(OUTDIR)/line_tree.obj \
-	$(OUTDIR)/peakbagger_collection.obj \
-	$(OUTDIR)/peakbagger_point.obj \
 	$(OUTDIR)/point_map.obj \
 	$(OUTDIR)/prominence.obj \
 	$(OUTDIR)/prominence_task.obj \

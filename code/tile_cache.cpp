@@ -24,23 +24,23 @@
 
 
 #include "tile_cache.h"
-#include "peakbagger_point.h"
+#include "coordinate_system.h"
 #include "easylogging++.h"
 
 #include <assert.h>
 
 using std::string;
 
-TileCache::TileCache(TileLoadingPolicy *policy, PointMap *externalPeaks, int maxEntries)
+TileCache::TileCache(TileLoadingPolicy *policy, int maxEntries)
     : mCache(maxEntries),
-      mLoadingPolicy(policy),
-      mExternalPeaks(externalPeaks) {
+      mLoadingPolicy(policy) {
 }
 
 TileCache::~TileCache() {
 }
 
-Tile *TileCache::getOrLoad(float minLat, float minLng) {
+Tile *TileCache::getOrLoad(float minLat, float minLng,
+                           const CoordinateSystem &coordinateSystem) {
   // In cache?
   int key = makeCacheKey(minLat, minLng);
   Tile *tile = nullptr;
@@ -56,7 +56,7 @@ Tile *TileCache::getOrLoad(float minLat, float minLng) {
   }
 
   // Not in cache; load it
-  tile = loadWithoutCaching(minLat, minLng);
+  tile = loadWithoutCaching(minLat, minLng, coordinateSystem);
   
   // Add to cache
   mLock.lock();
@@ -73,7 +73,8 @@ Tile *TileCache::getOrLoad(float minLat, float minLng) {
   return tile;
 }
 
-Tile *TileCache::loadWithoutCaching(float minLat, float minLng) {
+Tile *TileCache::loadWithoutCaching(float minLat, float minLng,
+                                    const CoordinateSystem &coordinateSystem) {
   Tile *tile = mLoadingPolicy->loadTile(minLat, minLng);
   if (tile == nullptr) {
     return nullptr;
@@ -117,45 +118,11 @@ Tile *TileCache::loadWithoutCaching(float minLat, float minLng) {
 
         // Print out spikes
         if (tile->get(x, y) == Tile::NODATA_ELEVATION && VLOG_IS_ON(1)) {
-          LatLng latlng = tile->latlng(Offsets(x, y));
+          LatLng latlng = coordinateSystem.getLatLng(Offsets(x, y));
           LOG(INFO) << "Removed possible spike at " << latlng.latitude() << ", " << latlng.longitude();
         }
       }
     }
-  }
-  
-  // Apply peak elevations, if any.  This forces us to use external (e.g. Peakbagger's)
-  // peak elevations, which may differ from those in the raster data.  For some peaks a
-  // small change in elevation can make a radical difference in isolation.
-  if (mExternalPeaks != nullptr) {
-    // Tiles overlap along the edges, and samples extend half a pixel into each
-    // neighboring tile.  Thus we need to check all 8 neighbors for peaks that
-    // overlap us.
-    int numPeaksWritten = 0;
-    for (int deltaX = -1; deltaX <= 1; deltaX += 1) {
-      for (int deltaY = -1; deltaY <= 1; deltaY += 1) {
-        float lng = minLng + deltaX;
-        float lat = minLat + deltaY;
-        PointMap::Bucket *bucket = mExternalPeaks->lookup(lat, lng);
-        if (bucket != nullptr) {
-          for (auto it : *bucket) {
-            // TODO: Not sure that this cast is a good assumption
-            PeakbaggerPoint *pb_point = (PeakbaggerPoint *) it;
-
-            if (tile->isInExtents(pb_point->latitude(), pb_point->longitude())) {
-              // Peakbagger elevations are in feet
-              tile->setLatLng(pb_point->latitude(), pb_point->longitude(),
-                              pb_point->elevation());
-              numPeaksWritten += 1;
-            }
-          }
-        }
-      }
-    }
-    VLOG(2) << "Wrote " << numPeaksWritten << " external peaks to tile";
-    
-    // We've changed the max elevation now
-    tile->recomputeMaxElevation();
   }
 
   VLOG(1) << "Loaded tile at " << minLat << " " << minLng << " with max elevation " << tile->maxElevation();
@@ -181,10 +148,9 @@ bool TileCache::getMaxElevation(float lat, float lng, int *elev) {
   return retval;
 }
 
-
 int TileCache::makeCacheKey(float minLat, float minLng) const {
   // Round to some reasonable precision
-  int latKey = static_cast<int>(minLat * 1000);
-  int lngKey = static_cast<int>(minLng * 1000);
-  return latKey * 1000000 + lngKey;
+  int latKey = static_cast<int>(minLat * 100);
+  int lngKey = static_cast<int>(minLng * 100);
+  return latKey * 100000 + lngKey;
 }

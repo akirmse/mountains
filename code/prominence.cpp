@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include "coordinate_system.h"
 #include "filter.h"
-#include "peakbagger_collection.h"
 #include "point_map.h"
 #include "prominence_task.h"
 #include "ThreadPool.h"
@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+// TODO: Make a common header for this
 #ifdef PLATFORM_LINUX
 #include <unistd.h>
 #endif
@@ -64,7 +65,6 @@ static void usage() {
   printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
-  printf("  -p filename       Peakbagger peak database file for matching\n");
   printf("  -t num_threads    Number of threads, default = 1\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
   exit(1);
@@ -73,7 +73,6 @@ static void usage() {
 int main(int argc, char **argv) {
   string terrain_directory(".");
   string output_directory(".");
-  string peakbagger_filename;
   string polygonFilename;
 
   int minProminence = 300;
@@ -86,7 +85,7 @@ int main(int argc, char **argv) {
   string str;
   bool antiprominence = false;
   int utmZone = NO_UTM_ZONE;
-  while ((ch = getopt(argc, argv, "af:i:k:m:o:p:t:z:")) != -1) {
+  while ((ch = getopt(argc, argv, "af:i:k:m:o:t:z:")) != -1) {
     switch (ch) {
     case 'a':
       antiprominence = true;
@@ -119,10 +118,6 @@ int main(int argc, char **argv) {
       output_directory = optarg;
       break;
 
-    case 'p':
-      peakbagger_filename = optarg;
-      break;
-
     case 't':
       numThreads = atoi(optarg);
       break;
@@ -146,22 +141,6 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  // Load Peakbagger database?
-  PeakbaggerCollection pb_collection;
-  auto peakbagger_peaks = std::make_unique<PointMap>();
-  if (!peakbagger_filename.empty()) {
-    printf("Loading peakbagger database\n");
-    if (!pb_collection.Load(peakbagger_filename)) {
-      LOG(ERROR) << "Couldn't load peakbagger database from " << peakbagger_filename;
-      exit(1);
-    }
-
-    // Put Peakbagger peaks in spatial structure
-    for (auto peak : pb_collection.points()) {
-      peakbagger_peaks->insert(&peak);
-    }
-  }
-  
   float bounds[4];
   for (int i = 0; i < 4; ++i) {
     char *endptr;
@@ -193,7 +172,7 @@ int main(int argc, char **argv) {
     policy.setUtmZone(utmZone);
   }
   const int CACHE_SIZE = 2;
-  auto cache = std::make_unique<TileCache>(&policy, peakbagger_peaks.get(), CACHE_SIZE);
+  auto cache = std::make_unique<TileCache>(&policy, CACHE_SIZE);
   
   VLOG(2) << "Using " << numThreads << " threads";
   
@@ -210,6 +189,9 @@ int main(int argc, char **argv) {
         wrappedLng -= 360;
       }
 
+      std::shared_ptr<CoordinateSystem> coordinateSystem(
+        fileFormat.coordinateSystemForOrigin(lat, wrappedLng, utmZone));
+
       // Skip tiles that don't intersect filtering polygon
       if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
                              lng, lng + fileFormat.degreesAcross())) {
@@ -220,7 +202,7 @@ int main(int argc, char **argv) {
           cache.get(), output_directory, minProminence);
         task->setAntiprominence(antiprominence);
         results.push_back(threadPool->enqueue([=] {
-              return task->run(lat, wrappedLng);
+              return task->run(lat, wrappedLng, *coordinateSystem);
             }));
       }
 

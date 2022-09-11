@@ -23,6 +23,7 @@
  */
 
 #include "prominence_task.h"
+#include "coordinate_system.h"
 #include "divide_tree.h"
 #include "island_tree.h"
 #include "tree_builder.h"
@@ -47,12 +48,12 @@ ProminenceTask::ProminenceTask(TileCache *cache, const string &output_dir,
   mAntiprominence = false;
 }
 
-bool ProminenceTask::run(float lat, float lng) {
+bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem) {
   mCurrentLatitude = lat;
   mCurrentLongitude = lng;
   
   // Load the main tile manually; cache could delete it if we allow it to be cached
-  std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng));
+  std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng, coordinateSystem));
   if (tile.get() == nullptr) {
     VLOG(2) << "Couldn't load tile for " << lat << " " << lng;
     return false;
@@ -64,7 +65,7 @@ bool ProminenceTask::run(float lat, float lng) {
   }
 
   // Build divide tree
-  TreeBuilder *builder = new TreeBuilder(tile.get());
+  TreeBuilder *builder = new TreeBuilder(tile.get(), coordinateSystem);
   DivideTree *divideTree = builder->buildDivideTree();
   delete builder;
 

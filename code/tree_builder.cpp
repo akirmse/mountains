@@ -23,10 +23,9 @@
  */
 
 #include "tree_builder.h"
+#include "coordinate_system.h"
 #include "divide_tree.h"
 #include "easylogging++.h"
-// XXX
-#include "degree_coordinate_system.h"
 
 #include <math.h>
 #include <memory.h>
@@ -60,9 +59,10 @@ using std::vector;
 // * Compute runoffs around the edge of the tile, and add runoff->peak
 // edges to the divide tree by walking uphill from each runoff.
 
-TreeBuilder::TreeBuilder(const Tile *tile) :
+TreeBuilder::TreeBuilder(const Tile *tile, const CoordinateSystem &coordinateSystem) :
     mDomainMap(tile) {
   mTile = tile;
+  mCoordinateSystem = std::unique_ptr<CoordinateSystem>(coordinateSystem.clone());
 }
 
 DivideTree *TreeBuilder::buildDivideTree() {
@@ -99,7 +99,7 @@ void TreeBuilder::findExtrema() {
         
         // TODO: Pick a point near the middle of the flat region
         mPeaks.push_back(Peak(Offsets(x, y), elev));
-        LatLng pos = mTile->latlng(Offsets(x, y));
+        LatLng pos = mCoordinateSystem->getLatLng(Offsets(x, y));
         VLOG(2) << "Peak #" << peakId << " at " << x << " " << y
                 << " at " << pos.latitude() << " " << pos.longitude();
 
@@ -312,16 +312,7 @@ void TreeBuilder::findRunoffs() {
 }
 
 DivideTree *TreeBuilder::generateDivideTree() {
-  // XXX Pass coordinate system in to constructor; move this to caller
-  float latDegrees = mTile->maxLatitude() - mTile->minLatitude();
-  float lngDegrees = mTile->maxLongitude() - mTile->minLongitude();
-  // The -1 removes overlap with neighbors
-  int samplesPerDegreeLat = static_cast<int>((mTile->height() - 1) / latDegrees);
-  int samplesPerDegreeLng = static_cast<int>((mTile->width() - 1) / lngDegrees);
-  DegreeCoordinateSystem coordinateSystem(mTile->minLatitude(), mTile->minLongitude(),
-                                          mTile->maxLatitude(), mTile->maxLongitude(),
-                                          samplesPerDegreeLat, samplesPerDegreeLng);
-  DivideTree *tree = new DivideTree(coordinateSystem, mPeaks, mSaddles, mRunoffs);
+  DivideTree *tree = new DivideTree(*mCoordinateSystem, mPeaks, mSaddles, mRunoffs);
   
   int saddleIndex = 0;
   for (Saddle &saddle : mSaddles) {
@@ -331,7 +322,7 @@ DivideTree *TreeBuilder::generateDivideTree() {
     vector<Offsets> path2 = walkUpToPeak(info.rise2);
     
     if (path1.empty() || path2.empty()) {
-      LatLng pos = mTile->latlng(saddle.location);
+      LatLng pos = mCoordinateSystem->getLatLng(saddle.location);
       LOG(ERROR) << "Failed to connect saddle " << saddleIndex << " to peak from "
                  << saddle.location.x() << " " << saddle.location.y() << " "
                  << pos.latitude() << " " << pos.longitude();
@@ -365,7 +356,7 @@ DivideTree *TreeBuilder::generateDivideTree() {
     const Runoff &runoff = mRunoffs[index];
     vector<Offsets> path = walkUpToPeak(runoff.location);
     if (path.empty()) {
-      LatLng pos = mTile->latlng(runoff.location);
+      LatLng pos = mCoordinateSystem->getLatLng(runoff.location);
       LOG(ERROR) << "Failed to connect runoff " << saddleIndex << " to peak from "
                  << runoff.location.x() << " " << runoff.location.y() << " "
                  << pos.latitude() << " " << pos.longitude();
@@ -438,7 +429,7 @@ vector<Offsets> TreeBuilder::walkUpToPeak(Offsets startPoint) {
 
       // Still no higher point?  Bug.
       if (point == newPoint) {
-        LatLng pos = mTile->latlng(point);
+        LatLng pos = mCoordinateSystem->getLatLng(point);
         LOG(ERROR) << "Couldn't find higher neighbor for " << point.x() << " " << point.y()
                    << " elev " << mTile->get(point) << " at " << pos.latitude() << " " << pos.longitude();
         LOG(ERROR) << "Path length was " << path.size();

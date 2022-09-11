@@ -22,27 +22,48 @@
  * SOFTWARE.
  */
 
+#ifndef _UTM_COORDINATE_SYSTEM_H_
+#define _UTM_COORDINATE_SYSTEM_H_
+
 #include "coordinate_system.h"
-#include "degree_coordinate_system.h"
-#include "utm_coordinate_system.h"
-#include "easylogging++.h"
 
-using std::string;
+// A coordinate system where the corners are specified as UTM northing and easting,
+// and samples are a constant number of meters.
 
-CoordinateSystem *CoordinateSystem::fromString(const string &str) {
-  if (str.empty()) {
-    return nullptr;
-  }
+class UtmCoordinateSystem : public CoordinateSystem {
+public:
 
-  switch (str[0]) {
-  case 'G':
-    return DegreeCoordinateSystem::fromString(str);
+  UtmCoordinateSystem(int zone, int minX, int minY, int maxX, int maxY,
+                      float metersPerSample);
+  virtual ~UtmCoordinateSystem();
 
-  case 'U':
-    return UtmCoordinateSystem::fromString(str);
+  virtual CoordinateSystem *clone() const;
 
-  default:
-    LOG(ERROR) << "Couldn't construct nknown coordinate system from: " << str;
-    return nullptr;
-  }
-}
+  virtual LatLng getLatLng(Offsets offsets) const;
+
+  // true if the two systems have the same number of pixels per degree
+  virtual bool compatibleWith(const CoordinateSystem &that) const;
+
+  virtual Offsets offsetsTo(const CoordinateSystem &that);
+
+  virtual std::unique_ptr<CoordinateSystem> mergeWith(const CoordinateSystem &that) const;
+
+  virtual int samplesAroundEquator() const;
+
+  virtual std::string toString() const;
+
+  static CoordinateSystem *fromString(const std::string &str);
+
+private:
+  // Longitude zone (1-60)
+  int mZone;
+  // Coordinates of corners in meters
+  int mMinX;
+  int mMinY;
+  int mMaxX;
+  int mMaxY;
+  float mMetersPerSample;
+};
+  
+#endif  // _UTM_COORDINATE_SYSTEM_H_
+

@@ -128,14 +128,7 @@ Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minL
     }
   }
   
-  // Tile is 1 square degree, minus one pixel on the bottom and right that
-  // they "helpfully" removed in processing.
-  float fMinLat = static_cast<float>(minLat) + 1.0f / outputHeight;
-  float fMaxLat = static_cast<float>(minLat) + 1;
-  float fMinLng = static_cast<float>(minLng);
-  float fMaxLng = fMinLng + 1 - 1.0f / outputWidth;
-  Tile *tile = new Tile(outputWidth, outputHeight, samples,
-                        fMinLat, fMinLng, fMinLat + 1, fMinLng + 1);
+  Tile *tile = new Tile(outputWidth, outputHeight, samples);
 
   delete [] inbuf;
   return tile;  

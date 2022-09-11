@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include "coordinate_system.h"
 #include "isolation_task.h"
-#include "peakbagger_collection.h"
 #include "point_map.h"
 #include "ThreadPool.h"
 #include "tile.h"
@@ -59,7 +59,6 @@ static void usage() {
   printf("  -i directory     Directory with terrain data\n");
   printf("  -m min_isolation Minimum isolation threshold for output, default = 1km\n");
   printf("  -o directory     Directory for output data\n");
-  printf("  -p filename      Peakbagger peak database file for matching\n");
   printf("  -t num_threads   Number of threads, default = 1\n");
   exit(1);
 }
@@ -67,7 +66,6 @@ static void usage() {
 int main(int argc, char **argv) {
   string terrain_directory(".");
   string output_directory(".");
-  string peakbagger_filename;
 
   float minIsolation = 1;
   int numThreads = 1;
@@ -75,7 +73,7 @@ int main(int argc, char **argv) {
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
   int ch;
-  while ((ch = getopt(argc, argv, "i:m:o:p:t:")) != -1) {
+  while ((ch = getopt(argc, argv, "i:m:o:t:")) != -1) {
     switch (ch) {
     case 'i':
       terrain_directory = optarg;
@@ -87,10 +85,6 @@ int main(int argc, char **argv) {
 
     case 'o':
       output_directory = optarg;
-      break;
-
-    case 'p':
-      peakbagger_filename = optarg;
       break;
 
     case 't':
@@ -106,22 +100,6 @@ int main(int argc, char **argv) {
     usage();
   }
 
-  // Load Peakbagger database?
-  PeakbaggerCollection pb_collection;
-  PointMap *peakbagger_peaks = new PointMap();
-  if (!peakbagger_filename.empty()) {
-    printf("Loading peakbagger database\n");
-    if (!pb_collection.Load(peakbagger_filename)) {
-      printf("Couldn't load peakbagger database from %s\n", peakbagger_filename.c_str());
-      exit(1);
-    }
-
-    // Put Peakbagger peaks in spatial structure
-    for (auto peak : pb_collection.points()) {
-      peakbagger_peaks->insert(&peak);
-    }
-  }
-  
   float bounds[4];
   for (int i = 0; i < 4; ++i) {
     char *endptr;
@@ -132,32 +110,26 @@ int main(int argc, char **argv) {
     }
   }
 
-  BasicTileLoadingPolicy policy(terrain_directory, FileFormat(FileFormat::Value::HGT));
+  // TODO: Maybe support other file formats in the future?
+  FileFormat fileFormat(FileFormat::Value::HGT);
+  BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
   const int CACHE_SIZE = 50;
-  auto cache = std::make_unique<TileCache>(&policy, peakbagger_peaks, CACHE_SIZE);
-
-  set<Offsets::Value> tilesToSkip;
-  tilesToSkip.insert(Offsets(47, -87).value());  // in Lake Superior; lots of fake peaks
+  auto cache = std::make_unique<TileCache>(&policy, CACHE_SIZE);
 
   VLOG(2) << "Using " << numThreads << " threads";
   
   auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
-  for (int lat = (int) floor(bounds[0]); lat < (int) ceil(bounds[1]); ++lat) {
-     for (int lng = (int) floor(bounds[2]); lng < (int) ceil(bounds[3]); ++lng) {
-      // Skip some very slow tiles known to have no peaks
-      Offsets coords(lat, lng);
-      if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
-        VLOG(1) << "Skipping slow tile " << lat << " " << lng;
-        continue;
-      }
-
+  for (auto lat = (float) floor(bounds[0]); lat < ceil(bounds[1]); lat += 1) {
+     for (auto lng = (float) floor(bounds[2]); lng < ceil(bounds[3]); lng += 1) {
+       std::shared_ptr<CoordinateSystem> coordinateSystem(
+         fileFormat.coordinateSystemForOrigin(lat, lng));
+       
       IsolationTask *task = new IsolationTask(
         cache.get(), output_directory, bounds, minIsolation);
       results.push_back(threadPool->enqueue([=] {
-            return task->run(static_cast<float>(lat), static_cast<float>(lng),
-                             peakbagger_peaks);
+            return task->run(lat, lng, *coordinateSystem);
           }));
     }
   }
@@ -169,8 +141,6 @@ int main(int argc, char **argv) {
   }
     
   printf("Tiles processed = %d\n", num_tiles_processed);
-
-  delete peakbagger_peaks;
 
   return 0;
 }

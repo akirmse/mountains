@@ -23,12 +23,16 @@
  */
 
 #include "file_format.h"
+#include "degree_coordinate_system.h"
+#include "utm_coordinate_system.h"
+#include "easylogging++.h"
 
+#include <cassert>
 #include <map>
 
 using std::string;
 
-int FileFormat::samplesAcross() const {
+int FileFormat::rawSamplesAcross() const {
   switch (mValue) {
   case Value::NED13_ZIP:  return 10812;
   case Value::NED1_ZIP:   return 3612;
@@ -37,10 +41,25 @@ int FileFormat::samplesAcross() const {
   case Value::THREEDEP_1M:  return 10012;
   default:
     // In particular, fail on GLO, because this number is variable with latitude.
-    printf("Couldn't compute tile size of unknown file format");
+    LOG(ERROR) << "Couldn't compute tile size of unknown file format";
     exit(1);
   }
 }
+
+int FileFormat::inMemorySamplesAcross() const {
+  switch (mValue) {
+  case Value::NED13_ZIP:  return 10801;
+  case Value::NED1_ZIP:   return 3601;
+  case Value::NED19:      return 8101;
+  case Value::HGT:        return 1201;
+  case Value::THREEDEP_1M:  return 10001;
+  case Value::GLO30:      return 3601;
+  default:
+    LOG(ERROR) << "Couldn't compute tile size of unknown file format";
+    exit(1);
+  }
+}
+
 
 float FileFormat::degreesAcross() const {
   switch (mValue) {
@@ -54,13 +73,45 @@ float FileFormat::degreesAcross() const {
     // means one x or y unit per tile (where each tile is 10000m in UTM).
     return 1.0f;
   default:
-    printf("Couldn't compute degree span of unknown file format");
+    LOG(ERROR) << "Couldn't compute degree span of unknown file format";
     exit(1);
   }
 }
 
 bool FileFormat::isUtm() const {
   return mValue == Value::THREEDEP_1M;
+}
+
+CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, int utmZone) {
+  switch (mValue) {
+  case Value::NED13_ZIP:  // fall through
+  case Value::NED1_ZIP:   
+  case Value::NED19:      
+  case Value::HGT:        
+  case Value::GLO30: {
+    // The -1 removes overlap with neighbors
+    int samplesPerDegreeLat = static_cast<int>((inMemorySamplesAcross() - 1) / degreesAcross());
+    int samplesPerDegreeLng = static_cast<int>((inMemorySamplesAcross() - 1) / degreesAcross());
+    return new DegreeCoordinateSystem(lat, lng,
+                                      lat + degreesAcross(),
+                                      lng + degreesAcross(),
+                                      samplesPerDegreeLat, samplesPerDegreeLng);
+  }
+
+  case Value::THREEDEP_1M:
+    // 10km x 10km tiles
+    return new UtmCoordinateSystem(utmZone,
+                                   static_cast<int>(lng * 10000),
+                                   static_cast<int>(lat * 10000),
+                                   static_cast<int>((lng + 1) * 10000),
+                                   static_cast<int>((lat + 1) * 10000),
+                                   1.0f);
+    
+  default:
+    assert(false);
+  }
+
+  return nullptr;
 }
 
 FileFormat *FileFormat::fromName(const string &name) {

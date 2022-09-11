@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-#include "isolation_finder.h"
 #include "isolation_task.h"
+#include "coordinate_system.h"
+#include "isolation_finder.h"
 #include "isolation_results.h"
 #include "peak_finder.h"
 
@@ -46,9 +47,9 @@ IsolationTask::IsolationTask(TileCache *cache, const string &output_dir,
   mMinIsolationKm = minIsolationKm;
 }
 
-bool IsolationTask::run(float lat, float lng, const PointMap *forcedPeaks) {
+bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem) {
   // Load the main tile manually; cache could delete it if we allow it to be cached
-  std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng));
+  std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng, coordinateSystem));
   if (tile.get() == nullptr) {
     VLOG(2) << "Couldn't load tile for " << lat << " " << lng;
     return false;
@@ -61,45 +62,11 @@ bool IsolationTask::run(float lat, float lng, const PointMap *forcedPeaks) {
   PeakFinder pfinder(tile.get());
   vector<Offsets> peaks = pfinder.findPeaks();
 
-  // Add any forced peaks in this tile to the list of peaks, if it isn't already there.
-  // Also keep a set of forced peaks' offsets, because we need to output them even
-  // if their isolation is below the normal min threshold.
-  set<Offsets::Value> forcedPeakOffsets;
-  if (forcedPeaks != nullptr) {
-    set<Offsets::Value> peakOffsets;
-    for (auto peak : peaks) {
-      peakOffsets.insert(peak.value());
-    }
-
-    auto bucket = forcedPeaks->lookup(lat, lng);
-    if (bucket != nullptr) {
-      for (auto point : *bucket) {
-        Offsets offsets = tile->toOffsets(point->latitude(), point->longitude());
-
-        // Tiles overlap one pixel on all sides, and we only look for peaks on the top
-        // and left edges of a tile to avoid counting them twice.  So don't add a peak
-        // on the right or bottom edges.
-        if (offsets.x() == tile->width() - 1 || offsets.y() == tile->height() - 1) {
-          continue;
-        }
-
-        VLOG(4) << "Adding forced peak with offsets " << offsets.x() << " " << offsets.y()
-                << " latlng " << point->latitude() << " " <<  point->longitude();
-        
-        auto offsetValue = offsets.value();
-        forcedPeakOffsets.insert(offsetValue);
-        if (peakOffsets.find(offsetValue) == peakOffsets.end()) {
-          peaks.push_back(offsets);
-        }
-      }
-    }
-  }
-
   //
   // Compute isolation of each peak
   //
   
-  IsolationFinder ifinder(mCache, tile.get());
+  IsolationFinder ifinder(mCache, tile.get(), coordinateSystem);
 
   IsolationResults results;
 
@@ -108,12 +75,12 @@ bool IsolationTask::run(float lat, float lng, const PointMap *forcedPeaks) {
   float minLng = mBounds[2];
   float maxLng = mBounds[3];
   
-  printf("Processing tile %.1f %.1f\n", tile->minLatitude(), tile->minLongitude());
+  printf("Processing tile %.1f %.1f\n", lat, lng);
 
   VLOG(1) << "Found " << peaks.size() << " peaks";
 
   for (auto offset : peaks) {
-    LatLng peak = tile->latlng(offset);
+    LatLng peak = coordinateSystem.getLatLng(offset);
     // Discard any peaks outside requested bounds
     if (peak.latitude() < minLat || peak.latitude() > maxLat ||
         peak.longitude() < minLng || peak.longitude() > maxLng) {
@@ -128,9 +95,7 @@ bool IsolationTask::run(float lat, float lng, const PointMap *forcedPeaks) {
               << " at " << higher.latitude() << " " << higher.longitude();
       float distance = peak.distanceEllipsoid(higher) / 1000;  // kilometers
 
-      // No min isolation for forced peaks; always include them
-      if (distance > mMinIsolationKm ||
-          forcedPeakOffsets.find(offset.value()) != forcedPeakOffsets.end()) {
+      if (distance > mMinIsolationKm) {
         results.addResult(peak, tile->get(offset), higher, distance);
       } else {
         VLOG(3) << "Isolation < minimum: " << distance;

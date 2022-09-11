@@ -25,7 +25,7 @@
 #ifndef _COORDINATE_SYSTEM_H_
 #define _COORDINATE_SYSTEM_H_
 
-// Helps convert a location (like an Offsets) into a point on the Earth.
+// Represents the area that a tile covers on the Earth.
 
 #include "primitives.h"
 #include "latlng.h"

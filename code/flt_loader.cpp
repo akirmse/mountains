@@ -23,7 +23,6 @@
  */
 
 #include "flt_loader.h"
-#include "utm.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -72,7 +71,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
     return nullptr;
   }
 
-  const int rawSideLength = mFormat.samplesAcross();
+  const int rawSideLength = mFormat.rawSamplesAcross();
   const int tileSideLength = rawSideLength - 2 * FLT_EXTRA_BORDER + 1;
   int num_raw_samples = rawSideLength * rawSideLength;
   
@@ -111,29 +110,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
   fclose(infile);
 
   if (samples != nullptr) {
-    // Compute lat/lng bounds of tile
-    float tileSpan = mFormat.degreesAcross();
-    float maxLat = minLat + tileSpan;
-    float maxLng = minLng + tileSpan;
-    // Convert from UTM to lat/lng if necessary
-    if (mFormat.isUtm()) {
-      double minNorthing = minLat * 10000;
-      double maxNorthing = maxLat * 10000;
-      double minEasting = minLng * 10000;
-      double maxEasting = maxLng * 10000;
-      double resultLat, resultLng;
-      char compositeZone[10];  // Like "10Q" -- we assume N hemisphere
-      snprintf(compositeZone, sizeof(compositeZone), "%dQ", mUtmZone);  
-      UTM::UTMtoLL(minNorthing, minEasting, compositeZone, resultLat, resultLng);
-      minLat = static_cast<float>(resultLat);
-      minLng = static_cast<float>(resultLng);
-      UTM::UTMtoLL(maxNorthing, maxEasting, compositeZone, resultLat, resultLng);
-      maxLat = static_cast<float>(resultLat);
-      maxLng = static_cast<float>(resultLng);
-    }
-
-    retval = new Tile(tileSideLength, tileSideLength, samples,
-                      minLat, minLng, maxLat, maxLng);
+    retval = new Tile(tileSideLength, tileSideLength, samples);
   }
 
   return retval;  

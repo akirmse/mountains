@@ -39,12 +39,7 @@ public:
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
-  //
-  // forcedPeaks, if non-null, means that any peaks in forcedPeaks in this tile
-  // should have their isolation calculation and output, even if the isolation
-  // is < minIsolationKm.  This can be used to generate isolation for a list of
-  // peaks that comes from an external database.
-  bool run(float lat, float lng, const PointMap *forcedPeaks);
+  bool run(float lat, float lng, const CoordinateSystem &coordinateSystem);
 
 private:
   TileCache *mCache;

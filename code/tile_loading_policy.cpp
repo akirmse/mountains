@@ -204,16 +204,6 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, float minLat
     delete neighbor;
   }
   
-  // We've made the tile a little bigger in extents.
-  float minLatitude = tile->minLatitude() - 1.0f / tile->height();
-  float maxLatitude = tile->maxLatitude();
-  float minLongitude = tile->minLongitude();
-  float maxLongitude = tile->maxLongitude() + 1.0f / tile->width();
-  Tile *newTile = new Tile(newWidth, newHeight, samples,
-                           minLatitude,
-                           minLongitude,
-                           maxLatitude,
-                           maxLongitude);
-  
+  Tile *newTile = new Tile(newWidth, newHeight, samples);
   return newTile;
 }
