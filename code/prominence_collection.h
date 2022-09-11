@@ -44,4 +44,4 @@ private:
    std::vector<ProminencePoint> mPoints;
 };
 
-#endif // ifndef _PEAKBAGGER_COLLECTION_H__
+#endif // ifndef _PROMINENCE_COLLECTION_H__

@@ -54,4 +54,4 @@ private:
   LatLng mIsolationLimitPoint;
 };
 
-#endif  // ifndef _PEAKBAGGER_POINT_H__
+#endif  // ifndef _ISOLATION_POINT_H__

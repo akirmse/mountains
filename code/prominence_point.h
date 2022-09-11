@@ -54,4 +54,4 @@ private:
   LatLng mKeySaddle;
 };
 
-#endif  // ifndef _PEAKBAGGER_POINT_H__
+#endif  // ifndef _PROMINENCE_POINT_H__
