@@ -46,8 +46,12 @@ IsolationFinder::IsolationFinder(TileCache *cache, const Tile *tile,
 IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
   int elev = mTile->get(peak);
   LatLng peakLocation(mCoordinateSystem->getLatLng(peak));
-  int peakLat = static_cast<int>(peakLocation.latitude());
-  int peakLng = static_cast<int>(peakLocation.longitude());
+
+  // Get minimum lat/lng of tile
+  auto originOffsets = Offsets(0, mTile->height() - 1);
+  auto origin = mCoordinateSystem->getLatLng(originOffsets);
+  int peakLat = static_cast<int>(origin.latitude());
+  int peakLng = static_cast<int>(origin.longitude());
 
   VLOG(2) << "Considering peak at " << peak.x() << " " << peak.y()
           << " lat/lng " << peakLocation.latitude() << " " << peakLocation.longitude() << " "
