@@ -50,7 +50,8 @@ DivideTree::DivideTree(const CoordinateSystem &coordinateSystem,
                        const std::vector<Peak> &peaks, const std::vector<Saddle> &saddles,
                        const std::vector<Runoff> &runoffs) :
     // Copy arrays
-    mCoordinateSystem(coordinateSystem), mPeaks(peaks), mSaddles(saddles), mRunoffs(runoffs) {
+    mPeaks(peaks), mSaddles(saddles), mRunoffs(runoffs) {
+  mCoordinateSystem = std::unique_ptr<CoordinateSystem>(coordinateSystem.clone());
   mNodes.resize(mPeaks.size() + 1);  // Peaks are 1-indexed; put in a dummy node 0
   for (Node &node : mNodes) {
     node.parentId = Node::Null;
@@ -334,12 +335,12 @@ void DivideTree::merge(const DivideTree &otherTree) {
 }
 
 bool DivideTree::setOrigin(const CoordinateSystem &coordinateSystem) {
-  if (!mCoordinateSystem.compatibleWith(coordinateSystem)) {
+  if (!mCoordinateSystem->compatibleWith(coordinateSystem)) {
     LOG(ERROR) << "Can't merge divide trees with different pixel sizes";
     return false;
   }
 
-  Offsets offsets(mCoordinateSystem.offsetsTo(coordinateSystem));
+  Offsets offsets(mCoordinateSystem->offsetsTo(coordinateSystem));
   int dx = offsets.x();
   int dy = offsets.y();
   VLOG(2) << "Offsetting origin by " << dx << " " << dy;
@@ -353,7 +354,7 @@ bool DivideTree::setOrigin(const CoordinateSystem &coordinateSystem) {
     runoff.location = runoff.location.offsetBy(dx, dy);
   }
 
-  mCoordinateSystem = coordinateSystem;
+  mCoordinateSystem.reset(coordinateSystem.clone());
   return true;
 }
 
@@ -413,14 +414,10 @@ bool DivideTree::writeToFile(const std::string &filename) const {
   }
 
   fprintf(file, "# Prominence divide tree generated at %s\n", getTimeString().c_str());
-          
-  fprintf(file, "G,%f,%f,%d,%d,%f,%f\n",
-          mCoordinateSystem.minLatitude(),
-          mCoordinateSystem.minLongitude(),
-          mCoordinateSystem.pixelsPerDegreeLatitude(),
-          mCoordinateSystem.pixelsPerDegreeLongitude(),
-          mCoordinateSystem.maxLatitude(),
-          mCoordinateSystem.maxLongitude());
+
+  // First line describes coordinate system
+  fprintf(file, "%s\n", mCoordinateSystem->toString().c_str());
+
   int index = 1;
   for (const Peak &peak : mPeaks) {
     fprintf(file, "P,%d,%d,%d,%d\n", index++, peak.location.x(), peak.location.y(), peak.elevation);
@@ -465,9 +462,9 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
   vector<Node> nodes;
   vector<int> runoffEdges;
   Node node;
-  float minLat = 0, minLng = 0, maxLat = 0, maxLng = 0;
-  int pixelsPerLat = 0, pixelsPerLng = 0;
 
+  bool coordinateSystemRead = false;
+  std::unique_ptr<CoordinateSystem> coordinateSystem;
   string line;
   vector<string> elements;
   while (file.good()) {
@@ -477,27 +474,20 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
       continue;
     }
 
-    split(line, ',', elements);
-    switch (elements[0][0]) {
-    case 'G':
-      if (elements.size() < 5) {
+    // Coordinate system is first real line
+    if (!coordinateSystemRead) {
+      auto coords = CoordinateSystem::fromString(line);
+      if (coords == nullptr) {
+        LOG(ERROR) << "Missing valid coordinate system description line";
         return nullptr;
       }
-      minLat = stof(elements[1]);
-      minLng = stof(elements[2]);
-      pixelsPerLat = stoi(elements[3]);
-      pixelsPerLng = stoi(elements[4]);
-      // Max lat/lng was added later for non-1x1 tile support
-      if (elements.size() >= 7) {
-        maxLat = stof(elements[5]);
-        maxLng = stof(elements[6]);
-      } else {
-        // Assume 1x1 tile for old DVT files
-        maxLat = minLat + 1;
-        maxLng = minLng + 1;
-      }
-      VLOG(2) << "Got min lat/lng " << minLat << " " << minLng;
-      break;
+      coordinateSystem.reset(coords);
+      coordinateSystemRead = true;
+      continue;
+    }
+
+    split(line, ',', elements);
+    switch (elements[0][0]) {
     case 'P':
       if (elements.size() != 5) {
         return nullptr;
@@ -543,14 +533,7 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
     }
   }
 
-  if (pixelsPerLat == 0 || pixelsPerLng == 0) {
-    LOG(ERROR) << "Missing valid geometry description line";
-    return nullptr;
-  }
-  
-  CoordinateSystem coordinateSystem(minLat, minLng, maxLat, maxLng,
-                                    pixelsPerLat, pixelsPerLng);
-  DivideTree *tree = new DivideTree(coordinateSystem, peaks, saddles, runoffs);
+  DivideTree *tree = new DivideTree(*coordinateSystem, peaks, saddles, runoffs);
   tree->mNodes = nodes;
   tree->mRunoffEdges = runoffEdges;
   return tree;
@@ -658,7 +641,7 @@ int DivideTree::getDepth(int nodeId) {
 void DivideTree::spliceAllRunoffs() {
   unordered_set<int> removedRunoffs;
 
-  int pixelsAroundGlobe = 360 * mCoordinateSystem.pixelsPerDegreeLongitude();
+  int samplesAroundGlobe = mCoordinateSystem->samplesAroundEquator();
 
   // When there are lots of runoffs, an N^2 lookup gets slow: use a hash map to make it O(N).
   unordered_multimap<Offsets::Value, int> locationMap;  // map of location to runoff index
@@ -672,7 +655,7 @@ void DivideTree::spliceAllRunoffs() {
       // Watch for wrapping around antimeridian: try +/- 360 degrees longitude, too
       Offsets runoffLocation = mRunoffs[i].location;
       for (int wraparound = -1; wraparound <= 1; ++wraparound) {
-        Offsets wraparoundLocation(runoffLocation.x() + wraparound * pixelsAroundGlobe,
+        Offsets wraparoundLocation(runoffLocation.x() + wraparound * samplesAroundGlobe,
                                     runoffLocation.y());
         const auto range = locationMap.equal_range(wraparoundLocation.value());
         for (auto it = range.first; it != range.second; ++it) {
@@ -838,7 +821,7 @@ const Saddle &DivideTree::getSaddle(int saddleId) const {
 }
 
 const CoordinateSystem &DivideTree::coordinateSystem() const {
-  return mCoordinateSystem;
+  return *mCoordinateSystem;
 }
 
 const vector<Peak> &DivideTree::peaks() const {
@@ -876,7 +859,7 @@ void DivideTree::debugPrint() const {
 }
 
 string DivideTree::getAsKml() const {
-  KMLWriter writer(mCoordinateSystem);
+  KMLWriter writer(*mCoordinateSystem);
   
   // Graph edges
   writer.startFolder("Edges");

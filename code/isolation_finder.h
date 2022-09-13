@@ -26,7 +26,9 @@
 #ifndef _ISOLATION_FINDER_H_
 #define _ISOLATION_FINDER_H_
 
+#include <memory>
 #include <vector>
+#include "latlng.h"
 #include "tile_cache.h"
 
 struct IsolationRecord {
@@ -55,7 +57,8 @@ struct IsolationRecord {
 
 class IsolationFinder {
 public:
-  explicit IsolationFinder(TileCache *cache, const Tile *tile);
+  IsolationFinder(TileCache *cache, const Tile *tile,
+                  const CoordinateSystem &coordinateSystem);
   
   IsolationRecord findIsolation(Offsets peak) const;
   
@@ -63,6 +66,7 @@ private:
   
   const Tile *mTile;
   TileCache *mCache;
+  std::unique_ptr<CoordinateSystem> mCoordinateSystem;
 
   // Search tile for a point higher than seedElevation.
   //

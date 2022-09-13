@@ -30,6 +30,8 @@
 
 #include <string>
 
+class CoordinateSystem;
+
 // Calculate prominence for all peaks in one tile
 class ProminenceTask {
 public:
@@ -39,7 +41,7 @@ public:
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
-  bool run(float lat, float lng);
+  bool run(float lat, float lng, const CoordinateSystem &coordinateSystem);
 
   // Determine whether this task computes prominence (value=false, the default),
   // or anti-prominence, which is the "prominence" of low points.

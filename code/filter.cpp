@@ -208,8 +208,7 @@ void Filter::getBounds(LatLng *sw, LatLng *ne) const {
       continue;
     }
 
-    for (int i = 0; i < (int) polygon.size(); ++i) {
-      const LatLng &point = polygon[i];
+    for (const LatLng &point : polygon) {
       min_latitude = std::min(min_latitude, point.latitude());
       max_latitude = std::max(max_latitude, point.latitude());
       min_longitude = std::min(min_longitude, point.longitude());

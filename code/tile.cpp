@@ -32,48 +32,18 @@
 #include <assert.h>
 #include <stdlib.h>
 
-Tile::Tile(int width, int height, Elevation *samples,
-           float minLat, float minLng, float maxLat, float maxLng) {
+Tile::Tile(int width, int height, Elevation *samples) {
   mWidth = width;
   mHeight = height;
   mSamples = samples;
-  mMinLat = minLat;
-  mMinLng = minLng;
-  mMaxLat = maxLat;
-  mMaxLng = maxLng;
   
-  mLngDistanceScale = nullptr;
   mMaxElevation = 0;
 
-  precomputeTileAfterLoad();
+  recomputeMaxElevation();
 }
 
 Tile::~Tile() {
   free(mSamples);
-  free(mLngDistanceScale);
-}
-
-void Tile::setLatLng(float latitude, float longitude, Elevation elevation) {
-  Offsets offsets = toOffsets(latitude, longitude);
-  int x = offsets.x();
-  int y = offsets.y();
-  
-  assert(x >= 0);
-  assert(x < mWidth);
-  assert(y >= 0);
-  assert(y < mHeight);
-
-  mSamples[y * mWidth + x] = elevation;
-}
-
-bool Tile::isInExtents(float latitude, float longitude) const {
-  Offsets offsets = toOffsets(latitude, longitude);
-  return isInExtents(offsets.x(), offsets.y());
-}
-
-int Tile::numVerticalSamplesForDistance(float distance) const {
-  // Degree of latitude is about 111km
-  return (int) (ceil(distance / 111000 * mHeight));
 }
 
 void Tile::flipElevations() {
@@ -85,34 +55,8 @@ void Tile::flipElevations() {
   }
 }
 
-void Tile::precomputeTileAfterLoad() {
-  // Precompute max elevation
-  recomputeMaxElevation();
-  
-  // Precompute distance scale factors
-  mLngDistanceScale = (float *) malloc(sizeof(float) * mHeight);
-  for (int y = 0; y < mHeight; ++y) {
-    LatLng point(latlng(Offsets(0, y)));
-    mLngDistanceScale[y] = cosf(degToRad(point.latitude()));
-  }
-}
-
 void Tile::recomputeMaxElevation() {
   mMaxElevation = computeMaxElevation();
-}
-
-LatLng Tile::latlng(Offsets pos)  const {
-  float latitude = mMaxLat - (mMaxLat - mMinLat) * (((float) pos.y()) / (mHeight - 1));
-  float longitude = mMinLng + (mMaxLng - mMinLng) * (((float) pos.x()) / (mWidth - 1));
-  return LatLng(latitude, longitude);
-}
-
-Offsets Tile::toOffsets(float latitude, float longitude) const {
-  // Samples are edge-centered; OK to go half a pixel outside a corner
-  int x = (int) ((longitude - mMinLng) * (mWidth - 1) + 0.5);
-  int y = (int) ((mMaxLat - latitude) * (mHeight - 1) + 0.5);
-
-  return Offsets(x, y);
 }
 
 Elevation Tile::computeMaxElevation() const {

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+#include "coordinate_system.h"
 #include "filter.h"
-#include "peakbagger_collection.h"
 #include "point_map.h"
 #include "prominence_task.h"
 #include "ThreadPool.h"
@@ -35,22 +35,24 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+// TODO: Make a common header for this
 #ifdef PLATFORM_LINUX
 #include <unistd.h>
 #endif
 #ifdef PLATFORM_WINDOWS
 #include "getopt-win.h"
 #endif
+#include <cassert>
 #include <cmath>
-#include <set>
 
 using std::ceil;
 using std::floor;
-using std::set;
 using std::string;
 using std::vector;
 
 INITIALIZE_EASYLOGGINGPP
+
+static const int NO_UTM_ZONE = -1;
 
 static void usage() {
   printf("Usage:\n");
@@ -60,10 +62,9 @@ static void usage() {
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"GLO30\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
-  printf("  -p filename       Peakbagger peak database file for matching\n");
   printf("  -t num_threads    Number of threads, default = 1\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
   exit(1);
@@ -72,7 +73,6 @@ static void usage() {
 int main(int argc, char **argv) {
   string terrain_directory(".");
   string output_directory(".");
-  string peakbagger_filename;
   string polygonFilename;
 
   int minProminence = 300;
@@ -84,7 +84,8 @@ int main(int argc, char **argv) {
   int ch;
   string str;
   bool antiprominence = false;
-  while ((ch = getopt(argc, argv, "af:i:k:m:o:p:t:")) != -1) {
+  int utmZone = NO_UTM_ZONE;
+  while ((ch = getopt(argc, argv, "af:i:k:m:o:t:z:")) != -1) {
     switch (ch) {
     case 'a':
       antiprominence = true;
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
     case 'f': {
       auto format = FileFormat::fromName(optarg);
       if (format == nullptr) {
-        printf("Unknown file format %s\n", optarg);
+        LOG(ERROR) << "Unknown file format " << optarg;
         usage();
       }
 
@@ -117,12 +118,13 @@ int main(int argc, char **argv) {
       output_directory = optarg;
       break;
 
-    case 'p':
-      peakbagger_filename = optarg;
-      break;
-
     case 't':
       numThreads = atoi(optarg);
+      break;
+
+    case 'z':
+      utmZone = atoi(optarg);
+      assert((utmZone > 0 && utmZone <= 60) && "UTM zone out of range");
       break;
     }
   }
@@ -134,29 +136,17 @@ int main(int argc, char **argv) {
     usage();
   }
 
-  // Load Peakbagger database?
-  PeakbaggerCollection pb_collection;
-  PointMap *peakbagger_peaks = new PointMap();
-  if (!peakbagger_filename.empty()) {
-    printf("Loading peakbagger database\n");
-    if (!pb_collection.Load(peakbagger_filename)) {
-      printf("Couldn't load peakbagger database from %s\n", peakbagger_filename.c_str());
-      exit(1);
-    }
-
-    // Put Peakbagger peaks in spatial structure
-    const vector<PeakbaggerPoint> &pb_peaks = pb_collection.points();
-    for (int i = 0; i < (int) pb_peaks.size(); ++i) {
-      peakbagger_peaks->insert(&pb_peaks[i]);
-    }
+  if (fileFormat.isUtm() && utmZone == NO_UTM_ZONE) {
+    LOG(ERROR) << "You must specify a UTM zone with this format";
+    exit(1);
   }
-  
+
   float bounds[4];
   for (int i = 0; i < 4; ++i) {
     char *endptr;
     bounds[i] = strtof(argv[i], &endptr);
     if (*endptr != 0) {
-      printf("Couldn't parse argument %d as number: %s\n", i + 1, argv[i]);
+      LOG(ERROR) << "Couldn't parse argument " << i + 1 << " as number: " << argv[i];
       usage();
     }
   }
@@ -164,8 +154,13 @@ int main(int argc, char **argv) {
   // Load filtering polygon
   Filter filter;
   if (!polygonFilename.empty()) {
+    if (fileFormat.isUtm()) {
+      LOG(ERROR) << "Can't specify a filter polygon with UTM data";
+      exit(1);
+    }
+    
     if (!filter.addPolygonsFromKml(polygonFilename)) {
-      printf("Couldn't load KML polygon from %s\n",polygonFilename.c_str());
+      LOG(ERROR) << "Couldn't load KML polygon from " << polygonFilename;
       exit(1);
     }
   }
@@ -173,15 +168,17 @@ int main(int argc, char **argv) {
   // Caching doesn't do anything for our calculation and the tiles are huge
   BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
   policy.enableNeighborEdgeLoading(true);
+  if (utmZone != NO_UTM_ZONE) {
+    policy.setUtmZone(utmZone);
+  }
   const int CACHE_SIZE = 2;
-  TileCache *cache = new TileCache(&policy, peakbagger_peaks, CACHE_SIZE);
+  auto cache = std::make_unique<TileCache>(&policy, CACHE_SIZE);
   
-  set<Offsets::Value> tilesToSkip;
-  tilesToSkip.insert(Offsets(47, -87).value());  // in Lake Superior; lots of fake peaks
-
   VLOG(2) << "Using " << numThreads << " threads";
+  VLOG(2) << "Bounds are " << bounds[0] << " " << bounds[1] << " "
+          << bounds[2] << " " << bounds[3];
   
-  ThreadPool *threadPool = new ThreadPool(numThreads);
+  auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
   float lat = bounds[0];
@@ -190,28 +187,25 @@ int main(int argc, char **argv) {
     while (lng < bounds[3]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
-      if (wrappedLng >= 180) {
+      if (!fileFormat.isUtm() && wrappedLng >= 180) {
         wrappedLng -= 360;
       }
+
+      std::shared_ptr<CoordinateSystem> coordinateSystem(
+        fileFormat.coordinateSystemForOrigin(lat, wrappedLng, utmZone));
 
       // Skip tiles that don't intersect filtering polygon
       if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
                              lng, lng + fileFormat.degreesAcross())) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
-        // Skip some very slow tiles known to have no peaks
-        Offsets coords(static_cast<int>(lat), static_cast<int>(lng));
-        if (tilesToSkip.find(coords.value()) != tilesToSkip.end()) {
-          VLOG(1) << "Skipping slow tile " << lat << " " << lng;
-        } else {
-          // Actually calculate prominence
-          ProminenceTask *task = new ProminenceTask(
-            cache, output_directory, minProminence);
-          task->setAntiprominence(antiprominence);
-          results.push_back(threadPool->enqueue([=] {
-                return task->run(lat, wrappedLng);
-              }));
-        }
+        // Actually calculate prominence
+        ProminenceTask *task = new ProminenceTask(
+          cache.get(), output_directory, minProminence);
+        task->setAntiprominence(antiprominence);
+        results.push_back(threadPool->enqueue([=] {
+              return task->run(lat, wrappedLng, *coordinateSystem);
+            }));
       }
 
       lng += fileFormat.degreesAcross();
@@ -226,10 +220,6 @@ int main(int argc, char **argv) {
   }
     
   printf("Tiles processed = %d\n", num_tiles_processed);
-
-  delete threadPool;
-  delete cache;
-  delete peakbagger_peaks;
 
   return 0;
 }

@@ -31,7 +31,7 @@
 
 #include <string>
 
-// Responsible for loading a tile given lat/lng.
+// Responsible for loading a tile given location.
 
 class TileLoadingPolicy {
 public:
@@ -54,12 +54,17 @@ public:
   // This is disabled by default.
   void enableNeighborEdgeLoading(bool enabled);
 
+  // The UTM zone is used when loading UTM-based tiles.  In such cases,
+  // the latitude will be treated as northing, and the longitude as easting.
+  void setUtmZone(int utmZone);
+
   virtual Tile *loadTile(float minLat, float minLng) const;
 
 private:
   std::string mDirectory;  // Directory for loading tiles
   FileFormat mFileFormat;  
   bool mNeighborEdgeLoadingEnabled;
+  int mUtmZone;
 
   // Load tile without modifications
   Tile *loadInternal(float minLat, float minLng) const;

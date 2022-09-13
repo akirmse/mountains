@@ -45,8 +45,9 @@ CFLAGS = $(CNORMALFLAGS)
 LINKFLAGS = $(LINKNORMALFLAGS)
 !endif
 
-POINTLIB = $(OUTDIR)/pointlib.a
+COORDLIB = $(OUTDIR)/coordlib.a
 LOADERLIB = $(OUTDIR)/loaderlib.a
+POINTLIB = $(OUTDIR)/pointlib.a
 
 POINTLIB_OBJS = \
 	$(OUTDIR)/point.obj \
@@ -58,6 +59,11 @@ LOADERLIB_OBJS = \
 	$(OUTDIR)/glo_loader.obj \
 	$(OUTDIR)/hgt_loader.obj \
 
+COORDLIB_OBJS = \
+	$(OUTDIR)/coordinate_system.obj \
+	$(OUTDIR)/degree_coordinate_system.obj \
+	$(OUTDIR)/utm_coordinate_system.obj \
+
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.obj \
 	$(OUTDIR)/file_format.obj \
@@ -67,26 +73,15 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/isolation_task.obj \
 	$(OUTDIR)/latlng.obj \
 	$(OUTDIR)/peak_finder.obj \
-	$(OUTDIR)/peakbagger_collection.obj \
-	$(OUTDIR)/peakbagger_point.obj \
 	$(OUTDIR)/point_map.obj \
 	$(OUTDIR)/tile.obj \
 	$(OUTDIR)/tile_cache.obj \
 	$(OUTDIR)/tile_loading_policy.obj \
 	$(POINTLIB) \
 	$(LOADERLIB) \
-
-PEAKBAGGER_ISOLATION_MAPPER_OBJS = \
-	$(OUTDIR)/isolation_collection.obj \
-	$(OUTDIR)/isolation_point.obj \
-	$(OUTDIR)/latlng.obj \
-	$(OUTDIR)/peakbagger_collection.obj \
-	$(OUTDIR)/peakbagger_isolation_mapper.obj \
-	$(OUTDIR)/peakbagger_point.obj \
-	$(POINTLIB) \
+	$(COORDLIB) \
 
 PROMINENCE_OBJS = \
-	$(OUTDIR)/coordinate_system.obj \
 	$(OUTDIR)/divide_tree.obj \
 	$(OUTDIR)/domain_map.obj \
 	$(OUTDIR)/easylogging++.obj \
@@ -96,8 +91,6 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/kml_writer.obj \
 	$(OUTDIR)/latlng.obj \
 	$(OUTDIR)/line_tree.obj \
-	$(OUTDIR)/peakbagger_collection.obj \
-	$(OUTDIR)/peakbagger_point.obj \
 	$(OUTDIR)/point_map.obj \
 	$(OUTDIR)/prominence.obj \
 	$(OUTDIR)/prominence_task.obj \
@@ -107,9 +100,9 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/tree_builder.obj \
 	$(POINTLIB) \
 	$(LOADERLIB) \
+	$(COORDLIB) \
 
 MERGE_DIVIDE_TREES_OBJS = \
-	$(OUTDIR)/coordinate_system.obj \
 	$(OUTDIR)/divide_tree.obj \
 	$(OUTDIR)/easylogging++.obj \
 	$(OUTDIR)/island_tree.obj \
@@ -119,6 +112,7 @@ MERGE_DIVIDE_TREES_OBJS = \
 	$(OUTDIR)/merge_divide_trees.obj \
 	$(OUTDIR)/tile.obj \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 FILTER_POINTS_OBJS = \
 	$(OUTDIR)/easylogging++.obj \
@@ -127,7 +121,6 @@ FILTER_POINTS_OBJS = \
 	$(POINTLIB) \
 
 COMPUTE_PARENTS_OBJS = \
-	$(OUTDIR)/coordinate_system.obj \
 	$(OUTDIR)/divide_tree.obj \
 	$(OUTDIR)/easylogging++.obj \
 	$(OUTDIR)/island_tree.obj \
@@ -135,10 +128,12 @@ COMPUTE_PARENTS_OBJS = \
 	$(OUTDIR)/line_tree.obj \
 	$(OUTDIR)/compute_parents.obj \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 all : makedirs \
 	$(OUTDIR)/isolation.exe \
-	$(OUTDIR)/prominence.exe $(OUTDIR)/merge_divide_trees.exe \
+	$(OUTDIR)/prominence.exe \
+	$(OUTDIR)/merge_divide_trees.exe \
 	$(OUTDIR)/filter_points.exe \
 	$(OUTDIR)/compute_parents.exe \
 
@@ -146,6 +141,9 @@ $(POINTLIB): $(POINTLIB_OBJS)
 	$(AR) /OUT:$@ $**
 
 $(LOADERLIB): $(LOADERLIB_OBJS)
+	$(AR) /OUT:$@ $**
+
+$(COORDLIB): $(COORDLIB_OBJS)
 	$(AR) /OUT:$@ $**
 
 $(OUTDIR)/isolation.exe: $(ISOLATION_OBJS)

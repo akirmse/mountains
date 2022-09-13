@@ -47,18 +47,19 @@
 // * Compute runoffs around the edge of the tile, and add runoff->peak
 // edges to the divide tree by walking uphill from each runoff.
 
+#include <memory>
 #include <stack>
 #include <vector>
 #include "primitives.h"
 #include "domain_map.h"
 #include "tile.h"
 
+class CoordinateSystem;
 class DivideTree;
-
 
 class TreeBuilder {
 public:
-  explicit TreeBuilder(const Tile *tile);
+  TreeBuilder(const Tile *tile, const CoordinateSystem &coordinateSystem);
 
   DivideTree *buildDivideTree();
   
@@ -85,6 +86,7 @@ private:
   std::stack<Offsets> mPendingStack;  // member var to avoid frequent allocations
   
   const Tile *mTile;
+  std::unique_ptr<CoordinateSystem> mCoordinateSystem;
 
   // Find peaks, saddles, runoffs
   void findExtrema();

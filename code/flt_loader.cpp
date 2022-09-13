@@ -38,8 +38,9 @@ static const int FLT_EXTRA_BORDER = 6;
 // while NED19 uses some very negative value (< -1e38).
 static const float NED_NODATA_MIN_ELEVATION = -9998;
 
-FltLoader::FltLoader(const FileFormat &format) {
+FltLoader::FltLoader(const FileFormat &format, int utmZone) {
   mFormat = format;
+  mUtmZone = utmZone;
 }
 
 Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minLng) {
@@ -49,6 +50,7 @@ Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minL
     return loadFromNEDZipFileInternal(directory, minLat, minLng);
 
   case FileFormat::Value::NED19:
+  case FileFormat::Value::THREEDEP_1M:
     return loadFromFltFile(directory, minLat, minLng);
 
   default:
@@ -69,7 +71,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
     return nullptr;
   }
 
-  const int rawSideLength = mFormat.samplesAcross();
+  const int rawSideLength = mFormat.rawSamplesAcross();
   const int tileSideLength = rawSideLength - 2 * FLT_EXTRA_BORDER + 1;
   int num_raw_samples = rawSideLength * rawSideLength;
   
@@ -104,15 +106,12 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
       }
     }
   }
-  
-  if (samples != nullptr) {
-    float tileSpan = mFormat.degreesAcross();
-    retval = new Tile(tileSideLength, tileSideLength, samples,
-                      minLat, minLng, minLat + tileSpan, minLng + tileSpan);
-  }
-
   delete [] inbuf;
   fclose(infile);
+
+  if (samples != nullptr) {
+    retval = new Tile(tileSideLength, tileSideLength, samples);
+  }
 
   return retval;  
 }
@@ -185,6 +184,12 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
              (minLng >= 0) ? 'e' : 'w',
              abs(static_cast<int>(minLng)),
              fractionalDegree(minLng));
+    break;
+
+  case FileFormat::Value::THREEDEP_1M:
+    // Note order: X (lng), then Y (lat)
+    snprintf(buf, sizeof(buf), "USGS_1M_%02d_x%02dy%03d.flt",
+             mUtmZone, static_cast<int>(minLng), static_cast<int>(minLat));
     break;
     
   default:

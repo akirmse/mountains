@@ -44,8 +44,9 @@ CFLAGS = $(CNORMALFLAGS)
 LINKFLAGS = $(LINKNORMALFLAGS)
 endif
 
-POINTLIB = $(OUTDIR)/pointlib.a
+COORDLIB = $(OUTDIR)/coordlib.a
 LOADERLIB = $(OUTDIR)/loaderlib.a
+POINTLIB = $(OUTDIR)/pointlib.a
 
 POINTLIB_OBJS = \
 	$(OUTDIR)/point.o \
@@ -57,6 +58,11 @@ LOADERLIB_OBJS = \
 	$(OUTDIR)/glo_loader.o \
 	$(OUTDIR)/hgt_loader.o \
 
+COORDLIB_OBJS = \
+	$(OUTDIR)/coordinate_system.o \
+	$(OUTDIR)/degree_coordinate_system.o \
+	$(OUTDIR)/utm_coordinate_system.o \
+
 ISOLATION_OBJS = \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/file_format.o \
@@ -66,17 +72,15 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/isolation_task.o \
 	$(OUTDIR)/latlng.o \
 	$(OUTDIR)/peak_finder.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
 	$(OUTDIR)/point_map.o \
 	$(OUTDIR)/tile.o \
 	$(OUTDIR)/tile_cache.o \
 	$(OUTDIR)/tile_loading_policy.o \
 	$(LOADERLIB) \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 PROMINENCE_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
 	$(OUTDIR)/divide_tree.o \
 	$(OUTDIR)/domain_map.o \
 	$(OUTDIR)/easylogging++.o \
@@ -86,8 +90,6 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/kml_writer.o \
 	$(OUTDIR)/latlng.o \
 	$(OUTDIR)/line_tree.o \
-	$(OUTDIR)/peakbagger_collection.o \
-	$(OUTDIR)/peakbagger_point.o \
 	$(OUTDIR)/point_map.o \
 	$(OUTDIR)/prominence.o \
 	$(OUTDIR)/prominence_task.o \
@@ -97,9 +99,9 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/tree_builder.o \
 	$(LOADERLIB) \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 MERGE_DIVIDE_TREES_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
 	$(OUTDIR)/divide_tree.o \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/island_tree.o \
@@ -109,6 +111,7 @@ MERGE_DIVIDE_TREES_OBJS = \
 	$(OUTDIR)/merge_divide_trees.o \
 	$(OUTDIR)/tile.o \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 FILTER_POINTS_OBJS = \
 	$(OUTDIR)/easylogging++.o \
@@ -117,7 +120,6 @@ FILTER_POINTS_OBJS = \
 	$(POINTLIB) \
 
 COMPUTE_PARENTS_OBJS = \
-	$(OUTDIR)/coordinate_system.o \
 	$(OUTDIR)/divide_tree.o \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/island_tree.o \
@@ -125,6 +127,7 @@ COMPUTE_PARENTS_OBJS = \
 	$(OUTDIR)/line_tree.o \
 	$(OUTDIR)/compute_parents.o \
 	$(POINTLIB) \
+	$(COORDLIB) \
 
 
 all : makedirs $(OUTDIR)/isolation $(OUTDIR)/prominence $(OUTDIR)/merge_divide_trees \
@@ -134,6 +137,9 @@ $(POINTLIB) : $(POINTLIB_OBJS)
 	$(AR) $@ $^ 
 
 $(LOADERLIB): $(LOADERLIB_OBJS)
+	$(AR) $@ $^ 
+
+$(COORDLIB): $(COORDLIB_OBJS)
 	$(AR) $@ $^ 
 
 $(OUTDIR)/isolation: $(ISOLATION_OBJS)
@@ -170,79 +176,3 @@ clean:
 depend:
 	makedepend -Y -p'$(OUTDIR)/' *.cpp
 	@$(RM) Makefile.bak
-
-# DO NOT DELETE
-
-debug/compute_parents.o: divide_tree.h coordinate_system.h primitives.h
-debug/compute_parents.o: latlng.h island_tree.h line_tree.h util.h
-debug/compute_parents.o: easylogging++.h
-debug/coordinate_system.o: coordinate_system.h primitives.h latlng.h
-debug/divide_tree.o: divide_tree.h coordinate_system.h primitives.h latlng.h
-debug/divide_tree.o: easylogging++.h island_tree.h kml_writer.h line_tree.h
-debug/divide_tree.o: util.h
-debug/domain_map.o: domain_map.h tile.h primitives.h latlng.h pixel_array.h
-debug/domain_map.o: easylogging++.h
-debug/filter.o: easylogging++.h filter.h latlng.h util.h
-debug/filter_points.o: easylogging++.h filter.h latlng.h util.h
-debug/flt_loader.o: flt_loader.h tile_loader.h tile.h primitives.h latlng.h
-debug/flt_loader.o: util.h easylogging++.h
-debug/glo_loader.o: glo_loader.h tile_loader.h tile.h primitives.h latlng.h
-debug/glo_loader.o: util.h easylogging++.h
-debug/hgt_loader.o: hgt_loader.h tile_loader.h tile.h primitives.h latlng.h
-debug/hgt_loader.o: util.h easylogging++.h
-debug/island_tree.o: island_tree.h primitives.h divide_tree.h
-debug/island_tree.o: coordinate_system.h latlng.h easylogging++.h
-debug/island_tree.o: kml_writer.h
-debug/isolation.o: isolation_task.h tile_cache.h lock.h lrucache.h
-debug/isolation.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/isolation.o: tile_loading_policy.h peakbagger_collection.h
-debug/isolation.o: peakbagger_point.h quadtree.h ThreadPool.h easylogging++.h
-debug/isolation_finder.o: isolation_finder.h tile_cache.h lock.h lrucache.h
-debug/isolation_finder.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/isolation_finder.o: tile_loading_policy.h easylogging++.h math_util.h
-debug/isolation_point.o: isolation_point.h point.h latlng.h
-debug/isolation_results.o: isolation_results.h latlng.h
-debug/isolation_task.o: isolation_finder.h tile_cache.h lock.h lrucache.h
-debug/isolation_task.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/isolation_task.o: tile_loading_policy.h isolation_task.h
-debug/isolation_task.o: isolation_results.h peak_finder.h easylogging++.h
-debug/kml_writer.o: kml_writer.h primitives.h coordinate_system.h latlng.h
-debug/latlng.o: latlng.h math_util.h
-debug/line_tree.o: line_tree.h primitives.h divide_tree.h coordinate_system.h
-debug/line_tree.o: latlng.h easylogging++.h
-debug/merge_divide_trees.o: divide_tree.h coordinate_system.h primitives.h
-debug/merge_divide_trees.o: latlng.h island_tree.h easylogging++.h
-debug/multi_source_loading_policy.o: multi_source_loading_policy.h
-debug/multi_source_loading_policy.o: tile_loading_policy.h tile.h
-debug/multi_source_loading_policy.o: primitives.h latlng.h
-debug/peak_finder.o: peak_finder.h tile.h primitives.h latlng.h
-debug/peakbagger_collection.o: peakbagger_collection.h peakbagger_point.h
-debug/peakbagger_collection.o: point.h quadtree.h
-debug/peakbagger_point.o: peakbagger_point.h point.h
-debug/point.o: point.h
-debug/point_map.o: point_map.h point.h easylogging++.h
-debug/prominence.o: filter.h latlng.h peakbagger_collection.h
-debug/prominence.o: peakbagger_point.h point.h quadtree.h point_map.h
-debug/prominence.o: prominence_task.h tile_cache.h lock.h lrucache.h tile.h
-debug/prominence.o: primitives.h tile_loading_policy.h ThreadPool.h
-debug/prominence.o: easylogging++.h
-debug/prominence_collection.o: prominence_collection.h prominence_point.h
-debug/prominence_collection.o: point.h latlng.h quadtree.h
-debug/prominence_point.o: prominence_point.h point.h latlng.h
-debug/prominence_task.o: prominence_task.h tile_cache.h lock.h lrucache.h
-debug/prominence_task.o: point_map.h point.h tile.h primitives.h latlng.h
-debug/prominence_task.o: tile_loading_policy.h divide_tree.h
-debug/prominence_task.o: coordinate_system.h island_tree.h tree_builder.h
-debug/prominence_task.o: domain_map.h pixel_array.h easylogging++.h
-debug/quadtree.o: quadtree.h point.h
-debug/tile.o: tile.h primitives.h latlng.h math_util.h util.h easylogging++.h
-debug/tile_cache.o: tile_cache.h lock.h lrucache.h point_map.h point.h tile.h
-debug/tile_cache.o: primitives.h latlng.h tile_loading_policy.h
-debug/tile_cache.o: peakbagger_point.h easylogging++.h
-debug/tile_loading_policy.o: tile_loading_policy.h tile.h primitives.h
-debug/tile_loading_policy.o: latlng.h flt_loader.h tile_loader.h util.h
-debug/tile_loading_policy.o: easylogging++.h glo_loader.h hgt_loader.h
-debug/tree_builder.o: tree_builder.h primitives.h domain_map.h tile.h
-debug/tree_builder.o: latlng.h pixel_array.h divide_tree.h
-debug/tree_builder.o: coordinate_system.h easylogging++.h
-debug/util.o: util.h

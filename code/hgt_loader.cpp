@@ -78,9 +78,7 @@ Tile *HgtLoader::loadTile(const std::string &directory, float minLat, float minL
       }
     }
 
-    // Tile is 1 square degree
-    retval = new Tile(HGT_TILE_SIZE, HGT_TILE_SIZE, samples,
-                      minLat, minLng, minLat + 1, minLng + 1);
+    retval = new Tile(HGT_TILE_SIZE, HGT_TILE_SIZE, samples);
   }
   
   fclose(infile);

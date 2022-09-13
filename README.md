@@ -120,6 +120,46 @@ usage: run_glo_prominence.py [-h] [--tile_dir TILE_DIR]
                              min_lat max_lat min_lng max_lng
 ```
 
+#### USGS 1m terrain
+
+This LIDAR-based data is high resolution, but has spotty coverage.  This is raw LIDAR data converted
+into a regular 1m grid.  It is delivered as TIFF files
+in the UTM projection, not lat/lng coordinates. The tiles must be converted to FLT format
+before running the prominence program on them.
+
+The data was collected in medium-scale areas, such as a county, and the tiles are organized into
+"projects" based on collection.  Thus, it is generally not possible to merge the tiles from multiple
+projects with each other.  You must be very careful interpreting the results, as any peaks whose
+key cols are outside of the project's coverage will have incorrect prominence.  You can browse
+the coverage [here](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1m/Projects/).
+
+There is a script in the ```scripts``` subdirectory that can automate the downloading and conversion of tiles,
+followed by running the prominence program on them.
+
+```
+usage: run_3dep1m_prominence.py [-h] --tile_dir TILE_DIR --output_dir
+                                OUTPUT_DIR --project PROJECT --zone ZONE
+                                [--prominence_command PROMINENCE_COMMAND]
+                                [--threads THREADS]
+                                min_x max_x min_y max_y
+```
+
+Note that you must specify the UTM zone (which can be inferred from the filenames of tiles in the project),
+the project name (like "CA_SantaClaraCounty_2020_A20"), and the coordinates are specified as X/Y in UTM, with units of 10,000 meters. 
+These X and Y coordinates also correspond to the naming of the tiles.
+
+#### Data summary
+
+
+| Name | Resolution | Coverage | Projection | Download |
+-------|------------|----------|------------|----------|
+| SRTM   | 90m        | global   | lat/lng |[Link](viewfinderpanoramas.com) |
+| NED1   | 30m        | US, Canada, Mexico | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1/) |
+| GLO-30 | 30m        | global minus Azerbaijan and Armenia | lat/lng | [Link](https://registry.opendata.aws/copernicus-dem/) |
+| NED13  | 10m        | US       | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/13)|
+| NED19  | 3m         | partial US | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/19) |
+| 3DEP1m | 1m         | partial US | UTM | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1m/Projects/) |
+
 ### Isolation
 
 ```
@@ -158,9 +198,12 @@ that can be viewed in Google Earth.  The unpruned trees are generally
 too large to be merged or to load into Earth.  Use the pruned versions
 (identified by "pruned" in their filenames).
 
-Next, merge the resultant divide trees into a single, larger divide
+Next, merge the resultant pruned divide trees into a single, larger divide
 tree.  If there are thousands of input files, it will be much faster
-to do this in multiple stages.
+to do this in multiple stages.  At the final stage, when you no longer
+need to do any merging, specify the "-f" flag to remove runoffs.  This
+will get rid of "junk" peaks around the edges, but you will not be able
+to further merge the resultant divide tree.
 
 ```
 merge_divide_trees output_file_prefix input_file [...]

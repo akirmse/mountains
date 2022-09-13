@@ -23,36 +23,23 @@
  */
 
 /*
- * A rectangular grid of terrain samples, equally spaced in lat/lng space.
+ * A rectangular grid of terrain samples, without a geographic reference.
  */
 
 #ifndef _TILE_H_
 #define _TILE_H_
 
 #include "primitives.h"
-#include "latlng.h"
-
-#include <vector>
-#include <string>
 
 class Tile {
 public:
 
   // Tile takes ownership of samples, which will be deallocated later via free().
-  Tile(int width, int height, Elevation *samples,
-       float minLat, float minLng, float maxLat, float maxLng);
+  Tile(int width, int height, Elevation *samples);
   ~Tile();
   
   int width() const { return mWidth; }
   int height() const { return mHeight; }
-
-  // Coordinates of corners; note that samples are edge-centered and extend
-  // half a pixel outside this.  Use isInExtents to know if coordinates are
-  // inside tile's extents.
-  float minLatitude() const { return mMinLat; }
-  float maxLatitude() const { return mMaxLat; }
-  float minLongitude() const { return mMinLng; }
-  float maxLongitude() const { return mMaxLng; }
 
   bool isInExtents(int x, int y) const {
     return (x >= 0) && (x < mWidth) && (y >= 0) && (y < mHeight);
@@ -60,7 +47,6 @@ public:
   bool isInExtents(Offsets offsets) const {
     return isInExtents(offsets.x(), offsets.y());
   }
-  bool isInExtents(float latitude, float longitude) const;
   
   Elevation get(Offsets offsets) const {
     return get(offsets.x(), offsets.y());
@@ -74,32 +60,9 @@ public:
     mSamples[y * mWidth + x] = elevation;
   }
   
-  // latitude and longitude must be in our extents
-  void setLatLng(float latitude, float longitude, Elevation elevation);
-  
   Elevation maxElevation() const {
     return mMaxElevation;
   }
-
-  // After setting some values, need to recompute max, which is cached
-  void recomputeMaxElevation();
-  
-  // Return LatLng for given offset into tile
-  LatLng latlng(Offsets pos) const;
-
-  // Return pixel offsets into tile matching given coordinates
-  Offsets toOffsets(float latitude, float longitude) const;
-  
-  // Return a scale factor in [0, 1] that should be multipled by any
-  // x distance at the given row, to account for the tile samples being
-  // progressively squished in height as latitude increases.
-  float distanceScaleForRow(int y) const {
-    return mLngDistanceScale[y];
-  }
-
-  // Return the number of samples in the vertical (latitude) direction
-  // guaranteed to cover the given distance in meters
-  int numVerticalSamplesForDistance(float distance) const;
 
   // Flip elevations so that depressions and mountains are swapped.
   // No-data values are left unchanged.
@@ -114,25 +77,13 @@ private:
   int mWidth;
   int mHeight;
 
-  float mMinLat;
-  float mMinLng;
-  float mMaxLat;
-  float mMaxLng;
-
-  // An array with one entry per row of the tile.
-  // Each entry is a scale factor in [0, 1] that should be multiplied by
-  // any distance in the longitude (x) direction.  This compensates for
-  // lines of longitude getting closer as latitude increases.  The value
-  // of the factor is the cosine of the latitude of the row.
-  float *mLngDistanceScale;
-
   Elevation mMaxElevation;
   
   Elevation *mSamples;
 
-  // Precompute some internal values after tile is loaded with samples
-  void precomputeTileAfterLoad();
-  
+  // After setting some values, need to recompute max, which is cached
+  void recomputeMaxElevation();
+
   Elevation computeMaxElevation() const;
 };
 
