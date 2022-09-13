@@ -120,7 +120,7 @@ usage: run_glo_prominence.py [-h] [--tile_dir TILE_DIR]
                              min_lat max_lat min_lng max_lng
 ```
 
-#### USGS 1m terrain
+#### USGS 1m terrain ("3DEP" = 3D Elevation Program)
 
 This LIDAR-based data is high resolution, but has spotty coverage.  This is raw LIDAR data converted
 into a regular 1m grid.  It is delivered as TIFF files
@@ -177,6 +177,9 @@ This will generate one output text file per input tile, containing the
 isolation of peaks in that tile.  The files can be merged and sorted
 with standard command-line utilities.
 
+The isolation calculation is currently limited to SRTM input data, though
+it could fairly easily be extended to the other data sets.
+
 ### Prominence
 
 First, generate divide trees for tiles of interest:
@@ -187,7 +190,7 @@ prominence -- <min latitude> <max latitude> <min longitude> <max longitude>
   Options:
   -i directory      Directory with terrain data
   -o directory      Directory for output data
-  -f format         "SRTM", "NED13-ZIP", "NED1-ZIP", "GLO30" input files
+  -f format         "SRTM", "NED13-ZIP", "NED1-ZIP", "NED19", "3DEP-1M", "GLO30" input files
   -k filename       File with KML polygon to filter input tiles
   -m min_prominence Minimum prominence threshold for output, default = 300ft
   -t num_threads    Number of threads, default = 1
