@@ -31,4 +31,8 @@ inline float degToRad(float degrees) {
   return static_cast<float>(degrees * M_PI / 180);
 }
 
+inline float radToDeg(float radians) {
+   return static_cast<float>(radians / M_PI * 180.0);
+}
+
 #endif  // _MATH_UTIL_H_

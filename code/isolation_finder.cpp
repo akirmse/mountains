@@ -27,7 +27,6 @@
 #include "coordinate_system.h"
 #include "easylogging++.h"
 #include "math_util.h"
-#include "point.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -139,8 +138,8 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
     // Found any higher ground in this ring?
     if (record.foundHigherGround && !hasHigherGroundBeenFound) {
       // Find bounding box that encloses all samples as close as nearest higher ground so far
-      Point peakPoint(peakLocation.latitude(), peakLocation.longitude());
-      vector<Point> corners = peakPoint.GetBoundingBoxForCap(record.distance);
+      LatLng peakPoint(peakLocation.latitude(), peakLocation.longitude());
+      vector<LatLng> corners = peakPoint.GetBoundingBoxForCap(record.distance);
       
       // Rounds towards minus infinity (tiles named by lower left corner)
       bottomLat = static_cast<int>(floor(corners[0].latitude()));

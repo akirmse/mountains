@@ -57,20 +57,20 @@ Quadtree::Quadtree(int max_level) {
    mCells.resize(1ULL << (2 * max_level));
 }
 
-void Quadtree::Insert(const Point &p) {
+void Quadtree::Insert(const LatLng &p) {
    int index = GetIndexForLatLng(p.latitude(), p.longitude());
    if (mCells[index] == NULL)
-      mCells[index] = new vector<const Point *>();
+      mCells[index] = new vector<const LatLng *>();
    mCells[index]->push_back(&p);
 }
 
-void Quadtree::InsertAll(const vector<Point> &points) {
-   for (const Point &point : points) {
+void Quadtree::InsertAll(const vector<LatLng> &points) {
+   for (const LatLng &point : points) {
       Insert(point);
    }
 }
 
-bool Quadtree::Remove(const Point *point) {
+bool Quadtree::Remove(const LatLng *point) {
    int index = GetIndexForLatLng(point->latitude(), point->longitude());
    Cell *cell = mCells[index];
    if (cell != NULL) {
@@ -86,7 +86,7 @@ bool Quadtree::Remove(const Point *point) {
 }
    
 
-void Quadtree::Lookup(const Point &p, std::vector<const Point *> *neighbors,
+void Quadtree::Lookup(const LatLng &p, std::vector<const LatLng *> *neighbors,
                       float threshold_meters) const {
    int p_index = GetIndexForLatLng(p.latitude(), p.longitude());
    set<int> indices;
@@ -96,17 +96,17 @@ void Quadtree::Lookup(const Point &p, std::vector<const Point *> *neighbors,
    // cap threshold_meters across, and computing the node indices for
    // the four corners.  Uniquify them, since some (or all) of the
    // corners may be in the same node.
-   vector<Point> box = p.GetBoundingBoxForCap(threshold_meters);
+   vector<LatLng> box = p.GetBoundingBoxForCap(threshold_meters);
    indices.insert(GetIndexForLatLng(box[0].latitude(), box[0].longitude()));
    indices.insert(GetIndexForLatLng(box[0].latitude(), box[1].longitude()));
    indices.insert(GetIndexForLatLng(box[1].latitude(), box[0].longitude()));
    indices.insert(GetIndexForLatLng(box[1].latitude(), box[1].longitude()));
 
    for (auto index : indices) {
-      vector<const Point *> *points = mCells[index];
+      vector<const LatLng *> *points = mCells[index];
       if (points != NULL) {
          for (auto point : *points) {
-            if (p.DistanceTo(*point) <= threshold_meters) {
+            if (p.distance(*point) <= threshold_meters) {
                neighbors->push_back(point);
             }
          }
