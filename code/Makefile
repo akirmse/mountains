@@ -49,7 +49,7 @@ LOADERLIB = $(OUTDIR)/loaderlib.a
 POINTLIB = $(OUTDIR)/pointlib.a
 
 POINTLIB_OBJS = \
-	$(OUTDIR)/point.o \
+	$(OUTDIR)/latlng.o \
 	$(OUTDIR)/quadtree.o \
 	$(OUTDIR)/util.o \
 
@@ -70,7 +70,6 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/isolation_finder.o \
 	$(OUTDIR)/isolation_results.o \
 	$(OUTDIR)/isolation_task.o \
-	$(OUTDIR)/latlng.o \
 	$(OUTDIR)/peak_finder.o \
 	$(OUTDIR)/point_map.o \
 	$(OUTDIR)/tile.o \
@@ -88,7 +87,6 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/file_format.o \
 	$(OUTDIR)/island_tree.o \
 	$(OUTDIR)/kml_writer.o \
-	$(OUTDIR)/latlng.o \
 	$(OUTDIR)/line_tree.o \
 	$(OUTDIR)/point_map.o \
 	$(OUTDIR)/prominence.o \
@@ -106,7 +104,6 @@ MERGE_DIVIDE_TREES_OBJS = \
 	$(OUTDIR)/easylogging++.o \
 	$(OUTDIR)/island_tree.o \
 	$(OUTDIR)/kml_writer.o \
-	$(OUTDIR)/latlng.o \
 	$(OUTDIR)/line_tree.o \
 	$(OUTDIR)/merge_divide_trees.o \
 	$(OUTDIR)/tile.o \

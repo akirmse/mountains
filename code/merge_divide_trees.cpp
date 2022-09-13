@@ -26,14 +26,9 @@
 
 #include "divide_tree.h"
 #include "island_tree.h"
-#ifdef PLATFORM_LINUX
-#include <unistd.h>
-#endif
-#ifdef PLATFORM_WINDOWS
-#include "getopt-win.h"
-#endif
 
 #include "easylogging++.h"
+#include "getopt.h"
 
 INITIALIZE_EASYLOGGINGPP
 

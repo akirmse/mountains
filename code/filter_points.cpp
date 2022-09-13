@@ -26,15 +26,9 @@
 
 #include "easylogging++.h"
 #include "filter.h"
+#include "getopt.h"
 #include "latlng.h"
 #include "util.h"
-
-#ifdef PLATFORM_LINUX
-#include <unistd.h>
-#endif
-#ifdef PLATFORM_WINDOWS
-#include "getopt-win.h"
-#endif
 
 #include <fstream>
 #include <string>
