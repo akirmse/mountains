@@ -45,7 +45,7 @@ PointMap::~PointMap() {
   }
 }
 
-void PointMap::insert(const Point *point) {
+void PointMap::insert(const LatLng *point) {
   // We want a peak just on the left or top edge to be included with
   // the tile to its right or bottom, respectively.
   // TODO: This epsilon value depends on the pixels per tile; it's half a pixel width.  Need to get from tile?

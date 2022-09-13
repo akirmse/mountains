@@ -25,6 +25,15 @@
 #include "latlng.h"
 
 #include "math_util.h"
+#include <assert.h>
+#include <math.h>
+#include <algorithm>
+
+static const float kEarthRadiusMeters = 6371.01 * 1000.0;
+static const float kMinLatRadians = (float) -M_PI / 2;
+static const float kMaxLatRadians = (float) M_PI / 2;
+static const float kMinLngRadians = (float) -M_PI;
+static const float kMaxLngRadians = (float) M_PI;
 
 float LatLng::distance(const LatLng &other) const {
   // See http://www.movable-type.co.uk/scripts/latlong.html
@@ -85,4 +94,35 @@ float LatLng::bearingTo(const LatLng &other) const {
   float term1 = sinf(deltaLng) * cosf(lat2);
   float term2 = cosf(lat1) * sinf(lat2) - sinf(lat1) * cosf(lat2) * cosf(deltaLng);
   return atan2f(term1, term2);
+}
+
+std::vector<LatLng> LatLng::GetBoundingBoxForCap(float distance_meters) const {
+   assert(distance_meters >= 0);
+   
+   // angular distance in radians on a great circle
+   float radDist = distance_meters / kEarthRadiusMeters;
+   float radLat = degToRad(mLatitude);
+   float radLon = degToRad(mLongitude);
+   float minLat = radLat - radDist;
+   float maxLat = radLat + radDist;
+   
+   float minLon, maxLon;
+   if (minLat > kMinLatRadians && maxLat < kMaxLatRadians) {
+      float deltaLon = asinf(sinf(radDist) / cosf(radLat));
+      minLon = radLon - deltaLon;
+      if (minLon < kMinLngRadians) minLon += static_cast<float>(2 * M_PI);
+      maxLon = radLon + deltaLon;
+      if (maxLon > kMaxLngRadians) maxLon -= static_cast<float>(2 * M_PI);
+   } else {
+      // a pole is within the distance
+      minLat = std::max(minLat, kMinLatRadians);
+      maxLat = std::min(maxLat, kMaxLatRadians);
+      minLon = kMinLngRadians;
+      maxLon = kMaxLngRadians;
+   }
+
+   std::vector<LatLng> box;
+   box.push_back(LatLng(radToDeg(minLat), radToDeg(minLon)));
+   box.push_back(LatLng(radToDeg(maxLat), radToDeg(maxLon)));
+   return box;
 }

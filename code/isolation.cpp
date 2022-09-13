@@ -30,15 +30,10 @@
 #include "tile_loading_policy.h"
 
 #include "easylogging++.h"
+#include "getopt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef PLATFORM_LINUX
-#include <unistd.h>
-#endif
-#ifdef PLATFORM_WINDOWS
-#include "getopt-win.h"
-#endif
 #include <cmath>
 #include <set>
 

@@ -32,16 +32,10 @@
 #include "tile_loading_policy.h"
 
 #include "easylogging++.h"
+#include "getopt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-// TODO: Make a common header for this
-#ifdef PLATFORM_LINUX
-#include <unistd.h>
-#endif
-#ifdef PLATFORM_WINDOWS
-#include "getopt-win.h"
-#endif
 #include <cassert>
 #include <cmath>
 

@@ -28,7 +28,7 @@
 
 #include <vector>
 
-#include "point.h"
+#include "latlng.h"
 
 class Quadtree {
 public:
@@ -38,28 +38,28 @@ public:
 
    // Insert the given point to the quadtree.
    // A copy is not made; the point must live as long as the quadtree.
-   void Insert(const Point &p);
+   void Insert(const LatLng &p);
 
    // Insert all of the points into the quadtree
-   void InsertAll(const std::vector<Point> &points);
+   void InsertAll(const std::vector<LatLng> &points);
 
    // Remove the point with the given ID at the given position.
    // Return true if it was found and removed.
-   bool Remove(const Point *point);
+   bool Remove(const LatLng *point);
    
    // Find all points in the tree within threshold meters of the given
    // one, and put them in "neighbors".
    //
    // threshold_meters must be no larger than the smallest edge of a
    // leaf quadtree cell, or else some neighbors may be missed.
-   void Lookup(const Point &p, std::vector<const Point *> *neighbors,
+   void Lookup(const LatLng &p, std::vector<const LatLng *> *neighbors,
                float threshold_meters) const;
    
 private:
    int GetIndexForLatLng(double lat, double lng) const;
 
    int mMaxLevel;
-   typedef std::vector<const Point *> Cell;
+   typedef std::vector<const LatLng *> Cell;
    std::vector<Cell *> mCells;
 };
 

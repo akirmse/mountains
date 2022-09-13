@@ -22,17 +22,17 @@
  * SOFTWARE.
  */
 
-#ifndef _MATH_UTIL_H_
-#define _MATH_UTIL_H_
+#ifndef _GETOPT_H_
+#define _GETOPT_H_
 
-#include <math.h>
+// Platform-independent include for getopt()
 
-inline float degToRad(float degrees) {
-  return static_cast<float>(degrees * M_PI / 180);
-}
+#ifdef PLATFORM_LINUX
+#include <unistd.h>
+#endif
+#ifdef PLATFORM_WINDOWS
+#include "getopt-win.h"
+#endif
 
-inline float radToDeg(float radians) {
-   return static_cast<float>(radians / M_PI * 180.0);
-}
 
-#endif  // _MATH_UTIL_H_
+#endif  // _GETOPT_H_

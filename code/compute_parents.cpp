@@ -35,15 +35,10 @@
 #include "line_tree.h"
 #include "util.h"
 
-#include <numeric>
-#ifdef PLATFORM_LINUX
-#include <unistd.h>
-#endif
-#ifdef PLATFORM_WINDOWS
-#include "getopt-win.h"
-#endif
-
 #include "easylogging++.h"
+#include "getopt.h"
+
+#include <numeric>
 
 INITIALIZE_EASYLOGGINGPP
 

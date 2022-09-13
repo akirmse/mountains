@@ -26,7 +26,7 @@
 #ifndef _POINT_MAP_H
 #define _POINT_MAP_H
 
-#include "point.h"
+#include "latlng.h"
 
 #include <vector>
 
@@ -34,12 +34,12 @@
 
 class PointMap {
 public:
-  typedef std::vector<const Point *> Bucket;
+  typedef std::vector<const LatLng *> Bucket;
 
   PointMap();
   ~PointMap();
 
-  void insert(const Point *point);
+  void insert(const LatLng *point);
 
   Bucket *lookup(float lat, float lng) const;
   
