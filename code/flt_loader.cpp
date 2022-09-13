@@ -189,7 +189,7 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
   case FileFormat::Value::THREEDEP_1M:
     // Note order: X (lng), then Y (lat)
     snprintf(buf, sizeof(buf), "USGS_1M_%02d_x%02dy%03d.flt",
-             mUtmZone, static_cast<int>(minLng), static_cast<int>(upperLat));
+             mUtmZone, static_cast<int>(minLng), static_cast<int>(minLat));
     break;
     
   default:

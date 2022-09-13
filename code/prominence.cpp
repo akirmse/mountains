@@ -175,6 +175,8 @@ int main(int argc, char **argv) {
   auto cache = std::make_unique<TileCache>(&policy, CACHE_SIZE);
   
   VLOG(2) << "Using " << numThreads << " threads";
+  VLOG(2) << "Bounds are " << bounds[0] << " " << bounds[1] << " "
+          << bounds[2] << " " << bounds[3];
   
   auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
@@ -185,7 +187,7 @@ int main(int argc, char **argv) {
     while (lng < bounds[3]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
-      if (wrappedLng >= 180) {
+      if (!fileFormat.isUtm() && wrappedLng >= 180) {
         wrappedLng -= 360;
       }
 

@@ -99,12 +99,12 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, in
   }
 
   case Value::THREEDEP_1M:
-    // 10km x 10km tiles
+    // 10km x 10km tiles, NW corner
     return new UtmCoordinateSystem(utmZone,
                                    static_cast<int>(lng * 10000),
-                                   static_cast<int>(lat * 10000),
+                                   static_cast<int>((lat - 1) * 10000),
                                    static_cast<int>((lng + 1) * 10000),
-                                   static_cast<int>((lat + 1) * 10000),
+                                   static_cast<int>(lat * 10000),
                                    1.0f);
     
   default:
