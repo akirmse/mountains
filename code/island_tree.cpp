@@ -47,7 +47,7 @@ void IslandTree::build() {
     // Initially, we're the only peak on our prominence island
     mNodes[index].saddlePeakId = index;
     mNodes[index].keySaddleId = Node::Null;
-    mNodes[index].prominence = Node::Null;
+    mNodes[index].prominence = Node::UnknownProminence;
   }
 
   // Now rearrange the topology, pushing higher peaks up the tree

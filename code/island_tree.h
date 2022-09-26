@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-#include "primitives.h"
+#include "divide_tree.h"
 
 class DivideTree;
 
@@ -40,10 +40,11 @@ public:
   struct Node {
     int parentId;  // Higher peak
     int saddlePeakId;  // Peak with highest saddle connected to us
-    int prominence;  // Null if not known
+    int prominence;  // UnknownProminence if not known
     int keySaddleId;  // Null if no key saddle
     
-    static const int Null = -1;
+    static const int Null = DivideTree::Node::Null;
+    static const int UnknownProminence = -99999;
   };
 
   explicit IslandTree(const DivideTree &divideTree);

@@ -162,7 +162,7 @@ void DivideTree::prune(int minProminence, const IslandTree &islandTree) {
       // Peak has below min prominence?
       const IslandTree::Node &iNode = islandTree.nodes()[peakId];
       if (deletedPeakIndices.find(peakId - 1) == deletedPeakIndices.end() &&
-          iNode.prominence != IslandTree::Node::Null &&
+          iNode.prominence != IslandTree::Node::UnknownProminence &&
           iNode.prominence < minProminence) {
         const auto range = neighbors.equal_range(peakId);
         if (range.first == range.second) {
