@@ -43,7 +43,7 @@ IsolationFinder::IsolationFinder(TileCache *cache, const Tile *tile,
 }
 
 IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
-  int elev = mTile->get(peak);
+  Elevation elev = mTile->get(peak);
   LatLng peakLocation(mCoordinateSystem->getLatLng(peak));
 
   // Get minimum lat/lng of tile
@@ -355,7 +355,7 @@ IsolationRecord IsolationFinder::checkNeighboringTile(float lat, float lng, cons
   VLOG(2) << "Possibly considering neighbor tile " << lat << " " << lng;
   
   // Don't even bother loading tile if we know if's all lower ground
-  int maxElevation;
+  Elevation maxElevation;
   if (mCache->getMaxElevation(lat, lng, &maxElevation) && elev > maxElevation) {
     return IsolationRecord();
   }

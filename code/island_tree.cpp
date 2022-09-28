@@ -141,7 +141,7 @@ void IslandTree::uninvertSaddle(int nodeId) {
 
 void IslandTree::computeProminences() {
   for (int i = 1; i < (int) mNodes.size(); ++i) {
-    int elev = getPeak(i).elevation;
+    Elevation elev = getPeak(i).elevation;
     int childNodeId = i;
     int parentNodeId = mNodes[i].parentId; 
     // Find first higher peak in parent chain
@@ -188,7 +188,8 @@ const vector<IslandTree::Node> &IslandTree::nodes() const {
   return mNodes;
 }
 
-bool IslandTree::point2IsHigher(int point1Elevation, int point1Id, int point2Elevation, int point2Id) {
+bool IslandTree::point2IsHigher(Elevation point1Elevation, int point1Id,
+                                Elevation point2Elevation, int point2Id) {
   return point1Elevation < point2Elevation ||
     (point1Elevation == point2Elevation && point1Id < point2Id);
 }

@@ -418,7 +418,7 @@ vector<Offsets> TreeBuilder::walkUpToPeak(Offsets startPoint) {
       DomainMap::Boundary boundary;
       mDomainMap.findFlatArea(point.x(), point.y(), &boundary);
 
-      int highestElevation = mTile->get(point);
+      Elevation highestElevation = mTile->get(point);
       for (auto value : boundary.higherPoints) {
         Offsets neighbor(value);
         if (mTile->get(neighbor) > highestElevation) {
@@ -458,7 +458,7 @@ const TreeBuilder::PerSaddleInfo &TreeBuilder::getSaddleInfo(DomainMap::Pixel do
 }
 
 Offsets TreeBuilder::findSteepestNeighbor(Offsets point) const {
-  int maxElev = -30000;
+  Elevation maxElev = -30000;
   Offsets maxPoint = point;
   for (int dy = -1; dy <= 1; ++dy) {
     for (int dx = -1; dx <= 1; ++dx) {

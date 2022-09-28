@@ -89,7 +89,7 @@ int DivideTree::maybeAddEdge(int peakId1, int peakId2, int saddleId) {
   assert(lowestSaddleNode1 != Node::Null);
   assert(mNodes[lowestSaddleNode1].saddleId != Node::Null);
   
-  int lowestSaddleElevation = getSaddle(mNodes[lowestSaddleNode1].saddleId).elevation;
+  Elevation lowestSaddleElevation = getSaddle(mNodes[lowestSaddleNode1].saddleId).elevation;
   int lowestSaddleNodeId = lowestSaddleNode1;
   if (lowestSaddleNodeId == Node::Null ||
       (lowestSaddleNode2 != Node::Null && getSaddle(mNodes[lowestSaddleNode2].saddleId).elevation < lowestSaddleElevation)) {
@@ -181,7 +181,7 @@ void DivideTree::prune(int minProminence, const IslandTree &islandTree) {
         // Safe to delete peak only if our highest saddle doesn't have min prominence.
         bool deletePeak = false;
         int ownerOfSaddleToDelete = Node::Null;
-        int highestSaddleElevation = 0;
+        Elevation highestSaddleElevation = 0;
         for (auto it = range.first; it != range.second; ++it) {
           int neighborPeakId = it->second;
           int saddleOwnerPeakId = (neighborPeakId == node.parentId) ? peakId : neighborPeakId;
@@ -734,7 +734,7 @@ void DivideTree::removePeak(int peakId, int neighborPeakId) {
       // highest neighboring saddle, which is somewhat expensive to
       // find.
       VLOG(3) << "Rare case of removing peak with no saddle to neighbor";
-      int highestSaddleElevation = 0;
+      Elevation highestSaddleElevation = 0;
       // Saddle to parent?
       if (mNodes[peakId].parentId != Node::Null) {
         neighborPeakId = mNodes[peakId].parentId;
@@ -745,7 +745,7 @@ void DivideTree::removePeak(int peakId, int neighborPeakId) {
       for (int nodeId = 1; nodeId < (int) mNodes.size(); ++nodeId) {
         const Node &node = mNodes[nodeId];
         if (node.parentId == peakId) {
-          int elevation = getSaddle(node.saddleId).elevation;
+          Elevation elevation = getSaddle(node.saddleId).elevation;
           if (elevation > highestSaddleElevation) {
             highestSaddleElevation = elevation;
             neighborPeakId = nodeId;

@@ -31,7 +31,8 @@ using std::vector;
 IsolationResults::IsolationResults() {
 }
 
-void IsolationResults::addResult(const LatLng &peakLocation, int elevation, const LatLng &higherLocation, float isolationKm) {
+void IsolationResults::addResult(const LatLng &peakLocation, Elevation elevation,
+                                 const LatLng &higherLocation, float isolationKm) {
   IsolationResult result;
   result.peak = peakLocation;
   result.peakElevation = elevation;
@@ -73,7 +74,7 @@ IsolationResults *IsolationResults::loadFromFile(const string &directory, float 
   IsolationResult result;
   while (!feof(file)) {
     float peakLatitude, peakLongitude, higherLatitude, higherLongitude;
-    if (fscanf(file, "%f,%f,%d,%f,%f,%f\n",
+    if (fscanf(file, "%f,%f,%hd,%f,%f,%f\n",
                &peakLatitude, &peakLongitude, &result.peakElevation,
                &higherLatitude, &higherLongitude,
                &result.isolationKm) != 6) {

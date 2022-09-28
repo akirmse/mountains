@@ -69,8 +69,8 @@ bool LineTree::writeToFile(const std::string &filename) const {
 
   for (int i = 1; i < (int) mNodes.size(); ++i) {
     const Node &node = mNodes[i];
-    int elev = getPeak(i).elevation;
-    int parentElev = -1;
+    Elevation elev = getPeak(i).elevation;
+    Elevation parentElev = -1;
     if (node.parentId != Node::Null) {
       parentElev = getPeak(node.parentId).elevation;
     }
@@ -127,7 +127,7 @@ void LineTree::computeOffMapSaddleProminence() {
       for (int nid = peakId; nid != nodeId; nid = mNodes[nid].parentId) {
         int saddleOwnerId = mNodes[nid].saddleId;
         Node *saddleOwnerNode = &mNodes[saddleOwnerId];
-        int saddleElevation = getSaddleForPeakId(saddleOwnerId).elevation;
+        Elevation saddleElevation = getSaddleForPeakId(saddleOwnerId).elevation;
         SaddleInfo *saddleInfo = &mSaddleInfo[getDivideTreeNode(saddleOwnerId).saddleId - 1];
         if (saddleElevation <= lowestSaddleElevation &&
             saddleInfo->saddleProminence == UNDEFINED_ELEVATION) {
@@ -220,7 +220,7 @@ void LineTree::computeOnMapSaddleProminence() {
         Node *saddleOwnerNode = &mNodes[saddleOwnerId];
         lowestSaddleElevation = std::min(mNodes[nid].lowestElevationSaddleChildDir,
                                          mNodes[mNodes[nid].parentId].lowestElevationSaddleParentDir);
-        int saddleElevation = getSaddleForPeakId(saddleOwnerId).elevation;
+        Elevation saddleElevation = getSaddleForPeakId(saddleOwnerId).elevation;
         SaddleInfo *saddleInfo = &mSaddleInfo[getDivideTreeNode(saddleOwnerId).saddleId - 1];
         if (saddleElevation <= lowestSaddleElevation &&
             saddleInfo->saddleProminence == UNDEFINED_ELEVATION) {

@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
       }
 
       // Flip elevations (if computing anti-prominence)
-      int elevation = peak.elevation;
+      Elevation elevation = peak.elevation;
       if (flipElevations) {
         elevation = -elevation;
       }
