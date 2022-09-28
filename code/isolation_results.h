@@ -29,6 +29,7 @@
 // Stores isolation results for a region, and serializes them.
 
 #include "latlng.h"
+#include "primitives.h"
 #include <string>
 #include <vector>
 
@@ -36,8 +37,8 @@ class IsolationResults {
 public:
   IsolationResults();
 
-  void addResult(const LatLng &peakLocation, int elevationMeters, const LatLng &higherLocation,
-                 float isolationKm);
+  void addResult(const LatLng &peakLocation, Elevation elevationMeters,
+                 const LatLng &higherLocation, float isolationKm);
 
   bool save(const std::string &directory, float lat, float lng) const;
 
@@ -47,7 +48,7 @@ private:
   struct IsolationResult {
     LatLng peak;
     LatLng higher;
-    int peakElevation;
+    Elevation peakElevation;
     float isolationKm;    
   };
   

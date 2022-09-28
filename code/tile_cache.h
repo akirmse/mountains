@@ -51,7 +51,7 @@ public:
 
   // If we've ever loaded the tile with the given minimum lat/lng, set elev to its maximum
   // elevation and return true, otherwise return false.
-  bool getMaxElevation(float lat, float lng, int *elev);
+  bool getMaxElevation(float lat, float lng, Elevation *elev);
   
 private:
 
@@ -59,7 +59,7 @@ private:
   lru_cache<int, Tile *> mCache;
   TileLoadingPolicy *mLoadingPolicy;
   // Map of encoded lat/lng to max elevation in that tile
-  std::unordered_map<int, int> mMaxElevations;
+  std::unordered_map<int, Elevation> mMaxElevations;
 
   Tile *loadInternal(float minLat, float minLng) const;
   

@@ -69,7 +69,7 @@ public:
   void flipElevations();
 
   // Missing data in source
-  static const Elevation NODATA_ELEVATION = -32768;
+  static constexpr Elevation NODATA_ELEVATION = -32768;
   
 private:
   Tile();

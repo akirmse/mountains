@@ -40,11 +40,11 @@ public:
   struct Node {
     int parentId;  // Higher peak
     int saddlePeakId;  // Peak with highest saddle connected to us
-    int prominence;  // UnknownProminence if not known
+    Elevation prominence;  // UnknownProminence if not known
     int keySaddleId;  // Null if no key saddle
     
     static const int Null = DivideTree::Node::Null;
-    static const int UnknownProminence = -99999;
+    static constexpr Elevation UnknownProminence = -32767;
   };
 
   explicit IslandTree(const DivideTree &divideTree);
@@ -77,7 +77,8 @@ private:
 
   // Return true if point2 is higher than point1.  The point IDs are used
   // to provide a total ordering (i.e. break ties on elevation).
-  bool point2IsHigher(int point1Elevation, int point1Id, int point2Elevation, int point2Id);
+  bool point2IsHigher(Elevation point1Elevation, int point1Id,
+                      Elevation point2Elevation, int point2Id);
 };
 
 #endif  // _ISLAND_TREE_H_

@@ -130,7 +130,7 @@ Tile *TileCache::loadWithoutCaching(float minLat, float minLng,
   return tile;
 }
 
-bool TileCache::getMaxElevation(float lat, float lng, int *elev) {
+bool TileCache::getMaxElevation(float lat, float lng, Elevation *elev) {
   assert(elev != nullptr);
 
   bool retval = true;
