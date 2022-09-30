@@ -50,7 +50,7 @@ static void usage() {
   printf("  compute_parents divide_tree.dvt output_file\n");
   printf("\n");
   printf("  Options:\n");
-  printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
+  printf("  -m min_prominence Minimum prominence threshold for output, default = 100\n");
   exit(1);
 }
 
@@ -65,7 +65,7 @@ static string argsToString(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  int minProminence = 300;
+  Elevation minProminence = 100;
 
   auto commandLine = argsToString(argc, argv);
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
   while ((ch = getopt(argc, argv, "m:")) != -1) {
     switch (ch) {
     case 'm':
-      minProminence = static_cast<int>(atoi(optarg));
+      minProminence = static_cast<Elevation>(atof(optarg));
       break;
     }
   }
