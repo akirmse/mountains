@@ -256,21 +256,12 @@ void DivideTree::prune(Elevation minProminence, const IslandTree &islandTree) {
     }
   }
 
-  // peakDeletionOffsets[i] tells how much to subtract to go from
-  // pre-deletion peak index i to post-deletion peak index.
+  // Compute offsets to account for deletions
   vector<int> peakDeletionOffsets(mPeaks.size(), 0);
-  for (int index : deletedPeakIndices) {
-    for (int i = index; i < (int) peakDeletionOffsets.size(); ++i) {
-      peakDeletionOffsets[i] += 1;
-    }
-  }
-  // Same for saddle deletions
+  computeDeletionOffsets(deletedPeakIndices, peakDeletionOffsets);
+
   vector<int> saddleDeletionOffsets(mSaddles.size(), 0);
-  for (int index : deletedSaddleIndices) {
-    for (int i = index; i < (int) saddleDeletionOffsets.size(); ++i) {
-      saddleDeletionOffsets[i] += 1;
-    }
-  }
+  computeDeletionOffsets(deletedSaddleIndices, saddleDeletionOffsets);
 
   // Compact peak / saddle / node arrays to deal with deletions
   removeVectorElementsByIndices(&mSaddles, deletedSaddleIndices); 
@@ -924,4 +915,31 @@ string DivideTree::getAsKml() const {
   writer.endFolder();
 
   return writer.finish();
+}
+
+void DivideTree::computeDeletionOffsets(const unordered_set<int> &deletedIndices,
+                                        vector<int> &deletionOffsets) const {
+  if (deletedIndices.empty()) {
+    return;
+  }
+  
+  // deletionOffsets[i] tells how much to subtract to go from
+  // pre-deletion index i to post-deletion index.
+
+  vector<int> sortedDeletedIndices(deletedIndices.begin(), deletedIndices.end());
+  std::sort(sortedDeletedIndices.begin(), sortedDeletedIndices.end());
+  int offset = 1;
+  for (int i = 0; i < (int) sortedDeletedIndices.size() - 1; ++i) {
+    int deletedIndex = sortedDeletedIndices[i];
+    int nextDeletedIndex = sortedDeletedIndices[i + 1];
+    for (int index = deletedIndex; index < nextDeletedIndex; ++index) {
+      deletionOffsets[index] = offset;
+    }
+    offset += 1;
+  }
+  
+  // Part of array past the last deleted index
+  for (int index = sortedDeletedIndices.back(); index < deletionOffsets.size(); ++index) {
+    deletionOffsets[index] = offset;      
+  }
 }

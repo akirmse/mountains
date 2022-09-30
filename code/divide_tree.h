@@ -146,7 +146,14 @@ private:
   void removePeak(int peakId, int neighborPeakId);
   
   std::string getKmlForSaddle(const Saddle &saddle, const char *styleUrl, int index) const;
-  
+
+  // Given a set of indices to delete, build up a vector that tells, for each individual
+  // index, how many deleted indices are <= the given index.  So if deletedIndices is
+  // { 3, 5, 6 }, deletionOffsets might end up [0, 0, 0, 1, 1, 2, 3, 3, 3].
+  // deletionOffsets must be initialized to a vector of 0s of the desired length.
+  void computeDeletionOffsets(const std::unordered_set<int> &deletedIndices,
+                              std::vector<int> &deletionOffsets) const;
+
   // Indices start at 1; use these helper functions to deal with offset.
   const Peak &getPeak(int peakId) const;
   const Saddle &getSaddle(int saddleId) const;

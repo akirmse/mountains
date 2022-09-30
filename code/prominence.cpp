@@ -61,6 +61,7 @@ static void usage() {
   printf("  -m min_prominence Minimum prominence threshold for output\n");
   printf("                    in same units as terrain data, default = 100\n");
   printf("  -t num_threads    Number of threads, default = 1\n");
+  printf("  -z                UTM zone (if input data is in UTM)\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
   exit(1);
 }
