@@ -192,7 +192,9 @@ prominence -- <min latitude> <max latitude> <min longitude> <max longitude>
   -o directory      Directory for output data
   -f format         "SRTM", "NED13-ZIP", "NED1-ZIP", "NED19", "3DEP-1M", "GLO30" input files
   -k filename       File with KML polygon to filter input tiles
-  -m min_prominence Minimum prominence threshold for output, default = 300ft
+  -m min_prominence Minimum prominence threshold for output
+                    in same units as terrain data, default = 100
+  -z                UTM zone (if input data is in UTM)
   -t num_threads    Number of threads, default = 1
 ```
 
@@ -215,7 +217,7 @@ merge_divide_trees output_file_prefix input_file [...]
 
   Options:
   -f                Finalize output tree: delete all runoffs and then prune
-  -m min_prominence Minimum prominence threshold for output, default = 300ft
+  -m min_prominence Minimum prominence threshold for output, default = 100
 ```
 
 The output is a dvt file with the merged divide tree, and a text file
@@ -237,7 +239,7 @@ filter_points input_file polygon_file output_file
 
 The isolation file has one peak per line, in this format:
 
-latitude,longitude,elevation in feet,ILP latitude,ILP longitude,isolation in km
+latitude,longitude,elevation,ILP latitude,ILP longitude,isolation in km
 
 where ILP means isolation limit point.
 
@@ -245,9 +247,11 @@ A zip file with our isolation results for the world is [here](https://drive.goog
 
 The prominence file has one peak per line, in this format:
 
-latitude,longitude,elevation in feet,key saddle latitude,key saddle longitude,prominence in feet
+latitude,longitude,elevation,key saddle latitude,key saddle longitude,prominence
 
-A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing).
+The units of elevation and prominence are the same as the input terrain data.
+
+A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing), with elevations in feet.
 
 ## Prominence parents and line parents
 
@@ -262,7 +266,7 @@ Usage:
   compute_parents divide_tree.dvt output_file
 
   Options:
-  -m min_prominence Minimum prominence threshold for output, default = 300ft
+  -m min_prominence Minimum prominence threshold for output, default = 100
 ```
 
 The input divide tree must be free of runoffs (see the options to ```merge_divide_trees```).  The output will list a peak, its prominence
