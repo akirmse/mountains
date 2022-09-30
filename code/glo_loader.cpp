@@ -122,8 +122,7 @@ Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minL
       if (fabs(sample - COPERNICUS_NODATA_ELEVATION) < 0.01) {
         samples[index] = Tile::NODATA_ELEVATION;
       } else {
-        // Use feet internally; small unit avoids losing precision with external data
-        samples[index] = (Elevation) metersToFeet(sample);
+        samples[index] = sample;
       }
     }
   }

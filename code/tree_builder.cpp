@@ -74,6 +74,10 @@ DivideTree *TreeBuilder::buildDivideTree() {
 }
 
 void TreeBuilder::findExtrema() {
+  // Avoid VLOG locking in certain performance-critical loops
+  bool vlog2 = VLOG_IS_ON(2);
+  bool vlog4 = VLOG_IS_ON(4);
+  
   DomainMap::Boundary boundary;
   vector<Offsets> segmentHighPoints;
   for (int y = 0; y < mTile->height(); ++y) {
@@ -99,9 +103,11 @@ void TreeBuilder::findExtrema() {
         
         // TODO: Pick a point near the middle of the flat region
         mPeaks.push_back(Peak(Offsets(x, y), elev));
-        LatLng pos = mCoordinateSystem->getLatLng(Offsets(x, y));
-        VLOG(2) << "Peak #" << peakId << " at " << x << " " << y
-                << " at " << pos.latitude() << " " << pos.longitude();
+        if (vlog2) {  // Performance optimization
+          LatLng pos = mCoordinateSystem->getLatLng(Offsets(x, y));
+          VLOG(2) << "Peak #" << peakId << " at " << x << " " << y
+                  << " at " << pos.latitude() << " " << pos.longitude();
+        }
 
         continue;
       }
@@ -189,8 +195,10 @@ void TreeBuilder::findExtrema() {
       int numSegments = static_cast<int>(segmentHighPoints.size());
       if (numSegments < 2) {
         // Flat area, but not a saddle
-        VLOG(4) << "Rejecting flat area " << x << " " << y
-                << " elev " << elev << " multiplicity " << numSegments;
+        if (vlog4) {  // Performance optimization
+          VLOG(4) << "Rejecting flat area " << x << " " << y
+                  << " elev " << elev << " multiplicity " << numSegments;
+        }
         mDomainMap.fillFlatArea(x, y, DomainMap::GenericFlatArea);
         continue;
       }

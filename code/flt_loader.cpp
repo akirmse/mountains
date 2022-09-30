@@ -99,8 +99,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
           if (sample < NED_NODATA_MIN_ELEVATION) {
             samples[index] = Tile::NODATA_ELEVATION;
           } else {
-            // Use feet internally; small unit avoids losing precision with external data
-            samples[index] = (Elevation) metersToFeet(sample);
+            samples[index] = sample;
           }
         }
       }

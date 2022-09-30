@@ -74,7 +74,7 @@ bool LineTree::writeToFile(const std::string &filename) const {
     if (node.parentId != Node::Null) {
       parentElev = getPeak(node.parentId).elevation;
     }
-    fprintf(file, "%d,%d,%d,%d\n", i, elev, node.parentId, parentElev);
+    fprintf(file, "%d,%.2f,%d,%.2f\n", i, elev, node.parentId, parentElev);
   }
 
   fclose(file);

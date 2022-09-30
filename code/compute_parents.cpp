@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
       auto parentProm = islandNodes[parentId].prominence;
       auto &lineParentPeak = peaks[lineParentId - 1];
       LatLng lineParentPos = coords.getLatLng(lineParentPeak.location);
-      fprintf(file, "%.4f,%.4f,%d,%.4f,%.4f,%d,%.4f,%.4f,%d\n",
+      fprintf(file, "%.4f,%.4f,%.2f,%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
               childPos.latitude(), childPos.longitude(), prom,
               promParentPos.latitude(), promParentPos.longitude(), parentProm,
               lineParentPos.latitude(), lineParentPos.longitude(), lineParentPeak.elevation);

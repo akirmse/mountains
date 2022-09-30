@@ -58,8 +58,10 @@ static void usage() {
   printf("  -o directory      Directory for output data\n");
   printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
-  printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
+  printf("  -m min_prominence Minimum prominence threshold for output\n");
+  printf("                    in same units as terrain data, default = 100\n");
   printf("  -t num_threads    Number of threads, default = 1\n");
+  printf("  -z                UTM zone (if input data is in UTM)\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
   exit(1);
 }
@@ -69,7 +71,7 @@ int main(int argc, char **argv) {
   string output_directory(".");
   string polygonFilename;
 
-  int minProminence = 300;
+  Elevation minProminence = 100;
   int numThreads = 1;
   FileFormat fileFormat = FileFormat(FileFormat::Value::HGT);
 
@@ -105,7 +107,7 @@ int main(int argc, char **argv) {
       break;
 
     case 'm':
-      minProminence = atoi(optarg);
+      minProminence = static_cast<Elevation>(atof(optarg));
       break;
 
     case 'o':
@@ -159,6 +161,9 @@ int main(int argc, char **argv) {
     }
   }
 
+  // Don't write out unpruned divide tree--it's too large and slow
+  ProminenceOptions options = {output_directory, minProminence, false, antiprominence};
+  
   // Caching doesn't do anything for our calculation and the tiles are huge
   BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
   policy.enableNeighborEdgeLoading(true);
@@ -194,9 +199,7 @@ int main(int argc, char **argv) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Actually calculate prominence
-        ProminenceTask *task = new ProminenceTask(
-          cache.get(), output_directory, minProminence);
-        task->setAntiprominence(antiprominence);
+        ProminenceTask *task = new ProminenceTask(cache.get(), options);
         results.push_back(threadPool->enqueue([=] {
               return task->run(lat, wrappedLng, *coordinateSystem);
             }));

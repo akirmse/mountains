@@ -51,7 +51,7 @@ bool IsolationResults::save(const string &directory, float lat, float lng) const
   }
 
   for (auto it : mResults) {
-    fprintf(file, "%.4f,%.4f,%d,%.4f,%.4f,%.4f\n",
+    fprintf(file, "%.4f,%.4f,%.2f,%.4f,%.4f,%.4f\n",
             it.peak.latitude(), it.peak.longitude(), it.peakElevation,
             it.higher.latitude(), it.higher.longitude(),
             it.isolationKm);
@@ -74,7 +74,7 @@ IsolationResults *IsolationResults::loadFromFile(const string &directory, float 
   IsolationResult result;
   while (!feof(file)) {
     float peakLatitude, peakLongitude, higherLatitude, higherLongitude;
-    if (fscanf(file, "%f,%f,%hd,%f,%f,%f\n",
+    if (fscanf(file, "%f,%f,%f,%f,%f,%f\n",
                &peakLatitude, &peakLongitude, &result.peakElevation,
                &higherLatitude, &higherLongitude,
                &result.isolationKm) != 6) {

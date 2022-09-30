@@ -120,7 +120,7 @@ void DivideTree::addRunoffEdge(int peakId, int runoffId) {
   mRunoffEdges[runoffId] = peakId;
 }
 
-void DivideTree::prune(int minProminence, const IslandTree &islandTree) {
+void DivideTree::prune(Elevation minProminence, const IslandTree &islandTree) {
   // We'll need line tree to know whether it's safe to delete saddles
   LineTree lineTree(*this);
   lineTree.build();
@@ -256,21 +256,12 @@ void DivideTree::prune(int minProminence, const IslandTree &islandTree) {
     }
   }
 
-  // peakDeletionOffsets[i] tells how much to subtract to go from
-  // pre-deletion peak index i to post-deletion peak index.
+  // Compute offsets to account for deletions
   vector<int> peakDeletionOffsets(mPeaks.size(), 0);
-  for (int index : deletedPeakIndices) {
-    for (int i = index; i < (int) peakDeletionOffsets.size(); ++i) {
-      peakDeletionOffsets[i] += 1;
-    }
-  }
-  // Same for saddle deletions
+  computeDeletionOffsets(deletedPeakIndices, peakDeletionOffsets);
+
   vector<int> saddleDeletionOffsets(mSaddles.size(), 0);
-  for (int index : deletedSaddleIndices) {
-    for (int i = index; i < (int) saddleDeletionOffsets.size(); ++i) {
-      saddleDeletionOffsets[i] += 1;
-    }
-  }
+  computeDeletionOffsets(deletedSaddleIndices, saddleDeletionOffsets);
 
   // Compact peak / saddle / node arrays to deal with deletions
   removeVectorElementsByIndices(&mSaddles, deletedSaddleIndices); 
@@ -420,18 +411,20 @@ bool DivideTree::writeToFile(const std::string &filename) const {
 
   int index = 1;
   for (const Peak &peak : mPeaks) {
-    fprintf(file, "P,%d,%d,%d,%d\n", index++, peak.location.x(), peak.location.y(), peak.elevation);
+    fprintf(file, "P,%d,%d,%d,%.2f\n", index++, peak.location.x(), peak.location.y(),
+            peak.elevation);
   }
 
   index = 1;
   for (const Saddle &saddle : mSaddles) {
-    fprintf(file, "S,%d,%c,%d,%d,%d\n", index++, static_cast<char>(saddle.type),
+    fprintf(file, "S,%d,%c,%d,%d,%.2f\n", index++, static_cast<char>(saddle.type),
             saddle.location.x(), saddle.location.y(), saddle.elevation);
   }
 
   index = 0;
   for (const Runoff &runoff : mRunoffs) {
-    fprintf(file, "R,%d,%d,%d,%d,%d,%d\n", index++, runoff.location.x(), runoff.location.y(), runoff.elevation,
+    fprintf(file, "R,%d,%d,%d,%.2f,%d,%d\n", index++, runoff.location.x(), runoff.location.y(),
+            runoff.elevation,
             runoff.filledQuadrants, runoff.insidePeakArea ? 1 : 0);
   }
 
@@ -492,13 +485,14 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
       if (elements.size() != 5) {
         return nullptr;
       }
-      peaks.push_back(Peak(Offsets(stoi(elements[2]), stoi(elements[3])), stoi(elements[4])));
+      peaks.push_back(Peak(Offsets(stoi(elements[2]), stoi(elements[3])),
+                           stof(elements[4])));
       break;
     case 'S': {
       if (elements.size() != 6) {
         return nullptr;
       }
-      Saddle saddle(Offsets(stoi(elements[3]), stoi(elements[4])), stoi(elements[5]));
+      Saddle saddle(Offsets(stoi(elements[3]), stoi(elements[4])), stof(elements[5]));
       saddle.type = Saddle::typeFromChar(elements[2][0]);
       saddles.push_back(saddle);
       break;
@@ -507,7 +501,7 @@ DivideTree *DivideTree::readFromFile(const std::string &filename) {
       if (elements.size() != 7) {
         return nullptr;
       }
-      Runoff runoff(Offsets(stoi(elements[2]), stoi(elements[3])), stoi(elements[4]),
+      Runoff runoff(Offsets(stoi(elements[2]), stoi(elements[3])), stof(elements[4]),
                     stoi(elements[5]));
       runoff.insidePeakArea = (elements[6] == "1");
       runoffs.push_back(runoff);
@@ -921,4 +915,31 @@ string DivideTree::getAsKml() const {
   writer.endFolder();
 
   return writer.finish();
+}
+
+void DivideTree::computeDeletionOffsets(const unordered_set<int> &deletedIndices,
+                                        vector<int> &deletionOffsets) const {
+  if (deletedIndices.empty()) {
+    return;
+  }
+  
+  // deletionOffsets[i] tells how much to subtract to go from
+  // pre-deletion index i to post-deletion index.
+
+  vector<int> sortedDeletedIndices(deletedIndices.begin(), deletedIndices.end());
+  std::sort(sortedDeletedIndices.begin(), sortedDeletedIndices.end());
+  int offset = 1;
+  for (int i = 0; i < (int) sortedDeletedIndices.size() - 1; ++i) {
+    int deletedIndex = sortedDeletedIndices[i];
+    int nextDeletedIndex = sortedDeletedIndices[i + 1];
+    for (int index = deletedIndex; index < nextDeletedIndex; ++index) {
+      deletionOffsets[index] = offset;
+    }
+    offset += 1;
+  }
+  
+  // Part of array past the last deleted index
+  for (int index = sortedDeletedIndices.back(); index < (int) deletionOffsets.size(); ++index) {
+    deletionOffsets[index] = offset;      
+  }
 }

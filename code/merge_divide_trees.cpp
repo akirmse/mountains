@@ -43,7 +43,8 @@ static void usage() {
   printf("\n");
   printf("  Options:\n");
   printf("  -f                Finalize output tree: delete all runoffs and then prune\n");
-  printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
+  printf("  -m min_prominence Minimum prominence threshold for output\n");
+  printf("                    in same units as divide tree, default = 100\n");
   exit(1);
 }
 
@@ -76,7 +77,7 @@ static bool mergeTrees(DivideTree *tree1, DivideTree *tree2) {
 }
 
 int main(int argc, char **argv) {
-  int minProminence = 300;
+  Elevation minProminence = 100;
   bool finalize = false;
   bool flipElevations = false;
 
@@ -96,7 +97,7 @@ int main(int argc, char **argv) {
       break;
       
     case 'm':
-      minProminence = atoi(optarg);
+      minProminence = static_cast<Elevation>(atof(optarg));
       break;
     }
   }
@@ -188,7 +189,7 @@ int main(int argc, char **argv) {
         elevation = -elevation;
       }
 
-      fprintf(file, "%.4f,%.4f,%d,%.4f,%.4f,%d\n",
+      fprintf(file, "%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
               peakpos.latitude(), peakpos.longitude(), elevation,
               colpos.latitude(), colpos.longitude(),
               nodes[i].prominence);
