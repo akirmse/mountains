@@ -41,7 +41,7 @@ using std::string;
 using std::vector;
 
 ProminenceTask::ProminenceTask(TileCache *cache, const string &output_dir,
-                               int minProminence) {
+                               Elevation minProminence) {
   mCache = cache;
   mOutputDir = output_dir;
   mMinProminence = minProminence;
@@ -90,13 +90,12 @@ bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinat
   //
   // Write pruned divide tree
   //
-  
-  if (!divideTree->writeToFile(getFilenamePrefix() + "-divide_tree_pruned_" +
-                               std::to_string(mMinProminence) + ".dvt")) {
+
+  string pruned_name("divide_tree_pruned_" + std::to_string(int(mMinProminence)));
+  if (!divideTree->writeToFile(getFilenamePrefix() + "-" + pruned_name + ".dvt")) {
     LOG(ERROR) << "Failed to save pruned divide tree file";
   }
-  writeStringToOutputFile("divide_tree_pruned_" + std::to_string(mMinProminence) +
-                          ".kml", divideTree->getAsKml());
+  writeStringToOutputFile(pruned_name + ".kml", divideTree->getAsKml());
 
   delete divideTree;
 

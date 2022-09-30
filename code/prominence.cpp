@@ -58,7 +58,8 @@ static void usage() {
   printf("  -o directory      Directory for output data\n");
   printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
-  printf("  -m min_prominence Minimum prominence threshold for output, default = 300ft\n");
+  printf("  -m min_prominence Minimum prominence threshold for output\n");
+  printf("                    in same units as terrain data, default = 100\n");
   printf("  -t num_threads    Number of threads, default = 1\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
   exit(1);
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
   string output_directory(".");
   string polygonFilename;
 
-  int minProminence = 300;
+  Elevation minProminence = 100;
   int numThreads = 1;
   FileFormat fileFormat = FileFormat(FileFormat::Value::HGT);
 
@@ -105,7 +106,7 @@ int main(int argc, char **argv) {
       break;
 
     case 'm':
-      minProminence = atoi(optarg);
+      minProminence = static_cast<Elevation>(atof(optarg));
       break;
 
     case 'o':

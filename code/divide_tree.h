@@ -78,7 +78,7 @@ public:
   //
   // The given islandTree must contain up-to-date prominence values.
   // islandTree becomes invalid upon return, since the divide tree has been modified.
-  void prune(int minProminence, const IslandTree &islandTree);
+  void prune(Elevation minProminence, const IslandTree &islandTree);
 
   // Merge otherTree into this tree, splicing any matching runoffs.  The two trees
   // must already be in the same coordinate system (i.e. all location values are

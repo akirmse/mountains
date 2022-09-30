@@ -36,7 +36,7 @@ class CoordinateSystem;
 class ProminenceTask {
 public:
   ProminenceTask(TileCache *cache, const std::string &output_dir,
-                 int minProminence);
+                 Elevation minProminence);
 
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
@@ -50,7 +50,7 @@ public:
 private:
   TileCache *mCache;
   std::string mOutputDir;
-  int mMinProminence;
+  Elevation mMinProminence;
 
   float mCurrentLatitude;
   float mCurrentLongitude;

@@ -33,6 +33,7 @@
 using std::string;
 
 static const int HGT_TILE_SIZE = 1201;
+static const int16 HGT_NODATA_ELEVATION = -32768;
 
 static uint16 swapByteOrder16(uint16 us) {
   return (us >> 8) | (us << 8);
@@ -58,29 +59,31 @@ Tile *HgtLoader::loadTile(const std::string &directory, float minLat, float minL
   
   int num_samples = HGT_TILE_SIZE * HGT_TILE_SIZE;
   
-  Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * num_samples);
+  int16 *inbuf = (int16 *) malloc(sizeof(int16) * num_samples);
   
   Tile *retval = nullptr;
   
-  int samples_read = static_cast<int>(fread(samples, sizeof(int16), num_samples, infile));
+  int samples_read = static_cast<int>(fread(inbuf, sizeof(int16), num_samples, infile));
   if (samples_read != num_samples) {
     fprintf(stderr, "Couldn't read tile file: %s, got %d samples expecting %d\n",
             filename.c_str(), samples_read, num_samples);
-    free(samples);
+    free(inbuf);
   } else {
-    // SRTM data is in big-endian order
+    Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * num_samples);
+    // SRTM data is in big-endian order; convert to Elevation
     for (int i = 0; i < num_samples; ++i) {
-      samples[i] = swapByteOrder16(samples[i]);
-
-      if (samples[i] != Tile::NODATA_ELEVATION) {
-        // Use feet internally; small unit avoids losing precision with external data
-        samples[i] = (Elevation) metersToFeet(samples[i]);
+      int16 elevation = swapByteOrder16(inbuf[i]);
+      if (elevation == HGT_NODATA_ELEVATION) {
+        samples[i] = Tile::NODATA_ELEVATION;
+      } else {
+        samples[i] = static_cast<Elevation>(elevation);
       }
     }
 
     retval = new Tile(HGT_TILE_SIZE, HGT_TILE_SIZE, samples);
   }
-  
+
+  free(inbuf);
   fclose(infile);
 
   return retval;
