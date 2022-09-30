@@ -40,12 +40,9 @@ using std::set;
 using std::string;
 using std::vector;
 
-ProminenceTask::ProminenceTask(TileCache *cache, const string &output_dir,
-                               Elevation minProminence) {
+ProminenceTask::ProminenceTask(TileCache *cache, const ProminenceOptions &options) {
   mCache = cache;
-  mOutputDir = output_dir;
-  mMinProminence = minProminence;
-  mAntiprominence = false;
+  mOptions = options;
 }
 
 bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem) {
@@ -60,7 +57,7 @@ bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinat
   }
 
   // Flip tile upside down if we're computing anti-prominence
-  if (mAntiprominence) {
+  if (mOptions.antiprominence) {
     tile->flipElevations();
   }
 
@@ -72,26 +69,29 @@ bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinat
   //
   // Write full divide tree
   //
-  if (!divideTree->writeToFile(getFilenamePrefix() + "-divide_tree.dvt")) {
-    LOG(ERROR) << "Failed to save divide tree file";
-  }
-  writeStringToOutputFile("divide_tree.kml", divideTree->getAsKml());
 
+  if (mOptions.writeFullDivideTree) {
+    if (!divideTree->writeToFile(getFilenamePrefix() + "-divide_tree.dvt")) {
+      LOG(ERROR) << "Failed to save divide tree file";
+    }
+    writeStringToOutputFile("divide_tree.kml", divideTree->getAsKml());
+  }
+  
   //
   // Prune low-prominence peaks to reduce divide tree size.  Rebuild island tree.
   //
-  VLOG(1) << "Pruning divide tree to " << mMinProminence << " prominence";
+  VLOG(1) << "Pruning divide tree to " << mOptions.minProminence << " prominence";
 
   IslandTree islandTree(*divideTree);
   islandTree.build();
 
-  divideTree->prune(mMinProminence, islandTree);
+  divideTree->prune(mOptions.minProminence, islandTree);
 
   //
   // Write pruned divide tree
   //
 
-  string pruned_name("divide_tree_pruned_" + std::to_string(int(mMinProminence)));
+  string pruned_name("divide_tree_pruned_" + std::to_string(int(mOptions.minProminence)));
   if (!divideTree->writeToFile(getFilenamePrefix() + "-" + pruned_name + ".dvt")) {
     LOG(ERROR) << "Failed to save pruned divide tree file";
   }
@@ -100,10 +100,6 @@ bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinat
   delete divideTree;
 
   return true;
-}
-
-void ProminenceTask::setAntiprominence(bool value) {
-  mAntiprominence = value;
 }
 
 bool ProminenceTask::writeStringToOutputFile(const string &filename, const string &str) const {
@@ -124,7 +120,7 @@ string ProminenceTask::getFilenamePrefix() const {
   sprintf(filename, "prominence-%02dx%02d-%03dx%02d",
           static_cast<int>(mCurrentLatitude), latHundredths,
           static_cast<int>(mCurrentLongitude), lngHundredths);
-  return mOutputDir + "/" + filename;
+  return mOptions.outputDir + "/" + filename;
 }
 
 int ProminenceTask::fractionalDegree(float degree) const {

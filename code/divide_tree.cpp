@@ -939,7 +939,7 @@ void DivideTree::computeDeletionOffsets(const unordered_set<int> &deletedIndices
   }
   
   // Part of array past the last deleted index
-  for (int index = sortedDeletedIndices.back(); index < deletionOffsets.size(); ++index) {
+  for (int index = sortedDeletedIndices.back(); index < (int) deletionOffsets.size(); ++index) {
     deletionOffsets[index] = offset;      
   }
 }

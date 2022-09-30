@@ -161,6 +161,9 @@ int main(int argc, char **argv) {
     }
   }
 
+  // Don't write out unpruned divide tree--it's too large and slow
+  ProminenceOptions options = {output_directory, minProminence, false, antiprominence};
+  
   // Caching doesn't do anything for our calculation and the tiles are huge
   BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
   policy.enableNeighborEdgeLoading(true);
@@ -196,9 +199,7 @@ int main(int argc, char **argv) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Actually calculate prominence
-        ProminenceTask *task = new ProminenceTask(
-          cache.get(), output_directory, minProminence);
-        task->setAntiprominence(antiprominence);
+        ProminenceTask *task = new ProminenceTask(cache.get(), options);
         results.push_back(threadPool->enqueue([=] {
               return task->run(lat, wrappedLng, *coordinateSystem);
             }));

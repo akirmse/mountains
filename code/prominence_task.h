@@ -32,30 +32,36 @@
 
 class CoordinateSystem;
 
+struct ProminenceOptions {
+  std::string outputDir;
+  Elevation minProminence;
+
+  // The full divide tree can be very large, and writing it can be very slow.
+  bool writeFullDivideTree;
+
+  // Determine whether this task computes prominence (value=false, the default),
+  // or anti-prominence, which is the "prominence" of low points.
+  bool antiprominence;
+};
+
 // Calculate prominence for all peaks in one tile
 class ProminenceTask {
 public:
-  ProminenceTask(TileCache *cache, const std::string &output_dir,
-                 Elevation minProminence);
+  ProminenceTask(TileCache *cache, const ProminenceOptions &options);
 
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
   bool run(float lat, float lng, const CoordinateSystem &coordinateSystem);
 
-  // Determine whether this task computes prominence (value=false, the default),
-  // or anti-prominence, which is the "prominence" of low points.
   void setAntiprominence(bool value);
   
 private:
   TileCache *mCache;
-  std::string mOutputDir;
-  Elevation mMinProminence;
+  ProminenceOptions mOptions;
 
   float mCurrentLatitude;
   float mCurrentLongitude;
-
-  bool mAntiprominence;
 
   std::string getFilenamePrefix() const;
   // Return hundredths of a degree from the given value
