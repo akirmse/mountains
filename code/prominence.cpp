@@ -81,7 +81,15 @@ int main(int argc, char **argv) {
   string str;
   bool antiprominence = false;
   int utmZone = NO_UTM_ZONE;
-  while ((ch = getopt(argc, argv, "af:i:k:m:o:t:z:")) != -1) {
+
+  // Make a do-nothing "v" option to avoid getting runtime warnings about --v (for
+  // the easylogging library) being an unknown option.  By this point easylogging
+  // has already processed its options.
+  option long_options[] = {
+    {"v", required_argument, nullptr, 0},
+    {nullptr, 0, 0, 0},
+  };
+  while ((ch = getopt_long(argc, argv, "af:i:k:m:o:t:z:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       antiprominence = true;

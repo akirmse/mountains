@@ -52,14 +52,6 @@ public:
     mPixels[y * mWidth + x] = value;
   }
 
-  void increment(int x, int y) {
-    set(x, y, get(x, y) + 1);
-  }
-
-  void clear() {
-    memset(mPixels, 0, mWidth * mHeight * sizeof(Pixel));
-  }
-
 private:
   int mWidth;
   int mHeight;
