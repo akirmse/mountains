@@ -235,6 +235,13 @@ filter_points input_file polygon_file output_file
 ```
 
 
+### Logging
+
+By default, the programs don't print much to the screen.  To see more of what's happening, you can
+set the log level on the command line using the flags from the [easylogging](https://github.com/amrayn/easyloggingpp#application-arguments)
+library.  Specifying ```--v=1``` will print each major operation, while ```--v=4``` will produce a 
+torrent of output.
+
 ## Results
 
 The isolation file has one peak per line, in this format:
