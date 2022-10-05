@@ -22,17 +22,18 @@
  * SOFTWARE.
  */
 
-#ifndef _GETOPT_H_
-#define _GETOPT_H_
+#ifndef _GETOPT_INTERNAL_H_
+#define _GETOPT_INTERNAL_H_
 
 // Platform-independent include for getopt()
 
 #ifdef PLATFORM_LINUX
 #include <unistd.h>
+#include <getopt.h>
 #endif
 #ifdef PLATFORM_WINDOWS
 #include "getopt-win.h"
 #endif
 
 
-#endif  // _GETOPT_H_
+#endif  // _GETOPT_INTERNAL_H_

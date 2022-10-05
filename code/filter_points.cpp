@@ -26,7 +26,7 @@
 
 #include "easylogging++.h"
 #include "filter.h"
-#include "getopt.h"
+#include "getopt_internal.h"
 #include "latlng.h"
 #include "util.h"
 
@@ -56,7 +56,12 @@ int main(int argc, char **argv) {
   
   int ch;
   string str;
-  while ((ch = getopt(argc, argv, "a:")) != -1) {
+  // Swallow --v that's parsed by the easylogging library
+  const struct option long_options[] = {
+    {"v", required_argument, nullptr, 0},
+    {nullptr, 0, 0, 0},
+  };
+  while ((ch = getopt_long(argc, argv, "a:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       wrapLongitude = static_cast<float>(atof(optarg));
