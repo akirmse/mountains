@@ -29,6 +29,7 @@
 
 #ifdef PLATFORM_LINUX
 #include <unistd.h>
+#include <getopt.h>
 #endif
 #ifdef PLATFORM_WINDOWS
 #include "getopt-win.h"
