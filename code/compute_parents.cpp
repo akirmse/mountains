@@ -73,7 +73,12 @@ int main(int argc, char **argv) {
   START_EASYLOGGINGPP(argc, argv);
 
   int ch;
-  while ((ch = getopt(argc, argv, "m:")) != -1) {
+  // Swallow --v that's parsed by the easylogging library
+  const struct option long_options[] = {
+    {"v", required_argument, nullptr, 0},
+    {nullptr, 0, 0, 0},
+  };
+  while ((ch = getopt_long(argc, argv, "m:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'm':
       minProminence = static_cast<Elevation>(atof(optarg));

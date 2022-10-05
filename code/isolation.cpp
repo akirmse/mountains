@@ -68,7 +68,12 @@ int main(int argc, char **argv) {
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
   int ch;
-  while ((ch = getopt(argc, argv, "i:m:o:t:")) != -1) {
+  // Swallow --v that's parsed by the easylogging library
+  const struct option long_options[] = {
+    {"v", required_argument, nullptr, 0},
+    {nullptr, 0, 0, 0},
+  };
+  while ((ch = getopt_long(argc, argv, "i:m:o:t:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'i':
       terrain_directory = optarg;
