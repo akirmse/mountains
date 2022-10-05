@@ -28,7 +28,7 @@
 #include "island_tree.h"
 
 #include "easylogging++.h"
-#include "getopt.h"
+#include "getopt_internal.h"
 
 INITIALIZE_EASYLOGGINGPP
 

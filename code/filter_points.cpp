@@ -26,7 +26,7 @@
 
 #include "easylogging++.h"
 #include "filter.h"
-#include "getopt.h"
+#include "getopt_internal.h"
 #include "latlng.h"
 #include "util.h"
 

@@ -32,7 +32,7 @@
 #include "tile_loading_policy.h"
 
 #include "easylogging++.h"
-#include "getopt.h"
+#include "getopt_internal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   // Make a do-nothing "v" option to avoid getting runtime warnings about --v (for
   // the easylogging library) being an unknown option.  By this point easylogging
   // has already processed its options.
-  option long_options[] = {
+  const struct option long_options[] = {
     {"v", required_argument, nullptr, 0},
     {nullptr, 0, 0, 0},
   };

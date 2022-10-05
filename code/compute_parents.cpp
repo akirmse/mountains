@@ -36,7 +36,7 @@
 #include "util.h"
 
 #include "easylogging++.h"
-#include "getopt.h"
+#include "getopt_internal.h"
 
 #include <numeric>
 

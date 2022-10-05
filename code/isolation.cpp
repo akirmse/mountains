@@ -30,7 +30,7 @@
 #include "tile_loading_policy.h"
 
 #include "easylogging++.h"
-#include "getopt.h"
+#include "getopt_internal.h"
 
 #include <stdio.h>
 #include <stdlib.h>

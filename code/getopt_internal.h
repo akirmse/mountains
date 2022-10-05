@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef _GETOPT_H_
-#define _GETOPT_H_
+#ifndef _GETOPT_INTERNAL_H_
+#define _GETOPT_INTERNAL_H_
 
 // Platform-independent include for getopt()
 
@@ -36,4 +36,4 @@
 #endif
 
 
-#endif  // _GETOPT_H_
+#endif  // _GETOPT_INTERNAL_H_
