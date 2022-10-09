@@ -58,6 +58,8 @@ def main():
                         help="Path to prominence binary")
     parser.add_argument('--threads', default=1, type=int,
                         help="Number of threads to use in computing prominence")
+    parser.add_argument('--min_prominence', default=100, type=float,
+                        help="Min prominence of resultant peaks, in input units")
     parser.add_argument('min_lat', type=int)
     parser.add_argument('max_lat', type=int)
     parser.add_argument('min_lng', type=int)
@@ -80,8 +82,9 @@ def main():
     pool.join()
 
     # Run prominence
-    prom_command = f"{args.prominence_command} --v=1 -f GLO30 -i {args.tile_dir} -o {args.output_dir} " + \
-        f"-t {args.threads} -- {args.min_lat} {args.max_lat} {args.min_lng} {args.max_lng}"
+    prom_command = f"{args.prominence_command} --v=1 -f GLO30 -i {args.tile_dir} -o {args.output_dir}" + \
+        f" -t {args.threads} -m {args.min_prominence}" + \
+        " -- {args.min_lat} {args.max_lat} {args.min_lng} {args.max_lng}"
     run_command(prom_command)
 
 if __name__ == '__main__':
