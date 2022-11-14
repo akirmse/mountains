@@ -122,7 +122,7 @@ def main():
     # Run prominence
     prom_command = f"{args.prominence_command} --v=1 -f NED19 -i {args.tile_dir} -o {args.output_dir}" + \
         f" -t {args.threads} -m {args.min_prominence}" + \
-        " -- {args.min_lat} {args.max_lat} {args.min_lng} {args.max_lng}"
+        f" -- {args.min_lat} {args.max_lat} {args.min_lng} {args.max_lng}"
     run_command(prom_command)
 
 if __name__ == '__main__':
