@@ -250,7 +250,7 @@ latitude,longitude,elevation,ILP latitude,ILP longitude,isolation in km
 
 where ILP means isolation limit point.
 
-A zip file with our isolation results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXRm1pak56blp1RGc/view?usp=sharing).
+A zip file with our isolation results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXRm1pak56blp1RGc/view?resourcekey=0-MxVs2IKeWLrN-saUoqaweA).
 
 The prominence file has one peak per line, in this format:
 
@@ -258,7 +258,7 @@ latitude,longitude,elevation,key saddle latitude,key saddle longitude,prominence
 
 The units of elevation and prominence are the same as the input terrain data.
 
-A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=sharing), with elevations in feet.
+A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=share_link&resourcekey=0-TZC_OGOqI5TFdfPE77Yl3g), with elevations in feet.
 
 ## Prominence parents and line parents
 
