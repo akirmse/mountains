@@ -155,6 +155,16 @@ int main(int argc, char **argv) {
     }
   }
 
+  // Validate that bounds are on tile boundaries
+  float degreesAcross = fileFormat.degreesAcross();
+  for (auto bound : bounds) {
+    if (bound / degreesAcross != static_cast<int>(bound / degreesAcross)) {
+      LOG(ERROR) << "Coordinates must be multiples of " << degreesAcross;
+      LOG(ERROR) << "This coordinate is not: " << bound;
+      exit(1);
+    }
+  }
+  
   // Load filtering polygon
   Filter filter;
   if (!polygonFilename.empty()) {
