@@ -120,11 +120,11 @@ Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
   // ZIP formats come only in 1x1 degree formats, so OK to cast lat/lng to int.
   // NED uses upper left corner for naming.
   char buf[100];
-  sprintf(buf, "%c%02d%c%03d.zip",
-          (minLat >= 0) ? 'n' : 's',
-          abs(static_cast<int>(minLat + mFormat.degreesAcross())),
-          (minLng >= 0) ? 'e' : 'w',
-          abs(static_cast<int>(minLng)));
+  snprintf(buf, sizeof(buf), "%c%02d%c%03d.zip",
+           (minLat >= 0) ? 'n' : 's',
+           abs(static_cast<int>(minLat + mFormat.degreesAcross())),
+           (minLng >= 0) ? 'e' : 'w',
+           abs(static_cast<int>(minLng)));
   string filename(buf);
   if (!directory.empty()) {
     filename = directory + "/" + filename;

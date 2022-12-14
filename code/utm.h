@@ -134,7 +134,7 @@ namespace UTM
         LongOriginRad = LongOrigin * DEG_TO_RAD;
 
         //compute the UTM Zone from the latitude and longitude
-        sprintf(UTMZone, "%d%c", ZoneNumber, UTMLetterDesignator(Lat));
+        snprintf(UTMZone, 4, "%d%c", ZoneNumber, UTMLetterDesignator(Lat));
 
         eccPrimeSquared = (eccSquared)/(1-eccSquared);
 

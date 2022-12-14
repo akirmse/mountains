@@ -41,11 +41,11 @@ static uint16 swapByteOrder16(uint16 us) {
 
 Tile *HgtLoader::loadTile(const std::string &directory, float minLat, float minLng) {
   char buf[100];
-  sprintf(buf, "%c%02d%c%03d.hgt",
-          (minLat >= 0) ? 'N' : 'S',
-          abs(static_cast<int>(minLat)),
-          (minLng >= 0) ? 'E' : 'W',
-          abs(static_cast<int>(minLng)));
+  snprintf(buf, sizeof(buf), "%c%02d%c%03d.hgt",
+           (minLat >= 0) ? 'N' : 'S',
+           abs(static_cast<int>(minLat)),
+           (minLng >= 0) ? 'E' : 'W',
+           abs(static_cast<int>(minLng)));
   string filename(buf);
   if (!directory.empty()) {
     filename = directory + "/" + filename;

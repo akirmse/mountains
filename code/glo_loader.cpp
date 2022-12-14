@@ -38,11 +38,11 @@ static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
 
 Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minLng) {
   char buf[100];
-  sprintf(buf, "Copernicus_DSM_COG_10_%c%02d_00_%c%03d_00_DEM.flt",
-          (minLat >= 0) ? 'N' : 'S',
-          abs(static_cast<int>(minLat)),
-          (minLng >= 0) ? 'E' : 'W',
-          abs(static_cast<int>(minLng)));
+  snprintf(buf, sizeof(buf), "Copernicus_DSM_COG_10_%c%02d_00_%c%03d_00_DEM.flt",
+           (minLat >= 0) ? 'N' : 'S',
+           abs(static_cast<int>(minLat)),
+           (minLng >= 0) ? 'E' : 'W',
+           abs(static_cast<int>(minLng)));
   string filename(buf);
   if (!directory.empty()) {
     filename = directory + "/" + filename;

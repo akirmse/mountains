@@ -93,7 +93,7 @@ IsolationResults *IsolationResults::loadFromFile(const string &directory, float 
 string IsolationResults::filenameForCoordinates(float lat, float lng) {
   char filename[PATH_MAX];
   // TODO: Maybe support sub-degree tiles one day, if anyone cares
-  sprintf(filename, "isolation-%02d-%03d.txt",
-          static_cast<int>(lat), static_cast<int>(lng));
+  snprintf(filename, sizeof(filename), "isolation-%02d-%03d.txt",
+           static_cast<int>(lat), static_cast<int>(lng));
   return filename;
 }
