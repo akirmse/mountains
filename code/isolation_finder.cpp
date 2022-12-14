@@ -346,7 +346,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile,
     record.distance = seedLocation.distance(record.closestHigherGround);
   }
 
-  delete lngDistanceScaleForRow;
+  free(lngDistanceScaleForRow);
   return record;
 }
 
