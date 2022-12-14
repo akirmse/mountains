@@ -117,9 +117,9 @@ string ProminenceTask::getFilenamePrefix() const {
   char filename[PATH_MAX];
   int latHundredths = fractionalDegree(mCurrentLatitude);
   int lngHundredths = fractionalDegree(mCurrentLongitude);
-  sprintf(filename, "prominence-%02dx%02d-%03dx%02d",
-          static_cast<int>(mCurrentLatitude), latHundredths,
-          static_cast<int>(mCurrentLongitude), lngHundredths);
+  snprintf(filename, sizeof(filename), "prominence-%02dx%02d-%03dx%02d",
+           static_cast<int>(mCurrentLatitude), latHundredths,
+           static_cast<int>(mCurrentLongitude), lngHundredths);
   return mOptions.outputDir + "/" + filename;
 }
 
