@@ -113,29 +113,45 @@ int main(int argc, char **argv) {
     usage();
   }
 
-  string outputFilename = argv[0];
-  DivideTree *divideTree = nullptr;
+  // Load all the initial trees
+  vector<DivideTree *> trees;
   for (int arg = 1; arg < argc; ++arg) {
     string inputFilename = argv[arg];
     VLOG(1) << "Loading tree from " << inputFilename;
-    
     DivideTree *newTree = DivideTree::readFromFile(inputFilename);
     if (newTree == nullptr) {
       LOG(ERROR) << "Failed to load divide tree from " << inputFilename;
       return 1;
     }
-
-    if (divideTree == nullptr) {
-      divideTree = newTree;
-    } else {
-      mergeTrees(divideTree, newTree);
-      delete newTree;
-    }
-
-    // Nuke any basin saddles created during merge
-    divideTree->compact();
+    trees.push_back(newTree);
   }
 
+  // Merge pairwise, like a binary tree of trees.  This is much faster
+  // than merging incrementally into a single tree when the number of trees
+  // is large (e.g. 3x faster for all of Australia).
+  while (trees.size() > 1) {
+    VLOG(1) << "Starting merge pass, # of remaining trees = " << trees.size();
+    vector<DivideTree *> newTrees;
+    for (int i = 0; i < trees.size() / 2; ++i) {
+      mergeTrees(trees[2 * i], trees[2 * i + 1]);
+      delete trees[2 * i + 1];
+
+      // Nuke any basin saddles created during merge
+      trees[2 * i]->compact();
+
+      newTrees.push_back(trees[2 * i]);
+    }
+
+    // One leftover tree?
+    if (trees.size() % 2 == 1) {
+      newTrees.push_back(trees.back());
+    }
+
+    trees = newTrees;
+  }
+    
+  DivideTree *divideTree = trees[0];
+  
   //
   // Build island tree, compute prominence
   //
@@ -158,6 +174,7 @@ int main(int argc, char **argv) {
   VLOG(1) << "Writing outputs";
   
   // Write .dvt
+  string outputFilename = argv[0];
   if (!divideTree->writeToFile(outputFilename + ".dvt")) {
     LOG(ERROR) << "Failed to write merged divide tree to " << outputFilename;
   }
