@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
   while (trees.size() > 1) {
     VLOG(1) << "Starting merge pass, # of remaining trees = " << trees.size();
     vector<DivideTree *> newTrees;
-    for (int i = 0; i < trees.size() / 2; ++i) {
+    for (int i = 0; i < (int) trees.size() / 2; ++i) {
       mergeTrees(trees[2 * i], trees[2 * i + 1]);
       delete trees[2 * i + 1];
 
