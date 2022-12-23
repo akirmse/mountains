@@ -54,6 +54,8 @@ static void usage() {
 int main(int argc, char **argv) {
   float wrapLongitude = -180;
   
+  // Parse options
+  START_EASYLOGGINGPP(argc, argv);
   int ch;
   string str;
   // Swallow --v that's parsed by the easylogging library
@@ -114,12 +116,12 @@ int main(int argc, char **argv) {
     LatLng point(lat, lng);
 
     if (filter.isPointInside(point)) {
-      printf("Point %f %f is in polygon\n", lat, lng);
+      VLOG(1) << "Point is in polygon: " <<  lat << ", " <<  lng;
       numPointsInPolygon += 1;
 
       outputFile << line << std::endl;
     } else {
-      printf("Point %f %f is not in polygon\n", lat, lng);
+      VLOG(1) << "Point is not in polygon: " <<  lat << ", " <<  lng;
       numPointsNotInPolygon += 1;
     }
   }
