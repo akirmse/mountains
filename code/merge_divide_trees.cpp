@@ -26,6 +26,7 @@
 
 #include "divide_tree.h"
 #include "island_tree.h"
+#include "ThreadPool.h"
 
 #include "easylogging++.h"
 #include "getopt_internal.h"
@@ -45,6 +46,7 @@ static void usage() {
   printf("  -f                Finalize output tree: delete all runoffs and then prune\n");
   printf("  -m min_prominence Minimum prominence threshold for output\n");
   printf("                    in same units as divide tree, default = 100\n");
+  printf("  -t num_threads    Number of threads to use, default = 1\n");
   exit(1);
 }
 
@@ -80,6 +82,7 @@ int main(int argc, char **argv) {
   Elevation minProminence = 100;
   bool finalize = false;
   bool flipElevations = false;
+  int numThreads = 1;
 
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -91,7 +94,7 @@ int main(int argc, char **argv) {
     {"v", required_argument, nullptr, 0},
     {nullptr, 0, 0, 0},
   };
-  while ((ch = getopt_long(argc, argv, "afm:", long_options, nullptr)) != -1) {
+  while ((ch = getopt_long(argc, argv, "afm:t:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       flipElevations = true;
@@ -104,6 +107,10 @@ int main(int argc, char **argv) {
     case 'm':
       minProminence = static_cast<Elevation>(atof(optarg));
       break;
+
+    case 't':
+      numThreads = atoi(optarg);
+      break;      
     }
   }
   argc -= optind;
@@ -113,6 +120,8 @@ int main(int argc, char **argv) {
     usage();
   }
 
+  VLOG(1) << "Using " << numThreads << " threads";
+  
   // Load all the initial trees
   vector<DivideTree *> trees;
   for (int arg = 1; arg < argc; ++arg) {
@@ -129,19 +138,27 @@ int main(int argc, char **argv) {
   // Merge pairwise, like a binary tree of trees.  This is much faster
   // than merging incrementally into a single tree when the number of trees
   // is large (e.g. 3x faster for all of Australia).
+  auto threadPool = std::make_unique<ThreadPool>(numThreads);
   while (trees.size() > 1) {
+    vector<std::future<DivideTree *>> results;
     VLOG(1) << "Starting merge pass, # of remaining trees = " << trees.size();
-    vector<DivideTree *> newTrees;
     for (int i = 0; i < (int) trees.size() / 2; ++i) {
-      mergeTrees(trees[2 * i], trees[2 * i + 1]);
-      delete trees[2 * i + 1];
+      results.push_back(threadPool->enqueue([=] {
+            mergeTrees(trees[2 * i], trees[2 * i + 1]);
 
-      // Nuke any basin saddles created during merge
-      trees[2 * i]->compact();
+            // Nuke any basin saddles created during merge
+            trees[2 * i]->compact();
 
-      newTrees.push_back(trees[2 * i]);
+            delete trees[2 * i + 1];
+            return trees[2 * i];
+          }));
     }
 
+    vector<DivideTree *> newTrees;
+    for (auto && result : results) {
+      newTrees.push_back(result.get());
+    }
+    
     // One leftover tree?
     if (trees.size() % 2 == 1) {
       newTrees.push_back(trees.back());
