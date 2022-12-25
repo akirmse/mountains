@@ -35,18 +35,28 @@ def process_tile(args):
 
     flt_filename = os.path.join(tile_dir, filename_base +  ".flt")
     
-    # Tile already exists locally?
+    # FLT tile already exists locally?
     if not os.path.isfile(flt_filename):
         tif_filename = os.path.join(tile_dir, filename_base + ".tif")
-        aws_filename = f"s3://copernicus-dem-30m/{filename_base}/{filename_base}.tif"
-        aws_command = f"aws s3 cp --no-sign-request {aws_filename} {tile_dir}"
-        run_command(aws_command)
+        # Download TIF file if we don't have it yet
+        if not os.path.isfile(tif_filename):
+            aws_filename = f"s3://copernicus-dem-30m/{filename_base}/{filename_base}.tif"
+            aws_command = f"aws s3 cp --no-sign-request {aws_filename} {tile_dir}"
+            run_command(aws_command)
 
-        # TODO: Only run if file is found (some tiles don't exist)
+        # Only process tile if TIF file is found (some tiles don't exist)
+        if os.path.isfile(tif_filename):
+            # Convert to .flt file format
+            gdal_command = f"gdal_translate -of EHdr {tif_filename} {flt_filename}"
+            run_command(gdal_command)
+
+            # Delete unneeded auxiliary files
+            for extension in [".flt.aux.xml", ".hdr", ".prj"]:
+                filename_to_delete = os.path.join(tile_dir, filename_base + extension)
+                if os.path.isfile(filename_to_delete):
+                    os.remove(filename_to_delete)
         
-        # Convert to .flt file format
-        gdal_command = f"gdal_translate -of EHdr {tif_filename} {flt_filename}"
-        run_command(gdal_command)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Download GLO tiles and run prominence on them')
@@ -56,6 +66,8 @@ def main():
                         help="Directory to place prominence results")
     parser.add_argument('--prominence_command', default='release/prominence',
                         help="Path to prominence binary")
+    parser.add_argument('--kml_polygon',
+                        help="File with KML polygon to filter input tiles"),
     parser.add_argument('--threads', default=1, type=int,
                         help="Number of threads to use in computing prominence")
     parser.add_argument('--min_prominence', default=100, type=float,
@@ -83,8 +95,12 @@ def main():
 
     # Run prominence
     prom_command = f"{args.prominence_command} --v=1 -f GLO30 -i {args.tile_dir} -o {args.output_dir}" + \
-        f" -t {args.threads} -m {args.min_prominence}" + \
-        f" -- {args.min_lat} {args.max_lat} {args.min_lng} {args.max_lng}"
+        f" -t {args.threads} -m {args.min_prominence}"
+
+    if args.kml_polygon:
+        prom_command += f" -k {args.kml_polygon}"
+    
+    prom_command += f" -- {args.min_lat} {args.max_lat} {args.min_lng} {args.max_lng}"
     run_command(prom_command)
 
 if __name__ == '__main__':

@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
   if (utmZone != NO_UTM_ZONE) {
     policy.setUtmZone(utmZone);
   }
-  const int CACHE_SIZE = 2;
+  const int CACHE_SIZE = 2 * numThreads;  // 2 neighbors per thread seems useful
   auto cache = std::make_unique<TileCache>(&policy, CACHE_SIZE);
   
   VLOG(2) << "Using " << numThreads << " threads";
