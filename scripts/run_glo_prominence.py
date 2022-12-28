@@ -9,6 +9,8 @@ import argparse
 import os
 import subprocess
 
+from filter import Filter
+
 from multiprocessing import Pool
 
 def run_command(command_string):
@@ -60,10 +62,11 @@ def process_tile(args):
 
 def main():
     parser = argparse.ArgumentParser(description='Download GLO tiles and run prominence on them')
-    parser.add_argument('--tile_dir', 
-                        help="Directory to place input tiles")
-    parser.add_argument('--output_dir',
-                        help="Directory to place prominence results")
+    requiredNamed = parser.add_argument_group('required named arguments')
+    requiredNamed.add_argument('--tile_dir', required = True,
+                              help="Directory to place input tiles")
+    requiredNamed.add_argument('--output_dir', required = True,
+                               help="Directory to place prominence results")
     parser.add_argument('--prominence_command', default='release/prominence',
                         help="Path to prominence binary")
     parser.add_argument('--kml_polygon',
@@ -80,6 +83,11 @@ def main():
     args = parser.parse_args()
     full_tile_dir = os.path.expanduser(args.tile_dir)
 
+    # Set up filtering polygon
+    filterPolygon = Filter()
+    if args.kml_polygon:
+        filterPolygon.addPolygonsFromKml(args.kml_polygon)
+
     # Run tile downloads in parallel because they're slow
     pool = Pool(args.threads)
 
@@ -87,7 +95,9 @@ def main():
     
     for lat in range(args.min_lat, args.max_lat):
         for lng in range(args.min_lng, args.max_lng):
-            process_args.append((lat, lng, full_tile_dir))
+            # Skip tiles that don't intersect filtering polygon
+            if filterPolygon.intersects(lat, lat + 1, lng, lng + 1):
+                process_args.append((lat, lng, full_tile_dir))
 
     pool.map(process_tile, process_args)
     pool.close()
