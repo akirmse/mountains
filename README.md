@@ -204,11 +204,7 @@ too large to be merged or to load into Earth.  Use the pruned versions
 (identified by "pruned" in their filenames).
 
 Next, merge the resultant pruned divide trees into a single, larger divide
-tree.  If there are thousands of input files, it will be much faster
-to do this in multiple stages.  At the final stage, when you no longer
-need to do any merging, specify the "-f" flag to remove runoffs.  This
-will get rid of "junk" peaks around the edges, but you will not be able
-to further merge the resultant divide tree.
+tree.  Large merges can be done in parallel with multiple threads. 
 
 ```
 merge_divide_trees output_file_prefix input_file [...]
@@ -218,7 +214,13 @@ merge_divide_trees output_file_prefix input_file [...]
   Options:
   -f                Finalize output tree: delete all runoffs and then prune
   -m min_prominence Minimum prominence threshold for output, default = 100
+  -t num_threads    Number of threads to use, default = 1
 ```
+
+Specify the "-f" flag to get final output when you no longer need to perform
+any further merges.  (In previous versions, merge_divide_tree was serial, and it made sense to 
+merge in multiple stages, specifying -f only at the last stage.  Now you
+can generally merge everything in one parallel step.)
 
 The output is a dvt file with the merged divide tree, and a text file
 with prominence values.  If desired, the text file can be filtered to
