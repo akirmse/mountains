@@ -260,7 +260,7 @@ latitude,longitude,elevation,key saddle latitude,key saddle longitude,prominence
 
 The units of elevation and prominence are the same as the input terrain data.
 
-A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/0B3icWNhBosDXZmlEWldSLWVGOE0/view?usp=share_link&resourcekey=0-TZC_OGOqI5TFdfPE77Yl3g), with elevations in feet.
+A zip file with our prominence results for the world is [here](https://drive.google.com/file/d/1HnMIZemDu3MgyCu7Fdy-VJOsiXTN5sYW/view?usp=share_link), with elevations in meters, down to 100 feet (30.48m) of prominence.  A visualization of the results is [here](http://everymountainintheworld.com).
 
 ## Prominence parents and line parents
 
