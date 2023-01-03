@@ -256,38 +256,8 @@ void DivideTree::prune(Elevation minProminence, const IslandTree &islandTree) {
     }
   }
 
-  // Compute offsets to account for deletions
-  vector<int> peakDeletionOffsets(mPeaks.size(), 0);
-  computeDeletionOffsets(deletedPeakIndices, peakDeletionOffsets);
-
-  vector<int> saddleDeletionOffsets(mSaddles.size(), 0);
-  computeDeletionOffsets(deletedSaddleIndices, saddleDeletionOffsets);
-
-  // Compact peak / saddle / node arrays to deal with deletions
-  removeVectorElementsByIndices(&mSaddles, deletedSaddleIndices); 
-  removeVectorElementsByIndices(&mPeaks, deletedPeakIndices);
-  // Indices are 0 based: need to temporarily remove blank mNodes[0]
-  mNodes.erase(mNodes.begin());
-  removeVectorElementsByIndices(&mNodes, deletedPeakIndices);
-  mNodes.insert(mNodes.begin(), Node());
-
+  removeDeletedPeaksAndSaddles(deletedPeakIndices, deletedSaddleIndices);
   VLOG(1) << "Pruned to " << mPeaks.size() << " peaks and " << mSaddles.size() << " saddles";
-
-  // Update indices in nodes and runoff edges to account for deletions
-  for (Node &node : mNodes) {
-    if (node.parentId != Node::Null) {
-      node.parentId -= peakDeletionOffsets[node.parentId - 1];
-    }
-
-    if (node.saddleId != Node::Null) {
-      node.saddleId -= saddleDeletionOffsets[node.saddleId - 1];
-    }
-  }
-  for (int &edge : mRunoffEdges) {
-    if (edge != Node::Null) {
-      edge -= peakDeletionOffsets[edge - 1];
-    }
-  }
 }
 
 void DivideTree::merge(const DivideTree &otherTree) {
@@ -350,8 +320,8 @@ bool DivideTree::setOrigin(const CoordinateSystem &coordinateSystem) {
 }
 
 void DivideTree::compact() {
-  unordered_map<int, int> saddleIdMap;
   unordered_set<int> removedIndices;
+  unordered_set<int> emptyIndices;
 
   // TODO: May want to save basin saddles for debugging, only delete during merge
   for (int i = 0; i < (int) mSaddles.size(); ++i) {
@@ -360,25 +330,10 @@ void DivideTree::compact() {
         saddle.type == Saddle::Type::FALSE_SADDLE ||
         saddle.type == Saddle::Type::BASIN) {
       removedIndices.insert(i);
-    } else {
-      // Saddle IDs are 1-based
-      saddleIdMap.insert(make_pair(i + 1, static_cast<int>(i + 1 - removedIndices.size())));
     }
   }
 
-  removeVectorElementsByIndices(&mSaddles, removedIndices);
-
-  // Renumber saddles in edges
-  for (int index = 0; index < (int) mNodes.size(); ++index) {
-    Node &node = mNodes[index];
-    if (node.saddleId != Node::Null) {
-      if (saddleIdMap.find(node.saddleId) == saddleIdMap.end()) {
-        LOG(ERROR) << "When compacting divide tree node " << index << ", couldn't find saddle "
-                   << node.saddleId << " to renumber";
-      }
-      node.saddleId = saddleIdMap[node.saddleId];
-    }
-  }
+  removeDeletedPeaksAndSaddles(emptyIndices, removedIndices);
 }
 
 void DivideTree::deleteRunoffs() {
@@ -667,6 +622,12 @@ void DivideTree::spliceAllRunoffs() {
   // Actually remove dead runoffs
   removeVectorElementsByIndices(&mRunoffs, removedRunoffs);
   removeVectorElementsByIndices(&mRunoffEdges, removedRunoffs);
+
+  // Actually remove dead peaks and saddles
+  removeDeletedPeaksAndSaddles(mRemovedPeakIndices, mRemovedSaddleIndices);
+
+  mRemovedPeakIndices.clear();
+  mRemovedSaddleIndices.clear();
 }
 
 void DivideTree::spliceTwoRunoffs(int index1, int index2, unordered_set<int> *removedRunoffs) {
@@ -761,28 +722,16 @@ void DivideTree::removePeak(int peakId, int neighborPeakId) {
 
   assert(removedSaddleId != Node::Null);
   
-  // Remove dead peak's node
-  mNodes.erase(mNodes.begin() + peakId);
-
-  // Remove dead peak and saddle
-  mPeaks.erase(mPeaks.begin() + peakId - 1);
-  mSaddles.erase(mSaddles.begin() + removedSaddleId - 1);
-  
-  // neighbor's ID may have changed by removal of peakId
-  if (neighborPeakId > peakId) {
-    neighborPeakId -= 1;
-  }
-  
+  // Mark peak and saddle as dead.
+  // It's much faster to mark them dead here and update all indices at once later
+  // than to update all the indices for each deleted peak.
+  mRemovedPeakIndices.insert(peakId - 1);
+  mRemovedSaddleIndices.insert(removedSaddleId - 1);
+    
   // Update node pointers
   for (Node &node : mNodes) {
     if (node.parentId == peakId) {
       node.parentId = neighborPeakId;
-    } else if (node.parentId > peakId) {
-      node.parentId -= 1;
-    }
-
-    if (node.saddleId > removedSaddleId) {
-      node.saddleId -= 1;
     }
   }
 
@@ -797,9 +746,6 @@ void DivideTree::removePeak(int peakId, int neighborPeakId) {
       // that applied only to its old peak).  The flat areas
       // of two peaks obviously can't touch.
       mRunoffs[index].insidePeakArea = false;
-    
-    } else if (runoffEdgeId > peakId) {
-      runoffEdgeId -= 1;
     }
 
     index += 1;
@@ -941,5 +887,39 @@ void DivideTree::computeDeletionOffsets(const unordered_set<int> &deletedIndices
   // Part of array past the last deleted index
   for (int index = sortedDeletedIndices.back(); index < (int) deletionOffsets.size(); ++index) {
     deletionOffsets[index] = offset;      
+  }
+}
+
+void DivideTree::removeDeletedPeaksAndSaddles(const std::unordered_set<int> &deletedPeakIndices,
+                                              const std::unordered_set<int> &deletedSaddleIndices) {
+  // Compute offsets to account for deletions
+  vector<int> peakDeletionOffsets(mPeaks.size(), 0);
+  computeDeletionOffsets(deletedPeakIndices, peakDeletionOffsets);
+
+  vector<int> saddleDeletionOffsets(mSaddles.size(), 0);
+  computeDeletionOffsets(deletedSaddleIndices, saddleDeletionOffsets);
+
+  // Compact peak / saddle / node arrays to deal with deletions
+  removeVectorElementsByIndices(&mSaddles, deletedSaddleIndices); 
+  removeVectorElementsByIndices(&mPeaks, deletedPeakIndices);
+  // Indices are 0 based: need to temporarily remove blank mNodes[0]
+  mNodes.erase(mNodes.begin());
+  removeVectorElementsByIndices(&mNodes, deletedPeakIndices);
+  mNodes.insert(mNodes.begin(), Node());
+
+  // Update indices in nodes and runoff edges to account for deletions
+  for (Node &node : mNodes) {
+    if (node.parentId != Node::Null) {
+      node.parentId -= peakDeletionOffsets[node.parentId - 1];
+    }
+
+    if (node.saddleId != Node::Null) {
+      node.saddleId -= saddleDeletionOffsets[node.saddleId - 1];
+    }
+  }
+  for (int &edge : mRunoffEdges) {
+    if (edge != Node::Null) {
+      edge -= peakDeletionOffsets[edge - 1];
+    }
   }
 }
