@@ -154,6 +154,10 @@ private:
   void computeDeletionOffsets(const std::unordered_set<int> &deletedIndices,
                               std::vector<int> &deletionOffsets) const;
 
+  // XXX Document
+  void removeDeletedPeaksAndSaddles(const std::unordered_set<int> &deletedPeakIndices,
+                                    const std::unordered_set<int> &deletedSaddleIndices);
+  
   // Indices start at 1; use these helper functions to deal with offset.
   const Peak &getPeak(int peakId) const;
   const Saddle &getSaddle(int saddleId) const;
@@ -169,6 +173,10 @@ private:
   std::vector<Node> mNodes;
   // Holds peak ID connected to each runoff (parallel array to mRunoffs)
   std::vector<int> mRunoffEdges;
+
+  // XXX Document
+  std::unordered_set<int> mRemovedPeakIndices;
+  std::unordered_set<int> mRemovedSaddleIndices;
 };
 
 #endif  // _DIVIDE_TREE_H_
