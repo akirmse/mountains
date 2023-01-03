@@ -320,10 +320,9 @@ bool DivideTree::setOrigin(const CoordinateSystem &coordinateSystem) {
 }
 
 void DivideTree::compact() {
-  unordered_map<int, int> saddleIdMap;
   unordered_set<int> removedIndices;
+  unordered_set<int> emptyIndices;
 
-  // XXX This should use removeDeletedPeaksAndSaddles() instead
   // TODO: May want to save basin saddles for debugging, only delete during merge
   for (int i = 0; i < (int) mSaddles.size(); ++i) {
     const Saddle &saddle = mSaddles[i];
@@ -331,25 +330,10 @@ void DivideTree::compact() {
         saddle.type == Saddle::Type::FALSE_SADDLE ||
         saddle.type == Saddle::Type::BASIN) {
       removedIndices.insert(i);
-    } else {
-      // Saddle IDs are 1-based
-      saddleIdMap.insert(make_pair(i + 1, static_cast<int>(i + 1 - removedIndices.size())));
     }
   }
 
-  removeVectorElementsByIndices(&mSaddles, removedIndices);
-
-  // Renumber saddles in edges
-  for (int index = 0; index < (int) mNodes.size(); ++index) {
-    Node &node = mNodes[index];
-    if (node.saddleId != Node::Null) {
-      if (saddleIdMap.find(node.saddleId) == saddleIdMap.end()) {
-        LOG(ERROR) << "When compacting divide tree node " << index << ", couldn't find saddle "
-                   << node.saddleId << " to renumber";
-      }
-      node.saddleId = saddleIdMap[node.saddleId];
-    }
-  }
+  removeDeletedPeaksAndSaddles(emptyIndices, removedIndices);
 }
 
 void DivideTree::deleteRunoffs() {

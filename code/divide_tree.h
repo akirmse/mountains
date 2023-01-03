@@ -154,7 +154,9 @@ private:
   void computeDeletionOffsets(const std::unordered_set<int> &deletedIndices,
                               std::vector<int> &deletionOffsets) const;
 
-  // XXX Document
+  // Given sets of peak and saddle indices to delete, actually remove them from our
+  // internal collections, updating any pointers in nodes to account for the
+  // renumbering of indices due to deletions.
   void removeDeletedPeaksAndSaddles(const std::unordered_set<int> &deletedPeakIndices,
                                     const std::unordered_set<int> &deletedSaddleIndices);
   
@@ -174,7 +176,7 @@ private:
   // Holds peak ID connected to each runoff (parallel array to mRunoffs)
   std::vector<int> mRunoffEdges;
 
-  // XXX Document
+  // Holds peak and saddle IDs to delete temporarily during a merge step.
   std::unordered_set<int> mRemovedPeakIndices;
   std::unordered_set<int> mRemovedSaddleIndices;
 };
