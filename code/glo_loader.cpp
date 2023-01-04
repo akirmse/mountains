@@ -35,6 +35,8 @@
 using std::string;
 
 static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
+// For ALOS 30 tiles impersonating GLO 30 tiles where GLO 30 doesn't have coverage
+static const float ALOSWORLD3D_NODATA_ELEVATION = -9999.0f;
 
 Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minLng) {
   char buf[100];
@@ -119,7 +121,8 @@ Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minL
       float sample = inbuf[index];
 
       // Convert Copernicus NODATA to our NODATA
-      if (fabs(sample - COPERNICUS_NODATA_ELEVATION) < 0.01) {
+      if (fabs(sample - COPERNICUS_NODATA_ELEVATION) < 0.01 ||
+          fabs(sample - ALOSWORLD3D_NODATA_ELEVATION) < 0.01) {
         samples[index] = Tile::NODATA_ELEVATION;
       } else {
         samples[index] = sample;
