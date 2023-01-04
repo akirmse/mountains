@@ -49,7 +49,7 @@ def process_tile(args):
         # Only process tile if TIF file is found (some tiles don't exist)
         if os.path.isfile(tif_filename):
             # Convert to .flt file format
-            gdal_command = f"gdal_translate -of EHdr {tif_filename} {flt_filename}"
+            gdal_command = f"gdal_translate -of EHdr -ot Float32 {tif_filename} {flt_filename}"
             run_command(gdal_command)
 
             # Delete unneeded auxiliary files
@@ -95,9 +95,14 @@ def main():
     
     for lat in range(args.min_lat, args.max_lat):
         for lng in range(args.min_lng, args.max_lng):
+            # Allow specifying longitude ranges that span the antimeridian (lng > 180)
+            wrappedLng = lng;
+            if wrappedLng >= 180:
+                wrappedLng -= 360
+
             # Skip tiles that don't intersect filtering polygon
             if filterPolygon.intersects(lat, lat + 1, lng, lng + 1):
-                process_args.append((lat, lng, full_tile_dir))
+                process_args.append((lat, wrappedLng, full_tile_dir))
 
     pool.map(process_tile, process_args)
     pool.close()
