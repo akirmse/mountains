@@ -88,9 +88,7 @@ void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {
     }
 
     // Mark range as visited
-    for (Coord rx = range.xmin; rx <= range.xmax; ++rx) {
-      mMarkers.set(rx, range.y, mMarkerValue);
-    }
+    mMarkers.setRange(range.xmin, range.y, mMarkerValue, range.xmax - range.xmin + 1);
 
     // Find adjacent ranges above
     if (range.y > 0) {
@@ -191,9 +189,7 @@ void DomainMap::fillFlatArea(int x, int y, Pixel value) {
     }
 
     // Fill range
-    for (Coord rx = range.xmin; rx <= range.xmax; ++rx) {
-      mPixels.set(rx, range.y, value);
-    }
+    mPixels.setRange(range.xmin, range.y, value, range.xmax - range.xmin + 1);
 
     // Find adjacent ranges above
     if (range.y > 0) {

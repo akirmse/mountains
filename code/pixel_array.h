@@ -52,6 +52,14 @@ public:
     mPixels[y * mWidth + x] = value;
   }
 
+  // Set count pixels horizontally starting at (x, y) to the given value
+  void setRange(int x, int y, Pixel value, int count) {
+    Pixel *ptr = mPixels + y * mWidth + x;
+    for (int i = 0; i < count; ++i) {
+      *ptr++ = value;
+    }
+  }
+
 private:
   int mWidth;
   int mHeight;
