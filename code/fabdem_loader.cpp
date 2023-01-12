@@ -75,6 +75,12 @@ Tile *FabdemLoader::loadTile(const std::string &directory, float minLat, float m
       int index = i * inputWidth + j;
       float sample = inbuf[index];
 
+      // Some source data appears to be corrupt
+      if (isnan(sample)) {
+        VLOG(1) << "Got NaN pixel at " << i << " " << j;
+        sample = COPERNICUS_NODATA_ELEVATION;
+      }
+      
       // Convert Copernicus NODATA to our NODATA
       if (fabs(sample - COPERNICUS_NODATA_ELEVATION) < 0.01) {
         inbuf[index] = Tile::NODATA_ELEVATION;

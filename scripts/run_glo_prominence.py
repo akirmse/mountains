@@ -75,8 +75,11 @@ def main():
                                help="Directory to place prominence results")
     parser.add_argument('--intermediate_dir',
                         help="Directory to place unzipped FLT tiles; default=tile_dir")
-    parser.add_argument('--download_tiles', default=True,
-                        help="Whether to try to download any missing tiles")
+    parser.add_argument('--download_tiles', dest='download_tiles', action='store_true',
+                        help="Download any missing tiles")
+    parser.add_argument('--no_download_tiles', dest='download_tiles', action='store_false',
+                        help="Don't download any missing tiles")
+    parser.set_defaults(download_tiles=True)
 
     parser.add_argument('--prominence_command', default='release/prominence',
                         help="Path to prominence binary")
@@ -125,7 +128,7 @@ def main():
 
     # Run prominence
     prom_command = f"{args.prominence_command} --v=1 -f {args.format}" + \
-        f" -i {args.tile_dir} -o {args.output_dir}" + \
+        f" -i {args.intermediate_dir} -o {args.output_dir}" + \
         f" -t {args.threads} -m {args.min_prominence}"
 
     if args.kml_polygon:
