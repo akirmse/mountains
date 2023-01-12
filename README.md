@@ -120,6 +120,12 @@ usage: run_glo_prominence.py [-h] [--tile_dir TILE_DIR]
                              min_lat max_lat min_lng max_lng
 ```
 
+#### FABDEM
+
+[FABDEM](https://data.bris.ac.uk/data/dataset/25wfy0f9ukoge2gs7a5mqpq2j7) (Forest And Buildings removed Copernicus DEM) is a version of the GLO30 data that has been modified by machine
+learning techniques to remove trees and buildings, leaving the bare earth.  To process FABDEM, use the same ```run_glo_prominence```
+Python script as with GLO30, giving the additional argument ```--format FABDEM```.
+
 #### USGS 1m terrain ("3DEP" = 3D Elevation Program)
 
 This LIDAR-based data is high resolution, but has spotty coverage.  This is raw LIDAR data converted
