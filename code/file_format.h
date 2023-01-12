@@ -40,6 +40,7 @@ public:
     NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
     THREEDEP_1M,  // FLT file containing one-meter LIDAR from 3D Elevation Program (3DEP)
     GLO30,  // Copernicus GLO-30 30m data
+    FABDEM, // Tree-free Copernicus GLO-30 30m data
   };
 
   FileFormat() = default;

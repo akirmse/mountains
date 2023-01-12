@@ -55,6 +55,7 @@ POINTLIB_OBJS = \
 	$(OUTDIR)/util.obj \
 
 LOADERLIB_OBJS = \
+	$(OUTDIR)/fabdem_loader.obj \
 	$(OUTDIR)/flt_loader.obj \
 	$(OUTDIR)/glo_loader.obj \
 	$(OUTDIR)/hgt_loader.obj \

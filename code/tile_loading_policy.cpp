@@ -24,6 +24,7 @@
 
 #include "tile_loading_policy.h"
 
+#include "fabdem_loader.h"
 #include "flt_loader.h"
 #include "glo_loader.h"
 #include "hgt_loader.h"
@@ -78,7 +79,8 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
       copyPixelsFromNeighbors(tile, minLat, minLng);
       break;
 
-    case FileFormat::Value::GLO30: {
+    case FileFormat::Value::GLO30:  // fall through
+    case FileFormat::Value::FABDEM: {
       // GLO30 "helpfully" removes the last row and column from each tile,
       // so we need to stick them back on.
       Tile *newTile = appendPixelsFromNeighbors(tile, minLat, minLng);
@@ -113,6 +115,10 @@ Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
     
   case FileFormat::Value::GLO30:
     loader = new GloLoader();
+    break;    
+
+  case FileFormat::Value::FABDEM:
+    loader = new FabdemLoader();
     break;    
 
   default:
