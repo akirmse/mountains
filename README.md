@@ -162,6 +162,7 @@ These X and Y coordinates also correspond to the naming of the tiles.
 | SRTM   | 90m        | global   | lat/lng |[Link](viewfinderpanoramas.com) |
 | NED1   | 30m        | US, Canada, Mexico | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1/) |
 | GLO-30 | 30m        | global minus Azerbaijan and Armenia | lat/lng | [Link](https://registry.opendata.aws/copernicus-dem/) |
+| FABDEM | 30m        | GLO-30 minus < -60°S and > 80°N | lat/lng | [Link](https://data.bris.ac.uk/data/dataset/25wfy0f9ukoge2gs7a5mqpq2j7) |
 | NED13  | 10m        | US       | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/13)|
 | NED19  | 3m         | partial US | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/19) |
 | 3DEP1m | 1m         | partial US | UTM | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1m/Projects/) |
