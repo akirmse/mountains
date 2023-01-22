@@ -26,6 +26,7 @@
 #include "isolation_finder.h"
 #include "coordinate_system.h"
 #include "easylogging++.h"
+#include "file_format.h"
 #include "math_util.h"
 
 #include <assert.h>
@@ -172,7 +173,7 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
   return record;
 }
 
-IsolationRecord IsolationFinder::findIsolation(const Tile *tile,
+IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const CoordinateSystem *tileCoordinateSystem,
                                                const LatLng *peakLocation, Offsets seedPoint, Elevation seedElevation) const {
   IsolationRecord record;
   
@@ -188,7 +189,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile,
   // of the factor is the cosine of the latitude of the row.
   float *lngDistanceScaleForRow = (float *) malloc(sizeof(float) * tile->height());
   for (int y = 0; y < tile->height(); ++y) {
-    LatLng point = mCoordinateSystem->getLatLng(Offsets(0, y));
+    LatLng point = tileCoordinateSystem->getLatLng(Offsets(0, y));
     lngDistanceScaleForRow[y] = cosf(degToRad(point.latitude()));
   }
 
@@ -257,7 +258,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile,
         for (int x = outerleftx; x < outerrightx; ++x) {
           if (tile->get(x, y) > seedElevation) {
             float distance = peakLocation->distance(
-              mCoordinateSystem->getLatLng(Offsets(x, y)));
+              tileCoordinateSystem->getLatLng(Offsets(x, y)));
             if (distance < minDistance) {
               VLOG(4) << "Found closer point on slow path: " << x << " " << y;
               minDistance = distance;
@@ -301,7 +302,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile,
       // We need to find a ring size that guarantees that we search all
       // land at least as close to the peak.
       exactDistanceCheck = true;
-      LatLng higherGroundLocation = mCoordinateSystem->getLatLng(closestHigherGround);
+      LatLng higherGroundLocation = tileCoordinateSystem->getLatLng(closestHigherGround);
       float distancePeakToHigherGround = peakLocation->distance(higherGroundLocation);
       minDistance = distancePeakToHigherGround;
 
@@ -340,9 +341,9 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile,
   }
       
   if (record.foundHigherGround) {
-    record.closestHigherGround = mCoordinateSystem->getLatLng(closestHigherGround);
+    record.closestHigherGround = tileCoordinateSystem->getLatLng(closestHigherGround);
 
-    LatLng seedLocation(mCoordinateSystem->getLatLng(seedPoint));
+    LatLng seedLocation(tileCoordinateSystem->getLatLng(seedPoint));
     record.distance = seedLocation.distance(record.closestHigherGround);
   }
 
@@ -359,12 +360,14 @@ IsolationRecord IsolationFinder::checkNeighboringTile(float lat, float lng, cons
   if (mCache->getMaxElevation(lat, lng, &maxElevation) && elev > maxElevation) {
     return IsolationRecord();
   }
-  
+  FileFormat format(FileFormat::Value::HGT);
   // Look in neighbor for nearest higher ground to close point
-  Tile *neighbor = mCache->getOrLoad(lat, lng, *mCoordinateSystem);
+  CoordinateSystem *tileCoordinateSystem = format.coordinateSystemForOrigin(lat, lng);
+
+  Tile *neighbor = mCache->getOrLoad(lat, lng, *tileCoordinateSystem);
   if (neighbor != nullptr) {
     // TODO: This asssumes that neighbor tile has same size as this tile.  Could use lat/lng instead.
-    return findIsolation(neighbor, peakLocation, seedCoords, elev);
+    return findIsolation(neighbor, tileCoordinateSystem, peakLocation, seedCoords, elev);
   }
   return IsolationRecord();  // Nothing found
 }

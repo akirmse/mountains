@@ -28,6 +28,7 @@
 
 #include <memory>
 #include <vector>
+#include "coordinate_system.h"
 #include "latlng.h"
 #include "tile_cache.h"
 
@@ -73,7 +74,7 @@ private:
   // If peakLocation is nullptr, then seedPoint is inside this tile and seedPoint gives its location.
   // If peakLocation is non-null, then peakLocation is outside the tile, and seedPoint is the closest point
   // in the tile to peakLocation.
-  IsolationRecord findIsolation(const Tile *tile, const LatLng *peakLocation, Offsets seedPoint, Elevation seedElevation) const;
+  IsolationRecord findIsolation(const Tile *tile, const CoordinateSystem *tileCoordinateSystem, const LatLng *peakLocation, Offsets seedPoint, Elevation seedElevation) const;
   
   // Check the neighboring tile with the given lat/lng, where seedCoords give the closest point
   // in the neighboring tile to the peak, and elev is the height of the peak.
