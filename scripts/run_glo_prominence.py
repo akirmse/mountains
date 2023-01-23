@@ -8,9 +8,11 @@
 
 import argparse
 import os
+import signal
 import subprocess
 
 from filter import Filter
+from interrupt import handle_ctrl_c, init_pool
 
 from multiprocessing import Pool
 
@@ -18,6 +20,7 @@ def run_command(command_string):
     print("> " + command_string)
     retval = subprocess.call(command_string, shell=True)
 
+@handle_ctrl_c
 def process_tile(args):
     (lat, lng, tile_dir, intermediate_dir, tile_format, download_tiles) = args
     lat_str = "%02d" % abs(lat)
@@ -106,7 +109,8 @@ def main():
         filterPolygon.addPolygonsFromKml(args.kml_polygon)
 
     # Run tile downloads in parallel because they're slow
-    pool = Pool(args.threads)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    pool = Pool(args.threads, initializer=init_pool)
 
     process_args = []
     
@@ -122,7 +126,10 @@ def main():
                 process_args.append((lat, wrappedLng, full_tile_dir, intermediate_dir,
                                      args.format, args.download_tiles))
 
-    pool.map(process_tile, process_args)
+    results = pool.map(process_tile, process_args)
+    if any(map(lambda x: isinstance(x, KeyboardInterrupt), results)):
+        print('Ctrl-C was entered.')
+        exit(1)
     pool.close()
     pool.join()
 
