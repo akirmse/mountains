@@ -135,7 +135,7 @@ def main():
 
     # Run prominence
     prom_command = f"{args.prominence_command} --v=1 -f {args.format}" + \
-        f" -i {args.intermediate_dir} -o {args.output_dir}" + \
+        f" -i {intermediate_dir} -o {args.output_dir}" + \
         f" -t {args.threads} -m {args.min_prominence}"
 
     if args.kml_polygon:
