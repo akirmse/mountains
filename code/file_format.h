@@ -36,6 +36,7 @@ public:
   enum class Value {
     HGT,  // SRTM (90m, 3 arcsecond)
     NED19,     // FLT file containing NED 1/9 arcsecond data
+    NED13,     // FLT file containing NED 1/3 arcsecond data
     NED13_ZIP, // ZIP file containing FLT NED 1/3 arcsecond data
     NED1_ZIP,  // ZIP file containing FLT NED 1 arcsecond data
     THREEDEP_1M,  // FLT file containing one-meter LIDAR from 3D Elevation Program (3DEP)

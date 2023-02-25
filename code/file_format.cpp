@@ -34,7 +34,9 @@ using std::string;
 
 int FileFormat::rawSamplesAcross() const {
   switch (mValue) {
-  case Value::NED13_ZIP:  return 10812;
+  case Value::NED13:  // fall through
+  case Value::NED13_ZIP:
+    return 10812;
   case Value::NED1_ZIP:   return 3612;
   case Value::NED19:      return 8112;
   case Value::HGT:        return 1201;
@@ -48,7 +50,9 @@ int FileFormat::rawSamplesAcross() const {
 
 int FileFormat::inMemorySamplesAcross() const {
   switch (mValue) {
-  case Value::NED13_ZIP:  return 10801;
+  case Value::NED13:  // fall through
+  case Value::NED13_ZIP:
+    return 10801;
   case Value::NED1_ZIP:   return 3601;
   case Value::NED19:      return 8101;
   case Value::HGT:        return 1201;
@@ -65,7 +69,9 @@ int FileFormat::inMemorySamplesAcross() const {
 
 float FileFormat::degreesAcross() const {
   switch (mValue) {
-  case Value::NED13_ZIP:  return 1.0f;
+  case Value::NED13:  // fall through
+  case Value::NED13_ZIP:
+    return 1.0f;
   case Value::NED1_ZIP:   return 1.0f;
   case Value::NED19:      return 0.25f;
   case Value::HGT:        return 1.0f;
@@ -89,6 +95,7 @@ bool FileFormat::isUtm() const {
 CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, int utmZone) {
   switch (mValue) {
   case Value::NED13_ZIP:  // fall through
+  case Value::NED13:
   case Value::NED1_ZIP:   
   case Value::NED19:      
   case Value::HGT:        
@@ -123,6 +130,7 @@ FileFormat *FileFormat::fromName(const string &name) {
   const std::map<string, FileFormat> fileFormatNames = {
     { "SRTM",      Value::HGT, },
     { "NED1-ZIP",  Value::NED1_ZIP, },
+    { "NED13",     Value::NED13, },
     { "NED13-ZIP", Value::NED13_ZIP, },
     { "NED19",     Value::NED19, },
     { "GLO30",     Value::GLO30, },

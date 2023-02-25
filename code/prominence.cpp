@@ -56,7 +56,7 @@ static void usage() {
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13-ZIP\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
+  printf("  -f format         \"SRTM\", \"NED13\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output\n");
   printf("                    in same units as terrain data, default = 100\n");
@@ -191,8 +191,8 @@ int main(int argc, char **argv) {
   const int CACHE_SIZE = 2 * numThreads;  // 2 neighbors per thread seems useful
   auto cache = std::make_unique<TileCache>(&policy, CACHE_SIZE);
   
-  VLOG(2) << "Using " << numThreads << " threads";
-  VLOG(2) << "Bounds are " << bounds[0] << " " << bounds[1] << " "
+  VLOG(1) << "Using " << numThreads << " threads";
+  VLOG(1) << "Bounds are " << bounds[0] << " " << bounds[1] << " "
           << bounds[2] << " " << bounds[3];
   
   auto threadPool = std::make_unique<ThreadPool>(numThreads);
