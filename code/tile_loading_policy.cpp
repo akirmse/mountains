@@ -73,6 +73,7 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
     switch (mFileFormat.value()) {
     case FileFormat::Value::HGT:  // Fall through
     case FileFormat::Value::NED19:
+    case FileFormat::Value::NED13:
     case FileFormat::Value::NED13_ZIP:
     case FileFormat::Value::NED1_ZIP:
     case FileFormat::Value::THREEDEP_1M:
@@ -107,6 +108,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
     break;
 
   case FileFormat::Value::NED13_ZIP:  // fall through
+  case FileFormat::Value::NED13:
   case FileFormat::Value::NED19:
   case FileFormat::Value::NED1_ZIP:
   case FileFormat::Value::THREEDEP_1M:
