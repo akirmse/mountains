@@ -7,7 +7,10 @@
 import argparse
 import os
 import requests
+import signal
 import subprocess
+
+from interrupt import handle_ctrl_c, init_pool
 
 from multiprocessing import Pool
 
@@ -18,6 +21,7 @@ def run_command(command_string):
     print("> " + command_string)
     retval = subprocess.call(command_string, shell=True)
 
+@handle_ctrl_c
 def process_tile(args):
     (project, x, y, zone, tile_dir) = args
         
@@ -71,7 +75,8 @@ def main():
     full_tile_dir = os.path.expanduser(args.tile_dir)
 
     # Run tile downloads in parallel because they're slow
-    pool = Pool(args.threads)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    pool = Pool(args.threads, initializer=init_pool)
 
     process_args = []
     
@@ -79,7 +84,10 @@ def main():
         for y in range(args.min_y, args.max_y):
             process_args.append((args.project, x, y, args.zone, full_tile_dir))
 
-    pool.map(process_tile, process_args)
+    results = pool.map(process_tile, process_args)
+    if any(map(lambda x: isinstance(x, KeyboardInterrupt), results)):
+        print('Ctrl-C was entered.')
+        exit(1)
     pool.close()
     pool.join()
 

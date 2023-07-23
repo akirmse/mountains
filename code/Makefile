@@ -50,7 +50,6 @@ POINTLIB = $(OUTDIR)/pointlib.a
 
 POINTLIB_OBJS = \
 	$(OUTDIR)/latlng.o \
-	$(OUTDIR)/quadtree.o \
 	$(OUTDIR)/util.o \
 
 LOADERLIB_OBJS = \

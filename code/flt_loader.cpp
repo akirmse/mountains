@@ -49,12 +49,13 @@ Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minL
   case FileFormat::Value::NED1_ZIP:
     return loadFromNEDZipFileInternal(directory, minLat, minLng);
 
+  case FileFormat::Value::NED13:
   case FileFormat::Value::NED19:
   case FileFormat::Value::THREEDEP_1M:
     return loadFromFltFile(directory, minLat, minLng);
 
   default:
-    printf("Got unknown tile file format in FltLoader");
+    LOG(ERROR) << "Got unknown tile file format in FltLoader";
     return nullptr;
   }
 }
@@ -173,6 +174,14 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
              (minLng >= 0) ? 'e' : 'w',
              abs(static_cast<int>(minLng)),
              format.value() == FileFormat::Value::NED13_ZIP ? "13" : "1");
+    break;
+
+  case FileFormat::Value::NED13:
+    snprintf(buf, sizeof(buf), "USGS_13_%c%02d%c%03d.flt",
+             (minLat >= 0) ? 'n' : 's',
+             abs(static_cast<int>(upperLat)),
+             (minLng >= 0) ? 'e' : 'w',
+             abs(static_cast<int>(minLng)));
     break;
     
   case FileFormat::Value::NED19:
