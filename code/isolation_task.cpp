@@ -47,7 +47,7 @@ IsolationTask::IsolationTask(TileCache *cache, const string &output_dir,
   mMinIsolationKm = minIsolationKm;
 }
 
-bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem) {
+bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem, const FileFormat format) {
   // Load the main tile manually; cache could delete it if we allow it to be cached
   std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng, coordinateSystem));
   if (tile.get() == nullptr) {
@@ -66,7 +66,7 @@ bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinate
   // Compute isolation of each peak
   //
   
-  IsolationFinder ifinder(mCache, tile.get(), coordinateSystem);
+  IsolationFinder ifinder(mCache, tile.get(), coordinateSystem, format);
 
   IsolationResults results;
 

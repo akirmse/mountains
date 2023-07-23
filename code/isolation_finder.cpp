@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-
 #include "isolation_finder.h"
 #include "coordinate_system.h"
 #include "easylogging++.h"
@@ -37,10 +36,11 @@
 using std::vector;
 
 IsolationFinder::IsolationFinder(TileCache *cache, const Tile *tile,
-                                 const CoordinateSystem &coordinateSystem) {
+                                 const CoordinateSystem &coordinateSystem, FileFormat format) {
   mTile = tile;
   mCache = cache;
   mCoordinateSystem = std::unique_ptr<CoordinateSystem>(coordinateSystem.clone());
+  mFormat = format;
 }
 
 IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
@@ -89,8 +89,11 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
       for (int lng = minx; lng <= maxx; ++lng) {
         // Deal with antimeridian: bring longitude back into range
         int neighborLng = lng;
-        if (neighborLng > 180) {
+        if (neighborLng >= 180) {
           neighborLng -= 360;
+        }
+        if (neighborLng < -180) {
+          neighborLng += 360;
         }
         
         // Skip any tile already checked
@@ -187,7 +190,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
   // any distance in the longitude (x) direction.  This compensates for
   // lines of longitude getting closer as latitude increases.  The value
   // of the factor is the cosine of the latitude of the row.
-  float *lngDistanceScaleForRow = (float *) malloc(sizeof(float) * tile->height());
+  float *lngDistanceScaleForRow = new float[ tile->height()];
   for (int y = 0; y < tile->height(); ++y) {
     LatLng point = tileCoordinateSystem->getLatLng(Offsets(0, y));
     lngDistanceScaleForRow[y] = cosf(degToRad(point.latitude()));
@@ -325,11 +328,15 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
     
     foundHigherGroundLastTime = record.foundHigherGround;
     
-    // Old outer ring is new inner ring
-    innerleftx = outerleftx;
-    innerrightx = outerrightx;
-    innertopy = outertopy;
-    innerbottomy = outerbottomy;
+    // increase inner ring only if no higher ground was found
+    // Otherwise possible that peak search is not conducted
+    if (!record.foundHigherGround) {
+      // Old outer ring is new inner ring
+      innerleftx = outerleftx;
+      innerrightx = outerrightx;
+      innertopy = outertopy;
+      innerbottomy = outerbottomy;
+    }
 
     // Expand outer ring
     dy = static_cast<int>(ceilf(dy * successive_rectangle_ratio));
@@ -347,7 +354,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
     record.distance = seedLocation.distance(record.closestHigherGround);
   }
 
-  free(lngDistanceScaleForRow);
+  delete [] lngDistanceScaleForRow;
   return record;
 }
 
@@ -360,9 +367,8 @@ IsolationRecord IsolationFinder::checkNeighboringTile(float lat, float lng, cons
   if (mCache->getMaxElevation(lat, lng, &maxElevation) && elev > maxElevation) {
     return IsolationRecord();
   }
-  FileFormat format(FileFormat::Value::HGT);
   // Look in neighbor for nearest higher ground to close point
-  CoordinateSystem *tileCoordinateSystem = format.coordinateSystemForOrigin(lat, lng);
+  CoordinateSystem *tileCoordinateSystem = mFormat.coordinateSystemForOrigin(lat, lng);
 
   Tile *neighbor = mCache->getOrLoad(lat, lng, *tileCoordinateSystem);
   if (neighbor != nullptr) {

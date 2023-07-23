@@ -31,6 +31,7 @@
 #include "coordinate_system.h"
 #include "latlng.h"
 #include "tile_cache.h"
+#include "file_format.h"
 
 struct IsolationRecord {
   bool foundHigherGround;
@@ -59,7 +60,7 @@ struct IsolationRecord {
 class IsolationFinder {
 public:
   IsolationFinder(TileCache *cache, const Tile *tile,
-                  const CoordinateSystem &coordinateSystem);
+                  const CoordinateSystem &coordinateSystem, FileFormat format);
   
   IsolationRecord findIsolation(Offsets peak) const;
   
@@ -68,6 +69,7 @@ private:
   const Tile *mTile;
   TileCache *mCache;
   std::unique_ptr<CoordinateSystem> mCoordinateSystem;
+  FileFormat mFormat;
 
   // Search tile for a point higher than seedElevation.
   //

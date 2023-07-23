@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
       IsolationTask *task = new IsolationTask(
         cache.get(), output_directory, bounds, minIsolation);
       results.push_back(threadPool->enqueue([=] {
-            return task->run(lat, lng, *coordinateSystem);
+            return task->run(lat, lng, *coordinateSystem, fileFormat);
           }));
     }
   }
