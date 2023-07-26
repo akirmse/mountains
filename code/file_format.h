@@ -67,7 +67,7 @@ public:
 
   // Return a new CoordinateSystem describing the section of the Earth that
   // the given tile with the given origin (lower-left corner) covers.
-  CoordinateSystem *coordinateSystemForOrigin(float lat, float lng, int utmZone = 0);
+  CoordinateSystem *coordinateSystemForOrigin(float lat, float lng, int utmZone = 0) const;
   
   // Return a FileFormat object for the given human-readable string,
   // or nullptr if none.

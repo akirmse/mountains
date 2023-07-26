@@ -92,7 +92,7 @@ bool FileFormat::isUtm() const {
   return mValue == Value::THREEDEP_1M;
 }
 
-CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, int utmZone) {
+CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, int utmZone) const {
   switch (mValue) {
   case Value::NED13_ZIP:  // fall through
   case Value::NED13:

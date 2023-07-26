@@ -39,7 +39,7 @@ public:
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
-  bool run(float lat, float lng, const CoordinateSystem &coordinateSystem);
+  bool run(float lat, float lng, const CoordinateSystem &coordinateSystem, const FileFormat format);
 
 private:
   TileCache *mCache;
