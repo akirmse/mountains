@@ -13,7 +13,7 @@ the "debug" or "release" subdirectories.
 Debug version:
 
 ```
-make  
+make
 ```
 
 Release version:
@@ -22,7 +22,7 @@ Release version:
 RELEASE=1 make
 ```
 
-This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, and Unbuntu 20.04 with gcc 9.
+This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, Unbuntu 20.04 with gcc 9 and Debian 12 with gcc 13.2.0.
 
 ### Windows
 
@@ -50,7 +50,7 @@ available from NASA (SRTM), or improved void-filled data is at
 Higher resolution data for North America is available at [The National
 Map](https://viewer.nationalmap.gov/).
 
-Copernicus 30m GLO30 data can be downloaded from [here](https://registry.opendata.aws/copernicus-dem/). 
+Copernicus 30m GLO30 data can be downloaded from [here](https://registry.opendata.aws/copernicus-dem/).
 
 Note that SRTM and GLO30 filenames reference the southwest corner of the tile,
 while NED filenames reference the northwest corner.
@@ -71,7 +71,7 @@ N59E006.hgt
 The National Elevation Dataset (NED) covers the U.S. at various resolutions:
 - NED1 has 1-arcsecond (~90 foot) samples
 - NED13 has 1/3-arcsecond (~30 foot) samples
-- NED19 has 1/9 arcsecond (~10 foot) samples. 
+- NED19 has 1/9 arcsecond (~10 foot) samples.
 
 ##### NED1 and NED13
 
@@ -88,7 +88,7 @@ The prominence code will extract the FLT file from the zip (using ```7z``` on Wi
 NED19 data is based on LIDAR.  As of this writing, it covers only part of the U.S.  Data is delivered
 as zip files that are 1/4 of a degree on each side.  The zip files containing
 the data contain the LIDAR collection name in the filename, making them difficult to discover.  There
-is a Python script in the ```scripts``` subdirectory that will discover the tiles for a given lat/lng, 
+is a Python script in the ```scripts``` subdirectory that will discover the tiles for a given lat/lng,
 download them, covert them to FLT format, and run the prominence code on them.
 
 ```
@@ -106,7 +106,7 @@ Multiple LIDAR collections can cover the same tile.  In this case, the script pi
 The data is delivered as TIFF files.  Convert them to FLT using ```gdal_translate```, for example:
 
 ```
-gdal_translate -of EHdr Copernicus_DSM_COG_10_N59_00_E006_00_DEM.tif Copernicus_DSM_COG_10_N59_00_E006_00_DEM.flt 
+gdal_translate -of EHdr Copernicus_DSM_COG_10_N59_00_E006_00_DEM.tif Copernicus_DSM_COG_10_N59_00_E006_00_DEM.flt
 ```
 
 There is a script in the ```scripts``` subdirectory that can automate the downloading and conversion of tiles,
@@ -151,7 +151,7 @@ usage: run_3dep1m_prominence.py [-h] --tile_dir TILE_DIR --output_dir
 ```
 
 Note that you must specify the UTM zone (which can be inferred from the filenames of tiles in the project),
-the project name (like "CA_SantaClaraCounty_2020_A20"), and the coordinates are specified as X/Y in UTM, with units of 10,000 meters. 
+the project name (like "CA_SantaClaraCounty_2020_A20"), and the coordinates are specified as X/Y in UTM, with units of 10,000 meters.
 These X and Y coordinates also correspond to the naming of the tiles.
 
 #### Data summary
@@ -211,7 +211,7 @@ too large to be merged or to load into Earth.  Use the pruned versions
 (identified by "pruned" in their filenames).
 
 Next, merge the resultant pruned divide trees into a single, larger divide
-tree.  Large merges can be done in parallel with multiple threads. 
+tree.  Large merges can be done in parallel with multiple threads.
 
 ```
 merge_divide_trees output_file_prefix input_file [...]
@@ -225,7 +225,7 @@ merge_divide_trees output_file_prefix input_file [...]
 ```
 
 Specify the "-f" flag to get final output when you no longer need to perform
-any further merges.  (In previous versions, merge_divide_tree was serial, and it made sense to 
+any further merges.  (In previous versions, merge_divide_tree was serial, and it made sense to
 merge in multiple stages, specifying -f only at the last stage.  Now you
 can generally merge everything in one parallel step.)
 
@@ -248,7 +248,7 @@ filter_points input_file polygon_file output_file
 
 By default, the programs don't print much to the screen.  To see more of what's happening, you can
 set the log level on the command line using the flags from the [easylogging](https://github.com/amrayn/easyloggingpp#application-arguments)
-library.  Specifying ```--v=1``` will print each major operation, while ```--v=4``` will produce a 
+library.  Specifying ```--v=1``` will print each major operation, while ```--v=4``` will produce a
 torrent of output.
 
 ## Results
@@ -286,14 +286,14 @@ Usage:
 ```
 
 The input divide tree must be free of runoffs (see the options to ```merge_divide_trees```).  The output will list a peak, its prominence
-parent, and its line parent on each line.  Landmass high points (where the prominence is equal to the elevation) are not included.  
+parent, and its line parent on each line.  Landmass high points (where the prominence is equal to the elevation) are not included.
 Their key saddles are the ocean, and there isn't a well-defined way to connect such peaks to other land masses through the divide tree.
 
 ## Anti-prominence
 
 The "anti-prominence" of low points can be computed by the same algorithm, simply by changing
-the sign of the elevation values.  This can be done by giving the -a option to the 
-```prominence``` command.  Then, at the final stage of merging (with the -f flag), add the -a option 
+the sign of the elevation values.  This can be done by giving the -a option to the
+```prominence``` command.  Then, at the final stage of merging (with the -f flag), add the -a option
 again to flip the elevation values back to positive.
 
 ## More information
