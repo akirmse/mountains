@@ -126,6 +126,7 @@ int main(int argc, char **argv) {
   const vector<IslandTree::Node> &islandNodes = islandTree->nodes();
   const vector<LineTree::Node> &lineNodes = lineTree->nodes();
   const vector<Peak> &peaks = divideTree->peaks();
+  const vector<Saddle> &saddles = divideTree->saddles();
   for (int i = 1; i < (int) divideNodes.size(); ++i) {
     auto prom = islandNodes[i].prominence;
     // Skip dinky peaks
@@ -145,6 +146,12 @@ int main(int argc, char **argv) {
     VLOG(3) << "Considering peak " <<
         childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
 
+    // Find saddle
+    LatLng colPos(0, 0);
+    if (islandNodes[i].keySaddleId != IslandTree::Node::Null) {
+      colPos = coords.getLatLng(saddles[islandNodes[i].keySaddleId - 1].location);
+    }
+    
     // Walk up line tree, looking for first peak with higher prominence.
     // (Prominence values are stored in island tree.)
     int parentId = lineNodes[i].parentId;
@@ -157,6 +164,7 @@ int main(int argc, char **argv) {
       }
 
       auto parentElevation = peaks[parentId - 1].elevation;
+      // TODO: Filter to line parent prom >= minProminence
       if (lineParentId == DivideTree::Node::Null && parentElevation >= elev) {
         lineParentId = parentId;
       }
@@ -182,8 +190,10 @@ int main(int argc, char **argv) {
       auto parentProm = islandNodes[parentId].prominence;
       auto &lineParentPeak = peaks[lineParentId - 1];
       LatLng lineParentPos = coords.getLatLng(lineParentPeak.location);
-      fprintf(file, "%.4f,%.4f,%.2f,%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
-              childPos.latitude(), childPos.longitude(), prom,
+      fprintf(file, "%.4f,%.4f,%.4f,%.4f,%.2f,%.2f,%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
+              childPos.latitude(), childPos.longitude(),
+              colPos.latitude(), colPos.longitude(),
+              elev, prom,
               promParentPos.latitude(), promParentPos.longitude(), parentProm,
               lineParentPos.latitude(), lineParentPos.longitude(), lineParentPeak.elevation);
     }
