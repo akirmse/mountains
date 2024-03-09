@@ -35,6 +35,8 @@ DomainMap::DomainMap(const Tile *tile) :
     mMarkers(tile->width(), tile->height()) {
   mTile = tile;
   mMarkerValue = 1;
+
+  mPixels.setAllPixels(EmptyPixel);
  }
 
 void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {

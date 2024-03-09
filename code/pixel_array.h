@@ -42,7 +42,8 @@ public:
     delete [] mPixels;
   }
 
-  static const Pixel EmptyPixel = 0;
+  // A non-terrain value
+  static const Pixel EmptyPixel = -32738;  
 
   Pixel get(int x, int y) const {
     return mPixels[y * mWidth + x];
@@ -58,6 +59,10 @@ public:
     for (int i = 0; i < count; ++i) {
       *ptr++ = value;
     }
+  }
+
+  void setAllPixels(Pixel value) {
+    setRange(0, 0, value, mWidth * mHeight);
   }
 
 private:

@@ -83,7 +83,7 @@ void TreeBuilder::findExtrema() {
   for (int y = 0; y < mTile->height(); ++y) {
     for (int x = 0; x < mTile->width(); ++x) {
       Elevation elev = mTile->get(x, y);
-
+      
       // Skip nodata
       if (elev == Tile::NODATA_ELEVATION) {
         continue;
@@ -95,7 +95,7 @@ void TreeBuilder::findExtrema() {
       }
 
       mDomainMap.findFlatArea(x, y, &boundary);
-
+      
       // If no higher boundary points, this is a peak
       if (boundary.higherPoints.empty()) {
         int peakId = static_cast<int>(mPeaks.size() + 1);
@@ -150,6 +150,7 @@ void TreeBuilder::findExtrema() {
         mPendingStack.push(higherPoint);
         Offsets highestPointInSegment = higherPoint;
         Elevation maxHeightInSegment = mTile->get(higherPoint);
+
         while (!mPendingStack.empty()) {
           Offsets point = mPendingStack.top();
           mPendingStack.pop();
@@ -164,7 +165,7 @@ void TreeBuilder::findExtrema() {
             highestPointInSegment = point;
             maxHeightInSegment = mTile->get(point);
           }
-
+          
           // Add any neighbors in higher points set
           for (int dy = -1; dy <= 1; ++dy) {
             for (int dx = -1; dx <= 1; ++dx) {
@@ -177,7 +178,7 @@ void TreeBuilder::findExtrema() {
             }
           }
         }
-          
+
         segmentHighPoints.push_back(highestPointInSegment);
         if (maxHeightInSegment > mTile->get(segmentHighPoints[segmentWithHighestPoint])) {
           segmentWithHighestPoint = static_cast<int>(segmentHighPoints.size() - 1);
@@ -412,7 +413,8 @@ vector<Offsets> TreeBuilder::walkUpToPeak(Offsets startPoint) {
     }
     
     // Found a saddle?
-    if (domainPixel < 0 && domainPixel != DomainMap::GenericFlatArea) {
+    if (domainPixel < 0 && domainPixel != DomainMap::GenericFlatArea &&
+        domainPixel != DomainMap::EmptyPixel) {
       VLOG(2) << "During walkup, encountered saddle " << domainPixel;
       // Exit saddle up steepest boundary point
       point = getSaddleInfo(domainPixel).rise1;
@@ -449,7 +451,7 @@ vector<Offsets> TreeBuilder::walkUpToPeak(Offsets startPoint) {
     point = newPoint;
   }
 
-  if (domainPixel != 0) {
+  if (domainPixel != DomainMap::EmptyPixel) {
     VLOG(2) << "Found path from saddle to peak " << domainPixel << " of length " << path.size();
   }
   

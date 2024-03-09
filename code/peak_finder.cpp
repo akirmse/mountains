@@ -43,9 +43,8 @@ vector<Offsets> PeakFinder::findPeaks() const {
   for (int y = 1; y < mTile->height() - 1; ++y) {
     for (int x = 1; x < mTile->width() - 1; ++x) {
       Elevation elev = mTile->get(x, y);
-      // Data from Jonathan de Ferranti appears to have 0 instead of nodata value
       // At least as high as all 8-neighbors?
-      if (elev != Tile::NODATA_ELEVATION && elev != 0 
+      if (elev != Tile::NODATA_ELEVATION
           && elev >= mTile->get(x - 1, y) && elev >= mTile->get(x + 1, y)
           && elev >= mTile->get(x, y - 1) && elev >= mTile->get(x, y + 1)
           && elev >= mTile->get(x - 1, y - 1) && elev >= mTile->get(x - 1, y + 1)
@@ -69,7 +68,7 @@ vector<Offsets> PeakFinder::findPeaks() const {
     Elevation elev = mTile->get(x, 0);
     
     // 5 neighbors in tile
-    if (elev != Tile::NODATA_ELEVATION && elev != 0 
+    if (elev != Tile::NODATA_ELEVATION
         && elev >= mTile->get(x - 1, 0) && elev >= mTile->get(x + 1, 0)
         && elev >= mTile->get(x, 1) && elev >= mTile->get(x - 1, 1)
         && elev >= mTile->get(x + 1, 1)) {
@@ -82,7 +81,7 @@ vector<Offsets> PeakFinder::findPeaks() const {
     Elevation elev = mTile->get(0, y);
 
     // 5 neighbors in tile
-    if (elev != Tile::NODATA_ELEVATION && elev != 0
+    if (elev != Tile::NODATA_ELEVATION
         && elev >= mTile->get(1, y)
         && elev >= mTile->get(0, y - 1) && elev >= mTile->get(0, y + 1)
         && elev >= mTile->get(1, y - 1) && elev >= mTile->get(1, y + 1)) {
@@ -93,7 +92,7 @@ vector<Offsets> PeakFinder::findPeaks() const {
   // Upper-left pixel
   Elevation elev = mTile->get(0, 0);
   // 3 neighbors in tile
-  if (elev != Tile::NODATA_ELEVATION && elev != 0
+  if (elev != Tile::NODATA_ELEVATION
       && elev >= mTile->get(1, 0)
       && elev >= mTile->get(0, 1)
       && elev >= mTile->get(1, 1)) {
