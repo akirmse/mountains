@@ -29,11 +29,6 @@
 
 using std::string;
 
-// NED FLT files have an overlap of 6 pixels on all sizes.  We want just 1.  To get that,
-// we remove all overlap pixels on the top and left, and leave one on the bottom and right.
-// See https://ca.water.usgs.gov/projects/sandiego/data/gis/dem/ned13/readme.pdf
-static const int FLT_EXTRA_BORDER = 6;
-
 // Anything less than this value is considered NODATA.  NED1 and NED13 use -9999,
 // while NED19 uses some very negative value (< -1e38).
 static const float NED_NODATA_MIN_ELEVATION = -9998;
@@ -73,7 +68,11 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
   }
 
   const int rawSideLength = mFormat.rawSamplesAcross();
-  const int tileSideLength = rawSideLength - 2 * FLT_EXTRA_BORDER + 1;
+  const int tileSideLength = mFormat.inMemorySamplesAcross();
+  // NED FLT files have an overlap of 6 pixels on all sizes.  We want just 1.  To get that,
+  // we remove all overlap pixels on the top and left, and leave one on the bottom and right.
+  // See https://ca.water.usgs.gov/projects/sandiego/data/gis/dem/ned13/readme.pdf
+  const int extraBorder = std::max(0, (rawSideLength - tileSideLength + 1) / 2);
   int num_raw_samples = rawSideLength * rawSideLength;
   
   Elevation *samples = (Elevation *) malloc(sizeof(Elevation) * tileSideLength * tileSideLength);
@@ -94,9 +93,9 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
         float sample = inbuf[i * rawSideLength + j];
         
         // Convert NED nodata to SRTM nodata
-        if (i >= FLT_EXTRA_BORDER && i < tileSideLength + FLT_EXTRA_BORDER &&
-            j >= FLT_EXTRA_BORDER && j < tileSideLength + FLT_EXTRA_BORDER) {
-          int index = ((i - FLT_EXTRA_BORDER) * tileSideLength) + (j - FLT_EXTRA_BORDER);
+        if (i >= extraBorder && i < tileSideLength + extraBorder &&
+            j >= extraBorder && j < tileSideLength + extraBorder) {
+          int index = ((i - extraBorder) * tileSideLength) + (j - extraBorder);
           if (sample < NED_NODATA_MIN_ELEVATION) {
             samples[index] = Tile::NODATA_ELEVATION;
           } else {
