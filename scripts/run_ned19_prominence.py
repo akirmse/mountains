@@ -8,8 +8,10 @@ import argparse
 import os
 import re
 import requests
+import signal
 import subprocess
 
+from interrupt import handle_ctrl_c, init_pool
 from multiprocessing import Pool
 from zipfile import ZipFile
 
@@ -29,6 +31,7 @@ def fractionalDegree(degree: float) -> int:
     excess = abs(degree - int(degree))
     return int(100 * excess)
     
+@handle_ctrl_c
 def process_tile(args):
     (lat, lng, tile_dir, contents) = args
     lat_str = "%02dx%02d" % (abs(int(lat)), fractionalDegree(lat))
@@ -100,7 +103,8 @@ def main():
     contents = requests.get(CONTENTS_URL).content.decode("utf-8")
 
     # Run tile downloads in parallel because they're slow
-    pool = Pool(args.threads)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    pool = Pool(args.threads, initializer=init_pool)
 
     process_args = []
 
@@ -115,7 +119,11 @@ def main():
             lng += tile_size
         lat += tile_size
 
-    pool.map(process_tile, process_args)
+    results = pool.map(process_tile, process_args)
+    if any(map(lambda x: isinstance(x, KeyboardInterrupt), results)):
+       print('Ctrl-C was entered.')
+       exit(1)
+
     pool.close()
     pool.join()
 
