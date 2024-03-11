@@ -27,6 +27,7 @@
 #include "util.h"
 
 #include <cassert>
+#include <cmath>
 #include <vector>
 
 using std::string;

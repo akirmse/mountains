@@ -28,6 +28,7 @@
 #include "easylogging++.h"
 
 #include <cassert>
+#include <cmath>
 #include <map>
 
 using std::string;
