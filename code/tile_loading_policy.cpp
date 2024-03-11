@@ -81,6 +81,7 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
       break;
 
     case FileFormat::Value::GLO30:  // fall through
+    case FileFormat::Value::LIDAR:
     case FileFormat::Value::FABDEM: {
       // GLO30 "helpfully" removes the last row and column from each tile,
       // so we need to stick them back on.
@@ -112,6 +113,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
   case FileFormat::Value::NED19:
   case FileFormat::Value::NED1_ZIP:
   case FileFormat::Value::THREEDEP_1M:
+  case FileFormat::Value::LIDAR:
     loader = new FltLoader(mFileFormat, mUtmZone);
     break;
     
@@ -127,7 +129,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
     LOG(ERROR) << "Unsupported tile file format";
     return nullptr;
   }
-    
+
   Tile *tile = loader->loadTile(mDirectory, minLat, minLng);
   
   delete loader;
