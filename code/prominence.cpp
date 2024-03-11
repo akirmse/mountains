@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
   // Validate that bounds are on tile boundaries
   float degreesAcross = fileFormat.degreesAcross();
   for (auto bound : bounds) {
-    if (bound / degreesAcross != static_cast<int>(bound / degreesAcross)) {
+    if (fabsf(bound / degreesAcross - static_cast<int>(std::round(bound / degreesAcross))) > 0.001f) {
       LOG(ERROR) << "Coordinates must be multiples of " << degreesAcross;
       LOG(ERROR) << "This coordinate is not: " << bound;
       exit(1);

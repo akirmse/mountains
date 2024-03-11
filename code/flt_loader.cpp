@@ -47,6 +47,7 @@ Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minL
   case FileFormat::Value::NED13:
   case FileFormat::Value::NED19:
   case FileFormat::Value::THREEDEP_1M:
+  case FileFormat::Value::LIDAR:
     return loadFromFltFile(directory, minLat, minLng);
 
   default:
@@ -60,7 +61,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
   if (!directory.empty()) {
     filename = directory + "/" + filename;
   }
-  
+
   FILE *infile = fopen(filename.c_str(), "rb");
   if (infile == nullptr) {
     VLOG(3) << "Failed to open file " << filename;
@@ -193,6 +194,14 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
              fractionalDegree(minLng));
     break;
 
+  case FileFormat::Value::LIDAR:
+    snprintf(buf, sizeof(buf), "tile_%02dx%02d_%03dx%02d.flt",
+             static_cast<int>(upperLat),
+             fractionalDegree(upperLat),
+             static_cast<int>(minLng),
+             fractionalDegree(minLng));
+    break;
+
   case FileFormat::Value::THREEDEP_1M:
     // Note order: X (lng), then Y (lat)
     snprintf(buf, sizeof(buf), "USGS_1M_%02d_x%02dy%03d.flt",
@@ -209,5 +218,5 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
 
 int FltLoader::fractionalDegree(float degree) const {
   float excess = fabs(degree - static_cast<int>(degree));
-  return static_cast<int>(100 * excess);
+  return static_cast<int>(std::round(100 * excess));
 }

@@ -48,7 +48,7 @@ ProminenceTask::ProminenceTask(TileCache *cache, const ProminenceOptions &option
 bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem) {
   mCurrentLatitude = lat;
   mCurrentLongitude = lng;
-  
+
   // Load the main tile manually; cache could delete it if we allow it to be cached
   std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng, coordinateSystem));
   if (tile.get() == nullptr) {
@@ -125,5 +125,5 @@ string ProminenceTask::getFilenamePrefix() const {
 
 int ProminenceTask::fractionalDegree(float degree) const {
   float excess = fabs(degree - static_cast<int>(degree));
-  return static_cast<int>(100 * excess);
+  return static_cast<int>(std::round(100 * excess));
 }

@@ -28,6 +28,7 @@
 #include "easylogging++.h"
 
 #include <cassert>
+#include <cmath>
 #include <map>
 
 using std::string;
@@ -41,6 +42,7 @@ int FileFormat::rawSamplesAcross() const {
   case Value::NED19:      return 8112;
   case Value::HGT:        return 1201;
   case Value::THREEDEP_1M:  return 10012;
+  case Value::LIDAR: return 10000;
   default:
     // In particular, fail on GLO, because this number is variable with latitude.
     LOG(ERROR) << "Couldn't compute tile size of unknown file format";
@@ -60,6 +62,7 @@ int FileFormat::inMemorySamplesAcross() const {
   case Value::GLO30: // Fall through
   case Value::FABDEM:
     return 3601;
+  case Value::LIDAR: return 10000;
   default:
     LOG(ERROR) << "Couldn't compute tile size of unknown file format";
     exit(1);
@@ -78,6 +81,7 @@ float FileFormat::degreesAcross() const {
   case Value::GLO30:  // Fall through
   case Value::FABDEM:
     return 1.0f;
+  case Value::LIDAR: return 0.1f;
   case Value::THREEDEP_1M:
     // This is a misnomer, as these tiles are in UTM coordinates.  The "degrees" across
     // means one x or y unit per tile (where each tile is 10000m in UTM).
@@ -110,6 +114,16 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, in
                                       samplesPerDegreeLat, samplesPerDegreeLng);
   }
 
+  case Value::LIDAR: {
+    int samplesPerDegreeLat = static_cast<int>(std::round(inMemorySamplesAcross() / degreesAcross()));
+    int samplesPerDegreeLng = static_cast<int>(std::round(inMemorySamplesAcross() / degreesAcross()));
+    return new DegreeCoordinateSystem(lat, lng,
+                                      lat + degreesAcross(),
+                                      lng + degreesAcross(),
+                                      samplesPerDegreeLat, samplesPerDegreeLng);
+  }
+    
+
   case Value::THREEDEP_1M:
     // 10km x 10km tiles, NW corner
     return new UtmCoordinateSystem(utmZone,
@@ -136,6 +150,7 @@ FileFormat *FileFormat::fromName(const string &name) {
     { "GLO30",     Value::GLO30, },
     { "FABDEM",    Value::FABDEM, },
     { "3DEP-1M",   Value::THREEDEP_1M, },
+    { "LIDAR",     Value::LIDAR, },
   };
 
   auto it = fileFormatNames.find(name);

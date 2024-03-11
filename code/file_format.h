@@ -42,6 +42,7 @@ public:
     THREEDEP_1M,  // FLT file containing one-meter LIDAR from 3D Elevation Program (3DEP)
     GLO30,  // Copernicus GLO-30 30m data
     FABDEM, // Tree-free Copernicus GLO-30 30m data
+    LIDAR,  // FLT file converted from LIDAR, 0.1 arcsecond
   };
 
   FileFormat() = default;

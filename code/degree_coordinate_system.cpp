@@ -27,6 +27,7 @@
 #include "util.h"
 
 #include <cassert>
+#include <cmath>
 #include <vector>
 
 using std::string;
@@ -79,8 +80,8 @@ Offsets DegreeCoordinateSystem::offsetsTo(const CoordinateSystem &that) {
     assert(false && "offsetsTo can only operate on CoordinateSystems of the same type");
   }
 
-  int dx = static_cast<int>((mMinLongitude - other->mMinLongitude) * mSamplesPerDegreeLongitude);
-  int dy = static_cast<int>((other->mMaxLatitude - mMaxLatitude) * mSamplesPerDegreeLatitude);
+  int dx = static_cast<int>(std::round((mMinLongitude - other->mMinLongitude) * mSamplesPerDegreeLongitude));
+  int dy = static_cast<int>(std::round((other->mMaxLatitude - mMaxLatitude) * mSamplesPerDegreeLatitude));
   return Offsets(dx, dy);
 }
 
