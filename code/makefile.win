@@ -72,7 +72,6 @@ ISOLATION_OBJS = \
 	$(OUTDIR)/isolation_results.obj \
 	$(OUTDIR)/isolation_task.obj \
 	$(OUTDIR)/peak_finder.obj \
-	$(OUTDIR)/point_map.obj \
 	$(OUTDIR)/tile.obj \
 	$(OUTDIR)/tile_cache.obj \
 	$(OUTDIR)/tile_loading_policy.obj \
@@ -89,7 +88,6 @@ PROMINENCE_OBJS = \
 	$(OUTDIR)/island_tree.obj \
 	$(OUTDIR)/kml_writer.obj \
 	$(OUTDIR)/line_tree.obj \
-	$(OUTDIR)/point_map.obj \
 	$(OUTDIR)/prominence.obj \
 	$(OUTDIR)/prominence_task.obj \
 	$(OUTDIR)/tile.obj \

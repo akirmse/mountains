@@ -24,7 +24,6 @@
 
 #include "coordinate_system.h"
 #include "isolation_task.h"
-#include "point_map.h"
 #include "ThreadPool.h"
 #include "tile.h"
 #include "tile_loading_policy.h"

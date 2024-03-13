@@ -24,7 +24,6 @@
 
 #include "coordinate_system.h"
 #include "filter.h"
-#include "point_map.h"
 #include "prominence_task.h"
 #include "ThreadPool.h"
 #include "tile.h"
