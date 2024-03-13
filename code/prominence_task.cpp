@@ -27,6 +27,7 @@
 #include "divide_tree.h"
 #include "island_tree.h"
 #include "tree_builder.h"
+#include "util.h"
 
 #include "easylogging++.h"
 
@@ -116,12 +117,9 @@ bool ProminenceTask::writeStringToOutputFile(const string &filename, const strin
 string ProminenceTask::getFilenamePrefix() const {
   char filename[PATH_MAX];
 
-  // XXX
-  const float epsilon = 0.001f;
-  float lat = mCurrentLatitude;
-  float lng = mCurrentLongitude;
-  lat += (lat >= 0) ? epsilon : -epsilon;
-  lng += (lng >= 0) ? epsilon : -epsilon;
+  // Deal with floating point imprecision
+  float lat = adjustCoordinate(mCurrentLatitude);
+  float lng = adjustCoordinate(mCurrentLongitude);
 
   int latHundredths = fractionalDegree(lat);
   int lngHundredths = fractionalDegree(lng);

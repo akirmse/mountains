@@ -62,13 +62,9 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
     filename = directory + "/" + filename;
   }
 
-  // XXX
-  VLOG(1) << "Loading FLT file " << filename;
-  
   FILE *infile = fopen(filename.c_str(), "rb");
   if (infile == nullptr) {
-// XXX    VLOG(3) << "Failed to open file " << filename;
-    VLOG(1) << "Failed to open file " << filename;
+    VLOG(3) << "Failed to open file " << filename;
     return nullptr;
   }
 

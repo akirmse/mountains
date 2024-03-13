@@ -36,6 +36,10 @@ float metersToFeet(float meters);
 // Trim whitespace from the start and end of the string, return a new string
 std::string trim(const std::string &s);
 
+// Adjust the given coordinate by an epsilon value away from 0, so that truncation
+// to int doesn't give incorrect values to due floating-point imprecision.
+float adjustCoordinate(float coordinate);
+
 /*
  * Split the given string by the given delimiter, putting the
  * result in elems and returning it.
