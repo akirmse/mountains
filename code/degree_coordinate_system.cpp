@@ -82,6 +82,10 @@ Offsets DegreeCoordinateSystem::offsetsTo(const CoordinateSystem &that) {
 
   int dx = static_cast<int>(std::round((mMinLongitude - other->mMinLongitude) * mSamplesPerDegreeLongitude));
   int dy = static_cast<int>(std::round((other->mMaxLatitude - mMaxLatitude) * mSamplesPerDegreeLatitude));
+  // XXX
+  VLOG(1) << "Ours " << toString();
+  VLOG(1) << "Theirs " << that.toString();
+  VLOG(1) << "dx " << dx << " dy " << dy;
   return Offsets(dx, dy);
 }
 

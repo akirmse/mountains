@@ -103,6 +103,15 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
 Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
   TileLoader *loader = nullptr;
 
+  // If the lat/lng can't be represented exactly in floating point,
+  // there's sometimes roundoff error when converting to integers for
+  // tile filenames.  Adding a little slop prevents truncation.  A
+  // tile is not going to be smaller than 0.1 degrees or so, so this
+  // amount should be safe.
+  const float epsilon = 0.001f;
+  minLat += (minLat >= 0) ? epsilon : -epsilon;
+  minLng += (minLng >= 0) ? epsilon : -epsilon;
+
   switch (mFileFormat.value()) {
   case FileFormat::Value::HGT:
     loader = new HgtLoader();
