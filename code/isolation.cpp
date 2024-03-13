@@ -99,10 +99,10 @@ int main(int argc, char **argv) {
     usage();
   }
 
-  float bounds[4];
+  double bounds[4];
   for (int i = 0; i < 4; ++i) {
     char *endptr;
-    bounds[i] = strtof(argv[i], &endptr);
+    bounds[i] = strtod(argv[i], &endptr);
     if (*endptr != 0) {
       printf("Couldn't parse argument %d as number: %s\n", i + 1, argv[i]);
       usage();

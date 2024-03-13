@@ -73,8 +73,8 @@ bool Filter::addPolygonsFromKml(const string &filename) {
       for (const string &eachPoint : pointText) {
         split(eachPoint, ',', elements);
         if (elements.size() >= 2) {
-          float lat = stof(elements[1]);  // note order in KML
-          float lng = stof(elements[0]);
+          double lat = stod(elements[1]);  // note order in KML
+          double lng = stod(elements[0]);
           polygon.push_back(LatLng(lat, lng));
         }
       }
@@ -109,8 +109,8 @@ bool Filter::isPointInside(const LatLng &latlng) const {
     }
     
     bool inside = false;
-    float testx = latlng.longitude();
-    float testy = latlng.latitude();
+    auto testx = latlng.longitude();
+    auto testy = latlng.latitude();
     
     // Allow wrapping around antimeridian
     if (testx < mWrapLongitude) {
@@ -134,7 +134,7 @@ bool Filter::isPointInside(const LatLng &latlng) const {
   return false;
 }
 
-void Filter::setWrapLongitude(float wrapLongitude) {
+void Filter::setWrapLongitude(double wrapLongitude) {
   mWrapLongitude = wrapLongitude;
   vector<vector<LatLng>> newPolygons;
   for (auto &polygon : mPolygons) {
@@ -151,7 +151,7 @@ void Filter::setWrapLongitude(float wrapLongitude) {
   mPolygons = newPolygons;
 }
 
-bool Filter::intersects(float minLat, float maxLat, float minLng, float maxLng) const {
+bool Filter::intersects(double minLat, double maxLat, double minLng, double maxLng) const {
   // If any corner of the rectangle is inside, there is an intersection
   LatLng p1(minLat, minLng);
   LatLng p2(minLat, maxLng);
@@ -198,10 +198,10 @@ void Filter::getBounds(LatLng *sw, LatLng *ne) const {
 
   bool anyPoints = false;
   
-  float min_latitude = 999;
-  float max_latitude = -999;
-  float min_longitude = 999;
-  float max_longitude = -999;
+  double min_latitude = 999;
+  double max_latitude = -999;
+  double min_longitude = 999;
+  double max_longitude = -999;
   
   for (auto &polygon : mPolygons) {
     if (polygon.empty()) {
@@ -221,14 +221,14 @@ void Filter::getBounds(LatLng *sw, LatLng *ne) const {
 }
 
 // Returns true if the lines intersect, otherwise false.
-bool Filter::segmentsIntersect(float p0_x, float p0_y, float p1_x, float p1_y,
-                               float p2_x, float p2_y, float p3_x, float p3_y) const {
+bool Filter::segmentsIntersect(double p0_x, double p0_y, double p1_x, double p1_y,
+                               double p2_x, double p2_y, double p3_x, double p3_y) const {
   // See http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-  float s1_x, s1_y, s2_x, s2_y;
+  double s1_x, s1_y, s2_x, s2_y;
   s1_x = p1_x - p0_x;     s1_y = p1_y - p0_y;
   s2_x = p3_x - p2_x;     s2_y = p3_y - p2_y;
 
-  float s, t;
+  double s, t;
   s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
   t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 

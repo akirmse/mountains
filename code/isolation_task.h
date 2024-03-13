@@ -34,18 +34,18 @@
 class IsolationTask {
 public:
   IsolationTask(TileCache *cache, const std::string &output_dir,
-                float bounds[], float minIsolationKm);
+                double bounds[], double minIsolationKm);
 
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
-  bool run(float lat, float lng, const CoordinateSystem &coordinateSystem, const FileFormat format);
+  bool run(double lat, double lng, const CoordinateSystem &coordinateSystem, const FileFormat format);
 
 private:
   TileCache *mCache;
   std::string mOutputDir;
-  float *mBounds;
-  float mMinIsolationKm;
+  double *mBounds;
+  double mMinIsolationKm;
 };
 
 #endif  // _ISOLATION_TASK_H_

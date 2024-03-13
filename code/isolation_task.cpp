@@ -40,14 +40,14 @@ using std::vector;
 
 // bounds is an array of min_lat, max_lat, min_lng, max_lng
 IsolationTask::IsolationTask(TileCache *cache, const string &output_dir,
-                             float bounds[], float minIsolationKm) {
+                             double bounds[], double minIsolationKm) {
   mCache = cache;
   mOutputDir = output_dir;
   mBounds = bounds;
   mMinIsolationKm = minIsolationKm;
 }
 
-bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem, const FileFormat format) {
+bool IsolationTask::run(double lat, double lng, const CoordinateSystem &coordinateSystem, const FileFormat format) {
   // Load the main tile manually; cache could delete it if we allow it to be cached
   std::unique_ptr<Tile> tile(mCache->loadWithoutCaching(lat, lng, coordinateSystem));
   if (tile.get() == nullptr) {
@@ -70,10 +70,10 @@ bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinate
 
   IsolationResults results;
 
-  float minLat = mBounds[0];
-  float maxLat = mBounds[1];
-  float minLng = mBounds[2];
-  float maxLng = mBounds[3];
+  auto minLat = mBounds[0];
+  auto maxLat = mBounds[1];
+  auto minLng = mBounds[2];
+  auto maxLng = mBounds[3];
   
   printf("Processing tile %.1f %.1f\n", lat, lng);
 
@@ -93,7 +93,7 @@ bool IsolationTask::run(float lat, float lng, const CoordinateSystem &coordinate
     if (record.foundHigherGround) {
       VLOG(2) << "Higher ground for " << peak.latitude() << " " << peak.longitude()
               << " at " << higher.latitude() << " " << higher.longitude();
-      float distance = peak.distanceEllipsoid(higher) / 1000;  // kilometers
+      auto distance = peak.distanceEllipsoid(higher) / 1000;  // kilometers
 
       if (distance > mMinIsolationKm) {
         results.addResult(peak, tile->get(offset), higher, distance);

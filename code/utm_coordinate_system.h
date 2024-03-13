@@ -34,7 +34,7 @@ class UtmCoordinateSystem : public CoordinateSystem {
 public:
 
   UtmCoordinateSystem(int zone, int minX, int minY, int maxX, int maxY,
-                      float metersPerSample);
+                      double metersPerSample);
   virtual ~UtmCoordinateSystem();
 
   virtual CoordinateSystem *clone() const;
@@ -62,7 +62,7 @@ private:
   int mMinY;
   int mMaxX;
   int mMaxY;
-  float mMetersPerSample;
+  double mMetersPerSample;
 };
   
 #endif  // _UTM_COORDINATE_SYSTEM_H_

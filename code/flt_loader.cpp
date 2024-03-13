@@ -38,7 +38,7 @@ FltLoader::FltLoader(const FileFormat &format, int utmZone) {
   mUtmZone = utmZone;
 }
 
-Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minLng) {
+Tile *FltLoader::loadTile(const std::string &directory, double minLat, double minLng) {
   switch (mFormat.value()) {
   case FileFormat::Value::NED13_ZIP:  // fall through
   case FileFormat::Value::NED1_ZIP:
@@ -56,7 +56,7 @@ Tile *FltLoader::loadTile(const std::string &directory, float minLat, float minL
   }
 }
 
-Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float minLng) {
+Tile *FltLoader::loadFromFltFile(const string &directory, double minLat, double minLng) {
   string filename = getFltFilename(minLat, minLng, mFormat);
   if (!directory.empty()) {
     filename = directory + "/" + filename;
@@ -117,7 +117,7 @@ Tile *FltLoader::loadFromFltFile(const string &directory, float minLat, float mi
 }
 
 Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
-                                            float minLat, float minLng) {
+                                            double minLat, double minLng) {
   // ZIP formats come only in 1x1 degree formats, so OK to cast lat/lng to int.
   // NED uses upper left corner for naming.
   char buf[100];
@@ -161,10 +161,10 @@ Tile *FltLoader::loadFromNEDZipFileInternal(const std::string &directory,
   return tile;  
 }
 
-string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &format) {
+string FltLoader::getFltFilename(double minLat, double minLng, const FileFormat &format) {
   char buf[100];
   // NED uses upper left corner for naming
-  float upperLat = minLat + format.degreesAcross();
+  auto upperLat = minLat + format.degreesAcross();
   switch (format.value()) {
   case FileFormat::Value::NED13_ZIP:  // fall through
   case FileFormat::Value::NED1_ZIP:
@@ -216,7 +216,7 @@ string FltLoader::getFltFilename(float minLat, float minLng, const FileFormat &f
   return buf;
 }
 
-int FltLoader::fractionalDegree(float degree) const {
-  float excess = fabs(degree - static_cast<int>(degree));
+int FltLoader::fractionalDegree(double degree) const {
+  double excess = fabs(degree - static_cast<int>(degree));
   return static_cast<int>(std::round(100 * excess));
 }

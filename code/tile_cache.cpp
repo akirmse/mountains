@@ -39,7 +39,7 @@ TileCache::TileCache(TileLoadingPolicy *policy, int maxEntries)
 TileCache::~TileCache() {
 }
 
-Tile *TileCache::getOrLoad(float minLat, float minLng,
+Tile *TileCache::getOrLoad(double minLat, double minLng,
                            const CoordinateSystem &coordinateSystem) {
   // In cache?
   int key = makeCacheKey(minLat, minLng);
@@ -73,7 +73,7 @@ Tile *TileCache::getOrLoad(float minLat, float minLng,
   return tile;
 }
 
-Tile *TileCache::loadWithoutCaching(float minLat, float minLng,
+Tile *TileCache::loadWithoutCaching(double minLat, double minLng,
                                     const CoordinateSystem &coordinateSystem) {
   Tile *tile = mLoadingPolicy->loadTile(minLat, minLng);
   if (tile == nullptr) {
@@ -130,7 +130,7 @@ Tile *TileCache::loadWithoutCaching(float minLat, float minLng,
   return tile;
 }
 
-bool TileCache::getMaxElevation(float lat, float lng, Elevation *elev) {
+bool TileCache::getMaxElevation(double lat, double lng, Elevation *elev) {
   assert(elev != nullptr);
 
   bool retval = true;
@@ -148,7 +148,7 @@ bool TileCache::getMaxElevation(float lat, float lng, Elevation *elev) {
   return retval;
 }
 
-int TileCache::makeCacheKey(float minLat, float minLng) const {
+int TileCache::makeCacheKey(double minLat, double minLng) const {
   // Round to some reasonable precision
   int latKey = static_cast<int>(minLat * 100);
   int lngKey = static_cast<int>(minLng * 100);

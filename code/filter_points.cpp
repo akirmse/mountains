@@ -52,7 +52,7 @@ static void usage() {
 }
 
 int main(int argc, char **argv) {
-  float wrapLongitude = -180;
+  double wrapLongitude = -180;
   
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   while ((ch = getopt_long(argc, argv, "a:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
-      wrapLongitude = static_cast<float>(atof(optarg));
+      wrapLongitude = atof(optarg);
       break;
     }
   }
@@ -111,8 +111,8 @@ int main(int argc, char **argv) {
     }
 
     split(line, ',', elements);
-    float lat = stof(elements[0]);
-    float lng = stof(elements[1]);
+    double lat = stod(elements[0]);
+    double lng = stod(elements[1]);
     LatLng point(lat, lng);
 
     if (filter.isPointInside(point)) {

@@ -34,7 +34,7 @@ class Tile;
 class TileLoader {
 public:
   // Load the given tile from the given directory.
-  virtual Tile *loadTile(const std::string &directory, float minLat, float minLng) = 0;
+  virtual Tile *loadTile(const std::string &directory, double minLat, double minLng) = 0;
 
   virtual ~TileLoader() {}
 };

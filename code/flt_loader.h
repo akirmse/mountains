@@ -40,21 +40,21 @@ public:
   // the latitude will be treated as northing, and the longitude as easting.
   explicit FltLoader(const FileFormat &format, int utmZone);
   
-  virtual Tile *loadTile(const std::string &directory, float minLat, float minLng);
+  virtual Tile *loadTile(const std::string &directory, double minLat, double minLng);
 
 private:
   FileFormat mFormat;
   int mUtmZone;  // For data in UTM coordinates
   
-  Tile *loadFromNEDZipFileInternal(const std::string &directory, float minLat, float minLng);
+  Tile *loadFromNEDZipFileInternal(const std::string &directory, double minLat, double minLng);
 
-  Tile *loadFromFltFile(const std::string &directory, float minLat, float minLng);
+  Tile *loadFromFltFile(const std::string &directory, double minLat, double minLng);
   
   // Return the filename for the .flt file for the given coordinates
-  std::string getFltFilename(float minLat, float minLng, const FileFormat &format);
+  std::string getFltFilename(double minLat, double minLng, const FileFormat &format);
 
   // Return hundredths of a degree from the given value
-  int fractionalDegree(float degree) const;
+  int fractionalDegree(double degree) const;
 };
 
 #endif  // _FLOT_LOADER_H_

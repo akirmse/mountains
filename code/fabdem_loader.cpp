@@ -36,7 +36,7 @@ using std::string;
 
 static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
 
-Tile *FabdemLoader::loadTile(const std::string &directory, float minLat, float minLng) {
+Tile *FabdemLoader::loadTile(const std::string &directory, double minLat, double minLng) {
   char buf[100];
   snprintf(buf, sizeof(buf), "%c%02d%c%03d_FABDEM_V1-0.flt",
            (minLat >= 0) ? 'N' : 'S',

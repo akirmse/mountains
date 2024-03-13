@@ -35,7 +35,7 @@
 
 class TileLoadingPolicy {
 public:
-  virtual Tile *loadTile(float minLat, float minLng) const = 0;
+  virtual Tile *loadTile(double minLat, double minLng) const = 0;
 };
 
 
@@ -58,7 +58,7 @@ public:
   // the latitude will be treated as northing, and the longitude as easting.
   void setUtmZone(int utmZone);
 
-  virtual Tile *loadTile(float minLat, float minLng) const;
+  virtual Tile *loadTile(double minLat, double minLng) const;
 
 private:
   std::string mDirectory;  // Directory for loading tiles
@@ -67,14 +67,14 @@ private:
   int mUtmZone;
 
   // Load tile without modifications
-  Tile *loadInternal(float minLat, float minLng) const;
+  Tile *loadInternal(double minLat, double minLng) const;
 
   // Copy pixels from south and east neighbors into this tile, and return it.
-  Tile *copyPixelsFromNeighbors(Tile *tile, float minLat, float minLng) const;
+  Tile *copyPixelsFromNeighbors(Tile *tile, double minLat, double minLng) const;
 
   // Create a new tile by appending the first row and column from south
   // and east neighbors to this tile, and return the new tile.
-  Tile *appendPixelsFromNeighbors(Tile *tile, float minLat, float minLng) const;
+  Tile *appendPixelsFromNeighbors(Tile *tile, double minLat, double minLng) const;
 };
 
 #endif  // _TILE_LOADING_POLICY_H_

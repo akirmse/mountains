@@ -33,7 +33,7 @@
 using std::string;
 using std::vector;
 
-DegreeCoordinateSystem::DegreeCoordinateSystem(float minLat, float minLng, float maxLat, float maxLng,
+DegreeCoordinateSystem::DegreeCoordinateSystem(double minLat, double minLng, double maxLat, double maxLng,
                                                int pixelsPerDegreeLat, int pixelsPerDegreeLng) {
   mMinLatitude = minLat;
   mMinLongitude = minLng;
@@ -66,10 +66,10 @@ bool DegreeCoordinateSystem::compatibleWith(const CoordinateSystem &that) const 
 
 LatLng DegreeCoordinateSystem::getLatLng(Offsets offsets) const {
   // Positive y is south
-  float latitude = mMaxLatitude -
-    ((float) offsets.y()) / mSamplesPerDegreeLatitude;
-  float longitude = mMinLongitude +
-    ((float) offsets.x()) / mSamplesPerDegreeLongitude;
+  double latitude = mMaxLatitude -
+    ((double) offsets.y()) / mSamplesPerDegreeLatitude;
+  double longitude = mMinLongitude +
+    ((double) offsets.x()) / mSamplesPerDegreeLongitude;
   return LatLng(latitude, longitude);
 }
 
@@ -119,7 +119,7 @@ string DegreeCoordinateSystem::toString() const {
 }
 
 CoordinateSystem *DegreeCoordinateSystem::fromString(const string &str) {
-  float minLat = 0, minLng = 0, maxLat = 0, maxLng = 0;
+  double minLat = 0, minLng = 0, maxLat = 0, maxLng = 0;
   int samplesPerLat = 0, samplesPerLng = 0;
 
   vector<string> elements;
@@ -129,14 +129,14 @@ CoordinateSystem *DegreeCoordinateSystem::fromString(const string &str) {
     return nullptr;
   }
   
-  minLat = stof(elements[1]);
-  minLng = stof(elements[2]);
+  minLat = stod(elements[1]);
+  minLng = stod(elements[2]);
   samplesPerLat = stoi(elements[3]);
   samplesPerLng = stoi(elements[4]);
   // Max lat/lng was added later for non-1x1 tile support
   if (elements.size() >= 7) {
-    maxLat = stof(elements[5]);
-    maxLng = stof(elements[6]);
+    maxLat = stod(elements[5]);
+    maxLng = stod(elements[6]);
   } else {
     // Assume 1x1 tile for old DVT files
     maxLat = minLat + 1;

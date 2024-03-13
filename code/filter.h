@@ -50,21 +50,21 @@ public:
   // Add 360 to the longitude of (presumably negative) longitudes <
   // wrapLongitude in the polygons.  This allows the polygons to cross
   // the antimeridian in a primitive way.
-  void setWrapLongitude(float wrapLongitude);
+  void setWrapLongitude(double wrapLongitude);
   
   // Determines whether given rectangle intersects any polygon.
-  bool intersects(float minLat, float maxLat, float minLng, float maxLng) const;
+  bool intersects(double minLat, double maxLat, double minLng, double maxLng) const;
 
   // Sets sw and ne to northwest and southeast corners of bounds.
   void getBounds(LatLng *sw, LatLng *ne) const;
   
 private:
   std::vector<std::vector<LatLng>> mPolygons;
-  float mWrapLongitude;
+  double mWrapLongitude;
 
   // Returns true if line segment p0-p1 intersects with segment p2-p3.
-  bool segmentsIntersect(float p0_x, float p0_y, float p1_x, float p1_y,
-                         float p2_x, float p2_y, float p3_x, float p3_y) const;  
+  bool segmentsIntersect(double p0_x, double p0_y, double p1_x, double p1_y,
+                         double p2_x, double p2_y, double p3_x, double p3_y) const;  
 };
 
 #endif  // _FILTER_H_

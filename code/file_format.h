@@ -61,14 +61,14 @@ public:
   // Return the degrees in lat or lng covered by one tile.
   // Note that this is the logical value (1 degree, 0.25 degree), not necessarily
   // the precise value covered, including border samples.
-  float degreesAcross() const;
+  double degreesAcross() const;
 
   // Does this format use UTM coordinates rather than lat/lng?
   bool isUtm() const;
 
   // Return a new CoordinateSystem describing the section of the Earth that
   // the given tile with the given origin (lower-left corner) covers.
-  CoordinateSystem *coordinateSystemForOrigin(float lat, float lng, int utmZone = 0) const;
+  CoordinateSystem *coordinateSystemForOrigin(double lat, double lng, int utmZone = 0) const;
   
   // Return a FileFormat object for the given human-readable string,
   // or nullptr if none.

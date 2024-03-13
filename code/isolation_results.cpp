@@ -32,7 +32,7 @@ IsolationResults::IsolationResults() {
 }
 
 void IsolationResults::addResult(const LatLng &peakLocation, Elevation elevation,
-                                 const LatLng &higherLocation, float isolationKm) {
+                                 const LatLng &higherLocation, double isolationKm) {
   IsolationResult result;
   result.peak = peakLocation;
   result.peakElevation = elevation;
@@ -42,7 +42,7 @@ void IsolationResults::addResult(const LatLng &peakLocation, Elevation elevation
   mResults.push_back(result);
 }
 
-bool IsolationResults::save(const string &directory, float lat, float lng) const {
+bool IsolationResults::save(const string &directory, double lat, double lng) const {
   string filename = directory + "/" + filenameForCoordinates(lat, lng);
   FILE *file = fopen(filename.c_str(), "w");
   if (file == nullptr) {
@@ -61,7 +61,7 @@ bool IsolationResults::save(const string &directory, float lat, float lng) const
   return true;
 }
 
-IsolationResults *IsolationResults::loadFromFile(const string &directory, float lat, float lng) {
+IsolationResults *IsolationResults::loadFromFile(const string &directory, double lat, double lng) {
   string filename = directory + "/" + filenameForCoordinates(lat, lng);
   FILE *file = fopen(filename.c_str(), "r");
   if (file == nullptr) {
@@ -73,8 +73,8 @@ IsolationResults *IsolationResults::loadFromFile(const string &directory, float 
 
   IsolationResult result;
   while (!feof(file)) {
-    float peakLatitude, peakLongitude, higherLatitude, higherLongitude;
-    if (fscanf(file, "%f,%f,%f,%f,%f,%f\n",
+    double peakLatitude, peakLongitude, higherLatitude, higherLongitude;
+    if (fscanf(file, "%lf,%lf,%f,%lf,%lf,%lf\n",
                &peakLatitude, &peakLongitude, &result.peakElevation,
                &higherLatitude, &higherLongitude,
                &result.isolationKm) != 6) {
@@ -90,7 +90,7 @@ IsolationResults *IsolationResults::loadFromFile(const string &directory, float 
   return obj;
 }
 
-string IsolationResults::filenameForCoordinates(float lat, float lng) {
+string IsolationResults::filenameForCoordinates(double lat, double lng) {
   char filename[PATH_MAX];
   // TODO: Maybe support sub-degree tiles one day, if anyone cares
   snprintf(filename, sizeof(filename), "isolation-%02d-%03d.txt",

@@ -39,7 +39,7 @@ static uint16 swapByteOrder16(uint16 us) {
   return (us >> 8) | (us << 8);
 }
 
-Tile *HgtLoader::loadTile(const std::string &directory, float minLat, float minLng) {
+Tile *HgtLoader::loadTile(const std::string &directory, double minLat, double minLng) {
   char buf[100];
   snprintf(buf, sizeof(buf), "%c%02d%c%03d.hgt",
            (minLat >= 0) ? 'N' : 'S',

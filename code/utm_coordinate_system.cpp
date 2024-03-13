@@ -34,7 +34,7 @@ using std::string;
 using std::vector;
 
 UtmCoordinateSystem::UtmCoordinateSystem(int zone, int minX, int minY, int maxX, int maxY,
-                                         float metersPerSample) {
+                                         double metersPerSample) {
   mZone = zone;
   mMinX = minX;
   mMinY = minY;
@@ -67,9 +67,9 @@ bool UtmCoordinateSystem::compatibleWith(const CoordinateSystem &that) const {
 }
 
 LatLng UtmCoordinateSystem::getLatLng(Offsets offsets) const {
-  float x = mMinX + offsets.x() * mMetersPerSample;
+  auto x = mMinX + offsets.x() * mMetersPerSample;
   // Positive y is south
-  float y = mMaxY - offsets.y() * mMetersPerSample;
+  auto y = mMaxY - offsets.y() * mMetersPerSample;
 
   // TODO: Support southern hemisphere
   char zone[10];
@@ -77,7 +77,7 @@ LatLng UtmCoordinateSystem::getLatLng(Offsets offsets) const {
   double lat, lng;
   UTM::UTMtoLL(y, x, zone, lat, lng);
   
-  return LatLng(static_cast<float>(lat), static_cast<float>(lng));
+  return LatLng(lat, lng);
 }
 
 Offsets UtmCoordinateSystem::offsetsTo(const CoordinateSystem &that) {
