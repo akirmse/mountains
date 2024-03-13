@@ -198,9 +198,10 @@ int main(int argc, char **argv) {
   auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
-  float lat = bounds[0];
+  // Use double precision to avoid accumulating floating-point error during loop
+  double lat = bounds[0];
   while (lat < bounds[1]) {
-    float lng = bounds[2];
+    double lng = bounds[2];
     while (lng < bounds[3]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
@@ -209,17 +210,21 @@ int main(int argc, char **argv) {
       }
 
       std::shared_ptr<CoordinateSystem> coordinateSystem(
-        fileFormat.coordinateSystemForOrigin(lat, wrappedLng, utmZone));
+        fileFormat.coordinateSystemForOrigin(
+          static_cast<float>(lat), static_cast<float>(wrappedLng), utmZone));
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
-                             lng, lng + fileFormat.degreesAcross())) {
+      if (!filter.intersects(static_cast<float>(lat),
+                             static_cast<float>(lat + fileFormat.degreesAcross()),
+                             static_cast<float>(lng),
+                             static_cast<float>(lng + fileFormat.degreesAcross()))) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Actually calculate prominence
         ProminenceTask *task = new ProminenceTask(cache.get(), options);
         results.push_back(threadPool->enqueue([=] {
-              return task->run(lat, wrappedLng, *coordinateSystem);
+              return task->run(static_cast<float>(lat), static_cast<float>(wrappedLng),
+                               *coordinateSystem);
             }));
       }
 

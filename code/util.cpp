@@ -44,6 +44,13 @@ float metersToFeet(float meters) {
   return meters / 0.3048f;
 }
 
+float adjustCoordinate(float coordinate) {
+  // A tile is not going to be smaller than 0.1 degrees or so, so this
+  // amount should be safe.
+  const float epsilon = 0.001f;
+  return coordinate + ((coordinate >= 0) ? epsilon : -epsilon);
+}
+
 string trim(const string &s) {
   static const std::string whitespace = " \t\f\v\n\r";
   std::size_t start = s.find_first_not_of(whitespace);

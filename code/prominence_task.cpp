@@ -27,6 +27,7 @@
 #include "divide_tree.h"
 #include "island_tree.h"
 #include "tree_builder.h"
+#include "util.h"
 
 #include "easylogging++.h"
 
@@ -55,7 +56,7 @@ bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinat
     VLOG(2) << "Couldn't load tile for " << lat << " " << lng;
     return false;
   }
-
+  
   // Flip tile upside down if we're computing anti-prominence
   if (mOptions.antiprominence) {
     tile->flipElevations();
@@ -115,11 +116,16 @@ bool ProminenceTask::writeStringToOutputFile(const string &filename, const strin
 
 string ProminenceTask::getFilenamePrefix() const {
   char filename[PATH_MAX];
-  int latHundredths = fractionalDegree(mCurrentLatitude);
-  int lngHundredths = fractionalDegree(mCurrentLongitude);
+
+  // Deal with floating point imprecision
+  float lat = adjustCoordinate(mCurrentLatitude);
+  float lng = adjustCoordinate(mCurrentLongitude);
+
+  int latHundredths = fractionalDegree(lat);
+  int lngHundredths = fractionalDegree(lng);
   snprintf(filename, sizeof(filename), "prominence-%02dx%02d-%03dx%02d",
-           static_cast<int>(mCurrentLatitude), latHundredths,
-           static_cast<int>(mCurrentLongitude), lngHundredths);
+           static_cast<int>(lat), latHundredths,
+           static_cast<int>(lng), lngHundredths);
   return mOptions.outputDir + "/" + filename;
 }
 

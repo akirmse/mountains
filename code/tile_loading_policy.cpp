@@ -103,6 +103,12 @@ Tile *BasicTileLoadingPolicy::loadTile(float minLat, float minLng) const {
 Tile *BasicTileLoadingPolicy::loadInternal(float minLat, float minLng) const {
   TileLoader *loader = nullptr;
 
+  // If the lat/lng can't be represented exactly in floating point,
+  // there's sometimes roundoff error when converting to integers for
+  // tile filenames.  Adding a little slop prevents truncation.  
+  minLat = adjustCoordinate(minLat);
+  minLng = adjustCoordinate(minLng);
+
   switch (mFileFormat.value()) {
   case FileFormat::Value::HGT:
     loader = new HgtLoader();
