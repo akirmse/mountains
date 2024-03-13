@@ -144,10 +144,10 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  float bounds[4];
+  double bounds[4];
   for (int i = 0; i < 4; ++i) {
     char *endptr;
-    bounds[i] = strtof(argv[i], &endptr);
+    bounds[i] = strtod(argv[i], &endptr);
     if (*endptr != 0) {
       LOG(ERROR) << "Couldn't parse argument " << i + 1 << " as number: " << argv[i];
       usage();
@@ -155,9 +155,9 @@ int main(int argc, char **argv) {
   }
 
   // Validate that bounds are on tile boundaries
-  float degreesAcross = fileFormat.degreesAcross();
+  double degreesAcross = fileFormat.degreesAcross();
   for (auto bound : bounds) {
-    if (fabsf(bound / degreesAcross - static_cast<int>(std::round(bound / degreesAcross))) > 0.001f) {
+    if (fabs(bound / degreesAcross - static_cast<int>(std::round(bound / degreesAcross))) > 0.001) {
       LOG(ERROR) << "Coordinates must be multiples of " << degreesAcross;
       LOG(ERROR) << "This coordinate is not: " << bound;
       exit(1);
@@ -209,21 +209,17 @@ int main(int argc, char **argv) {
       }
 
       std::shared_ptr<CoordinateSystem> coordinateSystem(
-        fileFormat.coordinateSystemForOrigin(
-          static_cast<float>(lat), static_cast<float>(wrappedLng), utmZone));
+        fileFormat.coordinateSystemForOrigin(lat, wrappedLng, utmZone));
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects(static_cast<float>(lat),
-                             static_cast<float>(lat + fileFormat.degreesAcross()),
-                             static_cast<float>(lng),
-                             static_cast<float>(lng + fileFormat.degreesAcross()))) {
+      if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
+                             lng, lng + fileFormat.degreesAcross())) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Actually calculate prominence
         ProminenceTask *task = new ProminenceTask(cache.get(), options);
         results.push_back(threadPool->enqueue([=] {
-              return task->run(static_cast<float>(lat), static_cast<float>(wrappedLng),
-                               *coordinateSystem);
+              return task->run(lat, wrappedLng, *coordinateSystem);
             }));
       }
 

@@ -70,22 +70,22 @@ int FileFormat::inMemorySamplesAcross() const {
 }
 
 
-float FileFormat::degreesAcross() const {
+double FileFormat::degreesAcross() const {
   switch (mValue) {
   case Value::NED13:  // fall through
   case Value::NED13_ZIP:
-    return 1.0f;
-  case Value::NED1_ZIP:   return 1.0f;
-  case Value::NED19:      return 0.25f;
-  case Value::HGT:        return 1.0f;
+    return 1.0;
+  case Value::NED1_ZIP:   return 1.0;
+  case Value::NED19:      return 0.25;
+  case Value::HGT:        return 1.0;
   case Value::GLO30:  // Fall through
   case Value::FABDEM:
-    return 1.0f;
-  case Value::LIDAR: return 0.1f;
+    return 1.0;
+  case Value::LIDAR: return 0.1;
   case Value::THREEDEP_1M:
     // This is a misnomer, as these tiles are in UTM coordinates.  The "degrees" across
     // means one x or y unit per tile (where each tile is 10000m in UTM).
-    return 1.0f;
+    return 1.0;
   default:
     LOG(ERROR) << "Couldn't compute degree span of unknown file format";
     exit(1);
@@ -96,7 +96,7 @@ bool FileFormat::isUtm() const {
   return mValue == Value::THREEDEP_1M;
 }
 
-CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, int utmZone) const {
+CoordinateSystem *FileFormat::coordinateSystemForOrigin(double lat, double lng, int utmZone) const {
   switch (mValue) {
   case Value::NED13_ZIP:  // fall through
   case Value::NED13:
@@ -131,7 +131,7 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(float lat, float lng, in
                                    static_cast<int>((lat - 1) * 10000),
                                    static_cast<int>((lng + 1) * 10000),
                                    static_cast<int>(lat * 10000),
-                                   1.0f);
+                                   1.0);
     
   default:
     assert(false);

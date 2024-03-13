@@ -33,7 +33,7 @@
 class HgtLoader : public TileLoader {
 public:
   // minLat and minLng name the SW corner of the tile, in degrees
-  virtual Tile *loadTile(const std::string &directory, float minLat, float minLng);
+  virtual Tile *loadTile(const std::string &directory, double minLat, double minLng);
 };
 
 #endif  // _HGT_LOADER_H_

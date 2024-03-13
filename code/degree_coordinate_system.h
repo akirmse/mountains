@@ -33,7 +33,7 @@
 class DegreeCoordinateSystem : public CoordinateSystem {
 public:
 
-  DegreeCoordinateSystem(float minLat, float minLng, float maxLat, float maxLng,
+  DegreeCoordinateSystem(double minLat, double minLng, double maxLat, double maxLng,
                          int pixelsPerDegreeLat, int pixelsPerDegreeLng);
   virtual ~DegreeCoordinateSystem();
 
@@ -55,10 +55,10 @@ public:
   static CoordinateSystem *fromString(const std::string &str);
 
 private:
-  float mMinLatitude;
-  float mMinLongitude;
-  float mMaxLatitude;
-  float mMaxLongitude;
+  double mMinLatitude;
+  double mMinLongitude;
+  double mMaxLatitude;
+  double mMaxLongitude;
   int mSamplesPerDegreeLatitude;
   int mSamplesPerDegreeLongitude;
 };

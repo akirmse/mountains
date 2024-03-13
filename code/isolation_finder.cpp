@@ -67,7 +67,7 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
   topLat = 89;
   leftLng = -180;
   rightLng = 179;
-  record.distance = 1e20f;
+  record.distance = 1e20;
 
   // Set of all tiles we've already checked
   std::unordered_set<Offsets::Value> checkedTiles;
@@ -124,7 +124,7 @@ IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {
           locationToUse = &peakLocation;
         }
         IsolationRecord neighborRecord = checkNeighboringTile(
-          static_cast<float>(lat), static_cast<float>(neighborLng), locationToUse,
+          static_cast<double>(lat), static_cast<double>(neighborLng), locationToUse,
           Offsets(seedx, seedy), elev);
         // Distance in record is distance to seed; we want distance to peak
         if (neighborRecord.foundHigherGround) {
@@ -190,10 +190,10 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
   // any distance in the longitude (x) direction.  This compensates for
   // lines of longitude getting closer as latitude increases.  The value
   // of the factor is the cosine of the latitude of the row.
-  float *lngDistanceScaleForRow = new float[ tile->height()];
+  double *lngDistanceScaleForRow = new double[ tile->height()];
   for (int y = 0; y < tile->height(); ++y) {
     LatLng point = tileCoordinateSystem->getLatLng(Offsets(0, y));
-    lngDistanceScaleForRow[y] = cosf(degToRad(point.latitude()));
+    lngDistanceScaleForRow[y] = cos(degToRad(point.latitude()));
   }
 
   // We want to search in concentric circles around the seed point.
@@ -217,8 +217,8 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
   //    the next larger rectangle).
 
   Offsets closestHigherGround(0, 0);
-  const float HUGE_DISTANCE = 1 << 30;
-  float minDistance = HUGE_DISTANCE;
+  const double HUGE_DISTANCE = 1 << 30;
+  auto minDistance = HUGE_DISTANCE;
 
   int seedx = seedPoint.x();
   int seedy = seedPoint.y();
@@ -231,7 +231,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
   // Initial half height of rectangle
   int dy = 20;
   // Compensate for latitude squish
-  int dx = static_cast<int>(ceilf(dy / lngDistanceScaleForRow[seedy]));
+  int dx = static_cast<int>(ceil(dy / lngDistanceScaleForRow[seedy]));
 
   int outerleftx = std::max(0, seedx - dx);
   int outerrightx = std::min(tile->width(), seedx + dx);
@@ -260,7 +260,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
         assert(peakLocation != nullptr);
         for (int x = outerleftx; x < outerrightx; ++x) {
           if (tile->get(x, y) > seedElevation) {
-            float distance = peakLocation->distance(
+            auto distance = peakLocation->distance(
               tileCoordinateSystem->getLatLng(Offsets(x, y)));
             if (distance < minDistance) {
               VLOG(4) << "Found closer point on slow path: " << x << " " << y;
@@ -275,13 +275,13 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
         // based on the average latitude of the segment connecting the
         // sample and the seed.
         int averageY = (y + seedy) / 2;
-        float lngScaleFactor = lngDistanceScaleForRow[averageY];
-        float yDistanceComponent = static_cast<float>((y - seedy) * (y - seedy));
+        double lngScaleFactor = lngDistanceScaleForRow[averageY];
+        double yDistanceComponent = static_cast<double>((y - seedy) * (y - seedy));
         
         for (int x = outerleftx; x < outerrightx; ++x) {
           if (tile->get(x, y) > seedElevation) {
-            float deltaX = (x - seedx) * lngScaleFactor;
-            float distance = deltaX * deltaX + yDistanceComponent;
+            auto deltaX = (x - seedx) * lngScaleFactor;
+            auto distance = deltaX * deltaX + yDistanceComponent;
             if (distance < minDistance) {
               VLOG(4) << "Found closer point on fast path: " << x << " " << y << " elev " << tile->get(x, y);
               minDistance = distance;
@@ -306,7 +306,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
       // land at least as close to the peak.
       exactDistanceCheck = true;
       LatLng higherGroundLocation = tileCoordinateSystem->getLatLng(closestHigherGround);
-      float distancePeakToHigherGround = peakLocation->distance(higherGroundLocation);
+      auto distancePeakToHigherGround = peakLocation->distance(higherGroundLocation);
       minDistance = distancePeakToHigherGround;
 
       // A very coarse estimate of the ring size is the peak/higher ground distance.
@@ -358,7 +358,7 @@ IsolationRecord IsolationFinder::findIsolation(const Tile *tile, const Coordinat
   return record;
 }
 
-IsolationRecord IsolationFinder::checkNeighboringTile(float lat, float lng, const LatLng *peakLocation,
+IsolationRecord IsolationFinder::checkNeighboringTile(double lat, double lng, const LatLng *peakLocation,
                                                       Offsets seedCoords, Elevation elev) const {
   VLOG(2) << "Possibly considering neighbor tile " << lat << " " << lng;
   

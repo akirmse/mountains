@@ -52,7 +52,7 @@ public:
   // Returns true if a tile was processed, false if tile couldn't be loaded.
   // lat, lng define the tile to analyze.
   // Output is written to output_dir.
-  bool run(float lat, float lng, const CoordinateSystem &coordinateSystem);
+  bool run(double lat, double lng, const CoordinateSystem &coordinateSystem);
 
   void setAntiprominence(bool value);
   
@@ -60,12 +60,12 @@ private:
   TileCache *mCache;
   ProminenceOptions mOptions;
 
-  float mCurrentLatitude;
-  float mCurrentLongitude;
+  double mCurrentLatitude;
+  double mCurrentLongitude;
 
   std::string getFilenamePrefix() const;
   // Return hundredths of a degree from the given value
-  int fractionalDegree(float degree) const;
+  int fractionalDegree(double degree) const;
   bool writeStringToOutputFile(const std::string &filename, const std::string &str) const;
 };
 

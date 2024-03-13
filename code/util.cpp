@@ -44,10 +44,10 @@ float metersToFeet(float meters) {
   return meters / 0.3048f;
 }
 
-float adjustCoordinate(float coordinate) {
+double adjustCoordinate(double coordinate) {
   // A tile is not going to be smaller than 0.1 degrees or so, so this
   // amount should be safe.
-  const float epsilon = 0.001f;
+  const double epsilon = 0.001;
   return coordinate + ((coordinate >= 0) ? epsilon : -epsilon);
 }
 

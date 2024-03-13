@@ -38,7 +38,7 @@ static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
 // For ALOS 30 tiles impersonating GLO 30 tiles where GLO 30 doesn't have coverage
 static const float ALOSWORLD3D_NODATA_ELEVATION = -9999.0f;
 
-Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minLng) {
+Tile *GloLoader::loadTile(const std::string &directory, double minLat, double minLng) {
   char buf[100];
   snprintf(buf, sizeof(buf), "Copernicus_DSM_COG_10_%c%02d_00_%c%03d_00_DEM.flt",
            (minLat >= 0) ? 'N' : 'S',
@@ -136,7 +136,7 @@ Tile *GloLoader::loadTile(const std::string &directory, float minLat, float minL
   return tile;  
 }
 
-int GloLoader::getWidthForLatitude(float minLat) const {
+int GloLoader::getWidthForLatitude(double minLat) const {
   // See table at
   // https://copernicus-dem-30m.s3.amazonaws.com/readme.html
   if (minLat >= 85 || minLat < -85) {

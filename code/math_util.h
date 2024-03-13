@@ -27,12 +27,12 @@
 
 #include <math.h>
 
-inline float degToRad(float degrees) {
-  return static_cast<float>(degrees * M_PI / 180);
+inline double degToRad(double degrees) {
+  return degrees * M_PI / 180;
 }
 
-inline float radToDeg(float radians) {
-   return static_cast<float>(radians / M_PI * 180.0);
+inline double radToDeg(double radians) {
+   return radians / M_PI * 180.0;
 }
 
 #endif  // _MATH_UTIL_H_

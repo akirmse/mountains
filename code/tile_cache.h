@@ -43,15 +43,15 @@ public:
   ~TileCache();
 
   // Retrieve the tile with the given minimum lat/lng, loading it from disk if necessary
-  Tile *getOrLoad(float minLat, float minLng, const CoordinateSystem &coordinateSystem);
+  Tile *getOrLoad(double minLat, double minLng, const CoordinateSystem &coordinateSystem);
 
   // Load the tile from disk without caching it
-  Tile *loadWithoutCaching(float minLat, float minLng,
+  Tile *loadWithoutCaching(double minLat, double minLng,
                            const CoordinateSystem &coordinateSystem);
 
   // If we've ever loaded the tile with the given minimum lat/lng, set elev to its maximum
   // elevation and return true, otherwise return false.
-  bool getMaxElevation(float lat, float lng, Elevation *elev);
+  bool getMaxElevation(double lat, double lng, Elevation *elev);
   
 private:
 
@@ -61,9 +61,9 @@ private:
   // Map of encoded lat/lng to max elevation in that tile
   std::unordered_map<int, Elevation> mMaxElevations;
 
-  Tile *loadInternal(float minLat, float minLng) const;
+  Tile *loadInternal(double minLat, double minLng) const;
   
-  int makeCacheKey(float minLat, float minLng) const;
+  int makeCacheKey(double minLat, double minLng) const;
 };
 
 #endif  // _TILE_CACHE_H_

@@ -29,90 +29,90 @@
 #include <math.h>
 #include <algorithm>
 
-static const float kEarthRadiusMeters = 6371.01 * 1000.0;
-static const float kMinLatRadians = (float) -M_PI / 2;
-static const float kMaxLatRadians = (float) M_PI / 2;
-static const float kMinLngRadians = (float) -M_PI;
-static const float kMaxLngRadians = (float) M_PI;
+static const double kEarthRadiusMeters = 6371.01 * 1000.0;
+static const double kMinLatRadians = -M_PI / 2;
+static const double kMaxLatRadians = M_PI / 2;
+static const double kMinLngRadians = -M_PI;
+static const double kMaxLngRadians = M_PI;
 
-float LatLng::distance(const LatLng &other) const {
+double LatLng::distance(const LatLng &other) const {
   // See http://www.movable-type.co.uk/scripts/latlong.html
-  float lat1 = degToRad(mLatitude);
-  float lat2 = degToRad(other.latitude());
-  float lng1 = degToRad(mLongitude);
-  float lng2 = degToRad(other.longitude());
+  auto lat1 = degToRad(mLatitude);
+  auto lat2 = degToRad(other.latitude());
+  auto lng1 = degToRad(mLongitude);
+  auto lng2 = degToRad(other.longitude());
 
-  float deltaLat = lat1 - lat2;
-  float deltaLng = lng1 - lng2;
-  float a = sinf(deltaLat / 2);
+  auto deltaLat = lat1 - lat2;
+  auto deltaLng = lng1 - lng2;
+  auto a = sin(deltaLat / 2);
   a = a * a;
-  float term = sinf(deltaLng / 2);
-  a += term * term * cosf(lat1) * cosf(lat2);
-  float c = 2 * atan2f(sqrtf(a), sqrtf(1-a));
+  auto term = sin(deltaLng / 2);
+  a += term * term * cos(lat1) * cos(lat2);
+  auto c = 2 * atan2(sqrt(a), sqrt(1-a));
   
-  const float earthRadius = 6371000;
+  const double earthRadius = 6371000;
   return c * earthRadius;
 }
 
-float LatLng::distanceEllipsoid(const LatLng &other) const {
+double LatLng::distanceEllipsoid(const LatLng &other) const {
   // Implementation from Greg Slayden's code; source unknown
-  float lat1 = degToRad(mLatitude);
-  float lat2 = degToRad(other.latitude());
-  float lng1 = degToRad(mLongitude);
-  float lng2 = degToRad(other.longitude());
+  auto lat1 = degToRad(mLatitude);
+  auto lat2 = degToRad(other.latitude());
+  auto lng1 = degToRad(mLongitude);
+  auto lng2 = degToRad(other.longitude());
 
   // WGS84 ellipsoid
-  float majorAxisKm = 6378.137f;
-  float flat = 1 / 298.257223563f;
+  double majorAxisKm = 6378.137;
+  double flat = 1 / 298.257223563;
   
-  float sinF = sinf((lat1 + lat2) / 2);
-  float cosF = cosf((lat1 + lat2) / 2);
-  float sinG = sinf((lat1 - lat2) / 2);
-  float cosG = cosf((lat1 - lat2) / 2);
-  float sinL = sinf((lng1 - lng2) / 2);
-  float cosL = cosf((lng1 - lng2) / 2);
+  auto sinF = sin((lat1 + lat2) / 2);
+  auto cosF = cos((lat1 + lat2) / 2);
+  auto sinG = sin((lat1 - lat2) / 2);
+  auto cosG = cos((lat1 - lat2) / 2);
+  auto sinL = sin((lng1 - lng2) / 2);
+  auto cosL = cos((lng1 - lng2) / 2);
 
-  float s = sinG * sinG * cosL * cosL + cosF * cosF * sinL * sinL;
-  float c = cosG * cosG * cosL * cosL + sinF * sinF * sinL * sinL;
-  float w = atan2f(sqrtf(s), sqrtf(c));
-  float r = sqrtf(s * c) / w;
-  float distance = ((2 * w * majorAxisKm) *
-                    (1 + flat * ((3 * r - 1) / (2 * c)) * (sinF * sinF * cosG * cosG) -
-                     (flat * ((3 * r + 1) / (2 * s)) * cosF * cosF * sinG * sinG)));
+  auto s = sinG * sinG * cosL * cosL + cosF * cosF * sinL * sinL;
+  auto c = cosG * cosG * cosL * cosL + sinF * sinF * sinL * sinL;
+  auto w = atan2(sqrt(s), sqrt(c));
+  auto r = sqrt(s * c) / w;
+  auto distance = ((2 * w * majorAxisKm) *
+                   (1 + flat * ((3 * r - 1) / (2 * c)) * (sinF * sinF * cosG * cosG) -
+                    (flat * ((3 * r + 1) / (2 * s)) * cosF * cosF * sinG * sinG)));
   return distance * 1000;  // meters
 }
 
-float LatLng::bearingTo(const LatLng &other) const {
+double LatLng::bearingTo(const LatLng &other) const {
   // See http://www.movable-type.co.uk/scripts/latlong.html
-  float lat1 = degToRad(mLatitude);
-  float lat2 = degToRad(other.latitude());
-  float lng1 = degToRad(mLongitude);
-  float lng2 = degToRad(other.longitude());
+  auto lat1 = degToRad(mLatitude);
+  auto lat2 = degToRad(other.latitude());
+  auto lng1 = degToRad(mLongitude);
+  auto lng2 = degToRad(other.longitude());
 
-  float deltaLng = lng1 - lng2;
+  auto deltaLng = lng1 - lng2;
 
-  float term1 = sinf(deltaLng) * cosf(lat2);
-  float term2 = cosf(lat1) * sinf(lat2) - sinf(lat1) * cosf(lat2) * cosf(deltaLng);
-  return atan2f(term1, term2);
+  auto term1 = sin(deltaLng) * cos(lat2);
+  auto term2 = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLng);
+  return atan2(term1, term2);
 }
 
-std::vector<LatLng> LatLng::GetBoundingBoxForCap(float distance_meters) const {
+std::vector<LatLng> LatLng::GetBoundingBoxForCap(double distance_meters) const {
    assert(distance_meters >= 0);
    
    // angular distance in radians on a great circle
-   float radDist = distance_meters / kEarthRadiusMeters;
-   float radLat = degToRad(mLatitude);
-   float radLon = degToRad(mLongitude);
-   float minLat = radLat - radDist;
-   float maxLat = radLat + radDist;
+   auto radDist = distance_meters / kEarthRadiusMeters;
+   auto radLat = degToRad(mLatitude);
+   auto radLon = degToRad(mLongitude);
+   auto minLat = radLat - radDist;
+   auto maxLat = radLat + radDist;
    
-   float minLon, maxLon;
+   double minLon, maxLon;
    if (minLat > kMinLatRadians && maxLat < kMaxLatRadians) {
-      float deltaLon = asinf(sinf(radDist) / cosf(radLat));
+      auto deltaLon = asin(sin(radDist) / cos(radLat));
       minLon = radLon - deltaLon;
-      if (minLon < kMinLngRadians) minLon += static_cast<float>(2 * M_PI);
+      if (minLon < kMinLngRadians) minLon += 2 * M_PI;
       maxLon = radLon + deltaLon;
-      if (maxLon > kMaxLngRadians) maxLon -= static_cast<float>(2 * M_PI);
+      if (maxLon > kMaxLngRadians) maxLon -= 2 * M_PI;
    } else {
       // a pole is within the distance
       minLat = std::max(minLat, kMinLatRadians);

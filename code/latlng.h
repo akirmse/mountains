@@ -35,7 +35,7 @@ public:
     mLongitude = 0;
   }
   
-  LatLng(float lat, float lng) {
+  LatLng(double lat, double lng) {
     mLatitude = lat;
     mLongitude = lng;
   }
@@ -49,17 +49,17 @@ public:
     mLongitude = other.mLongitude;
   }
 
-  float latitude() const { return mLatitude; }
-  float longitude() const { return mLongitude; }
+  double latitude() const { return mLatitude; }
+  double longitude() const { return mLongitude; }
 
   // Distance in meters
-  float distance(const LatLng &other) const;
+  double distance(const LatLng &other) const;
 
   // Distance in meters using a more accurate but slower calculation
-  float distanceEllipsoid(const LatLng &other) const;
+  double distanceEllipsoid(const LatLng &other) const;
 
   // Initial bearing to point in radians
-  float bearingTo(const LatLng &that) const;
+  double bearingTo(const LatLng &that) const;
 
   /**
 	 * <p>Computes the bounding coordinates of all points on the surface
@@ -93,10 +93,10 @@ public:
 	 * array element.</li>
 	 * </ul>
 	 */   
-  std::vector<LatLng> GetBoundingBoxForCap(float distance_meters) const;
+  std::vector<LatLng> GetBoundingBoxForCap(double distance_meters) const;
   
 private:
-  float mLatitude, mLongitude;
+  double mLatitude, mLongitude;
 };
 
 #endif  // _LATLNG_H_

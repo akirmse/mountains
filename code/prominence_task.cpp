@@ -46,7 +46,7 @@ ProminenceTask::ProminenceTask(TileCache *cache, const ProminenceOptions &option
   mOptions = options;
 }
 
-bool ProminenceTask::run(float lat, float lng, const CoordinateSystem &coordinateSystem) {
+bool ProminenceTask::run(double lat, double lng, const CoordinateSystem &coordinateSystem) {
   mCurrentLatitude = lat;
   mCurrentLongitude = lng;
 
@@ -118,8 +118,8 @@ string ProminenceTask::getFilenamePrefix() const {
   char filename[PATH_MAX];
 
   // Deal with floating point imprecision
-  float lat = adjustCoordinate(mCurrentLatitude);
-  float lng = adjustCoordinate(mCurrentLongitude);
+  auto lat = adjustCoordinate(mCurrentLatitude);
+  auto lng = adjustCoordinate(mCurrentLongitude);
 
   int latHundredths = fractionalDegree(lat);
   int lngHundredths = fractionalDegree(lng);
@@ -129,7 +129,7 @@ string ProminenceTask::getFilenamePrefix() const {
   return mOptions.outputDir + "/" + filename;
 }
 
-int ProminenceTask::fractionalDegree(float degree) const {
-  float excess = fabs(degree - static_cast<int>(degree));
+int ProminenceTask::fractionalDegree(double degree) const {
+  double excess = abs(degree - static_cast<int>(degree));
   return static_cast<int>(std::round(100 * excess));
 }
