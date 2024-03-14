@@ -167,6 +167,39 @@ These X and Y coordinates also correspond to the naming of the tiles.
 | NED19  | 3m         | partial US | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/19) |
 | 3DEP1m | 1m         | partial US | UTM | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1m/Projects/) |
 
+#### LIDAR
+
+High-resolution LIDAR can be processed by first converting it to FLT files using
+the following Python script in the ```scripts``` subdirectory.
+
+```
+usage: run_lidar_prominence.py [-h] --output_dir OUTPUT_DIR [--threads THREADS] input_files [input_files ...]
+
+Convert LIDAR to standard tiles
+
+positional arguments:
+  input_files           Input Lidar tiles, or GDAL VRT of tiles
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --threads THREADS     Number of threads to use
+
+required named arguments:
+  --output_dir OUTPUT_DIR
+                        Directory to place warped tiles
+```
+
+This takes one or more input DEM files in any format GDAL understands, and warps them into a set of output
+tiles (in ```output_dir```) that are 0.1 degrees on a side in the lat/lng projection (EPSG:4326), with 10,000 x 10,000 resolution.  This is about 1 meter
+per sample.
+
+These tiles can then be used as input to the ```prominence``` program by specifying the LIDAR format (e.g. the flag ```-f LIDAR```).
+In summary, the steps are
+
+* Run ```run_lidar_prominence``` to convert the input LIDAR DEM to intermediate tiles.
+* Run ```prominence``` with these intermediate tiles as input to generate divide trees.
+* Run ```merge_divide_trees``` on the output files from ```prominence``` to get a text file with peak locations.
+
 ### Isolation
 
 ```
