@@ -42,8 +42,9 @@ public:
     delete [] mPixels;
   }
 
-  // A non-terrain value
-  static const Pixel EmptyPixel = -32738;  
+  // A non-terrain value; also don't overlap with peak or saddle
+  // indexes.
+  static const Pixel EmptyPixel = std::numeric_limits<Pixel>::min();  
 
   Pixel get(int x, int y) const {
     return mPixels[y * mWidth + x];
