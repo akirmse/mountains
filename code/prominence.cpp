@@ -50,7 +50,7 @@ static const int NO_UTM_ZONE = -1;
 static void usage() {
   printf("Usage:\n");
   printf("  prominence [options] min_lat max_lat min_lng max_lng\n");
-  printf("  where coordinates are integer degrees\n");
+  printf("  where coordinates are on tile boundaries\n");
   printf("\n");
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
