@@ -27,6 +27,8 @@
 
 #include "tile.h"
 
+#include <limits>
+
 // A 2D array of integer values
 
 template<typename Pixel> class PixelArray {
