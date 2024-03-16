@@ -46,6 +46,7 @@ static void usage() {
   printf("  -f                Finalize output tree: delete all runoffs and then prune\n");
   printf("  -m min_prominence Minimum prominence threshold for output\n");
   printf("                    in same units as divide tree, default = 100\n");
+  printf("  -s scale_factor   Scale output elevations by this (e.g. meters to feet), default = 1\n");
   printf("  -t num_threads    Number of threads to use, default = 1\n");
   exit(1);
 }
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
   bool finalize = false;
   bool flipElevations = false;
   int numThreads = 1;
+  float elevationScale = 1.0f;
 
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -94,7 +96,7 @@ int main(int argc, char **argv) {
     {"v", required_argument, nullptr, 0},
     {nullptr, 0, 0, 0},
   };
-  while ((ch = getopt_long(argc, argv, "afm:t:", long_options, nullptr)) != -1) {
+  while ((ch = getopt_long(argc, argv, "afm:s:t:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       flipElevations = true;
@@ -108,6 +110,10 @@ int main(int argc, char **argv) {
       minProminence = static_cast<Elevation>(atof(optarg));
       break;
 
+    case 's':
+      elevationScale = static_cast<Elevation>(atof(optarg));
+      break;
+      
     case 't':
       numThreads = atoi(optarg);
       break;      
@@ -121,6 +127,7 @@ int main(int argc, char **argv) {
   }
 
   VLOG(1) << "Using " << numThreads << " threads";
+  VLOG(1) << "Using elevation scale " << elevationScale;
   
   // Load all the initial trees
   vector<DivideTree *> trees;
@@ -229,9 +236,9 @@ int main(int argc, char **argv) {
       }
 
       fprintf(file, "%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
-              peakpos.latitude(), peakpos.longitude(), elevation,
+              peakpos.latitude(), peakpos.longitude(), elevation * elevationScale,
               colpos.latitude(), colpos.longitude(),
-              nodes[i].prominence);
+              nodes[i].prominence * elevationScale);
     }
   }
   fclose(file);
