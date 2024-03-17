@@ -2,10 +2,11 @@
 # - Converts them to lat-long projection
 # - Resamples to tiles that are of fixed size and resolution
 #
+# Writes a shapefiles "boundary.shp" to the tile dir, showing the nodata
+# boundary of the input.
+#
 # Requires osgeo in the Python path
 
-# TODO: Generating some empty tiles with no data.  Find an efficient way to
-# discard these tiles.
 # TODO: Option to run prominence automatically on the results?
 
 import argparse
@@ -18,22 +19,13 @@ import subprocess
 
 from interrupt import handle_ctrl_c, init_pool
 from multiprocessing import Pool
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 # Each output tile is this many degrees and samples on a side
 TILE_SIZE_DEGREES = 0.1  # Must divide 1 evenly
 TILE_SIZE_SAMPLES = 10000
 
 epsilon = 0.0001
-
-def get_extent(ds):
-    """ Return list of corner coordinates from a gdal Dataset """
-    xmin, xpixel, _, ymax, _, ypixel = ds.GetGeoTransform()
-    width, height = ds.RasterXSize, ds.RasterYSize
-    xmax = xmin + width * xpixel
-    ymin = ymax + height * ypixel
-
-    return (xmin, ymax), (xmax, ymax), (xmax, ymin), (xmin, ymin)
 
 def round_down(coord):
     """Return coord rounded down to the nearest TILE_SIZE_DEGREES"""
@@ -63,7 +55,7 @@ def process_tile(args):
         projWin = [x, y + TILE_SIZE_DEGREES, x + TILE_SIZE_DEGREES, y],
         callback=gdal.TermProgress_nocb)
     gdal.Translate(output_filename, vrt_filename, options = translate_options)
-        
+
 def main():
     parser = argparse.ArgumentParser(description='Convert LIDAR to standard tiles')
     requiredNamed = parser.add_argument_group('required named arguments')
@@ -96,15 +88,26 @@ def main():
     # Reproject VRT
     warped_vrt_filename = os.path.join(args.output_dir, 'warped.vrt')
     warp_options = gdal.WarpOptions(format = "VRT", dstSRS = 'EPSG:4326')
-    gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options)
-    
-    # Get bounds, rounded to tile degree boundaries
-    ds = gdal.Open(warped_vrt_filename)
-    extent = get_extent(ds)
-    xmin = round_down(extent[0][0])
-    ymin = round_down(extent[3][1])
-    xmax = round_up(extent[1][0])
-    ymax = round_up(extent[0][1])
+    gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options,
+              callback=gdal.TermProgress_nocb)
+
+    # Get bounding polygon of source data, using coarse overview for speed
+    print("Computing bounding area")
+    footprint_filename = os.path.join(args.output_dir, 'boundary.shp')
+    footprint_options = gdal.FootprintOptions(
+        ovr=2, dstSRS='EPSG:4326', maxPoints='unlimited',
+        callback=gdal.TermProgress_nocb)
+    footprint = gdal.Footprint(footprint_filename, raw_vrt_filename, options=footprint_options)
+
+    bounds = footprint.GetLayer(0).GetNextFeature()
+    coverage_geometry = bounds.GetGeometryRef()
+    xmin, xmax, ymin, ymax = coverage_geometry.GetEnvelope()
+
+    # Rounded to tile degree boundaries so that we cover the whole data set
+    xmin = round_down(xmin)
+    ymin = round_down(ymin)
+    xmax = round_up(xmax)
+    ymax = round_up(ymax)
 
     # Run in parallel
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -117,8 +120,18 @@ def main():
     while y <= ymax - epsilon:
         x = xmin
         while x <= xmax - epsilon:
-            output_filename = os.path.join(args.output_dir, filename_for_coordinates(x, y))
-            process_args.append((x, y, warped_vrt_filename, output_filename))
+            # Skip this tile if it doesn't overlap any data in the source
+            box = ogr.Geometry(ogr.wkbLinearRing)
+            box.AddPoint(x, y)
+            box.AddPoint(x, y + TILE_SIZE_DEGREES)
+            box.AddPoint(x + TILE_SIZE_DEGREES, y + TILE_SIZE_DEGREES)
+            box.AddPoint(x + TILE_SIZE_DEGREES, y)
+            box.AddPoint(x, y)
+            polybox = ogr.Geometry(ogr.wkbPolygon)
+            polybox.AddGeometry(box)
+            if polybox.Intersects(coverage_geometry):
+                output_filename = os.path.join(args.output_dir, filename_for_coordinates(x, y))
+                process_args.append((x, y, warped_vrt_filename, output_filename))
             
             x += TILE_SIZE_DEGREES
         y += TILE_SIZE_DEGREES
