@@ -62,6 +62,7 @@ static void usage() {
   printf("  -t num_threads    Number of threads, default = 1\n");
   printf("  -z                UTM zone (if input data is in UTM)\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
+  printf("  --kml             Generate KML output of divide tree\n"); 
   exit(1);
 }
 
@@ -79,6 +80,7 @@ int main(int argc, char **argv) {
   int ch;
   string str;
   bool antiprominence = false;
+  int writeKml = false;
   int utmZone = NO_UTM_ZONE;
 
   // Make a do-nothing "v" option to avoid getting runtime warnings about --v (for
@@ -86,6 +88,7 @@ int main(int argc, char **argv) {
   // has already processed its options.
   const struct option long_options[] = {
     {"v", required_argument, nullptr, 0},
+    {"kml", no_argument, &writeKml, 1},
     {nullptr, 0, 0, 0},
   };
   while ((ch = getopt_long(argc, argv, "af:i:k:m:o:t:z:", long_options, nullptr)) != -1) {
@@ -179,7 +182,8 @@ int main(int argc, char **argv) {
   }
 
   // Don't write out unpruned divide tree--it's too large and slow
-  ProminenceOptions options = {output_directory, minProminence, false, antiprominence};
+  ProminenceOptions options = {output_directory, minProminence, false, antiprominence,
+                               static_cast<bool>(writeKml)};
   
   // Caching doesn't do anything for our calculation and the tiles are huge
   BasicTileLoadingPolicy policy(terrain_directory, fileFormat);

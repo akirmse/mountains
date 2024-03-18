@@ -75,7 +75,9 @@ bool ProminenceTask::run(double lat, double lng, const CoordinateSystem &coordin
     if (!divideTree->writeToFile(getFilenamePrefix() + "-divide_tree.dvt")) {
       LOG(ERROR) << "Failed to save divide tree file";
     }
-    writeStringToOutputFile("divide_tree.kml", divideTree->getAsKml());
+    if (mOptions.writeKml) {
+      writeStringToOutputFile("divide_tree.kml", divideTree->getAsKml());
+    }
   }
   
   //
@@ -96,7 +98,9 @@ bool ProminenceTask::run(double lat, double lng, const CoordinateSystem &coordin
   if (!divideTree->writeToFile(getFilenamePrefix() + "-" + pruned_name + ".dvt")) {
     LOG(ERROR) << "Failed to save pruned divide tree file";
   }
-  writeStringToOutputFile(pruned_name + ".kml", divideTree->getAsKml());
+  if (mOptions.writeKml) {
+    writeStringToOutputFile(pruned_name + ".kml", divideTree->getAsKml());
+  }
 
   delete divideTree;
 

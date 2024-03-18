@@ -42,6 +42,9 @@ struct ProminenceOptions {
   // Determine whether this task computes prominence (value=false, the default),
   // or anti-prominence, which is the "prominence" of low points.
   bool antiprominence;
+
+  // Write KML of pruned divide tree?
+  bool writeKml;
 };
 
 // Calculate prominence for all peaks in one tile
