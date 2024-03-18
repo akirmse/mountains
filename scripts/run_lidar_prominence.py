@@ -19,7 +19,8 @@ import subprocess
 
 from interrupt import handle_ctrl_c, init_pool
 from multiprocessing import Pool
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
+from pathlib import Path
 
 # Each output tile is this many degrees and samples on a side
 TILE_SIZE_DEGREES = 0.1  # Must divide 1 evenly
@@ -55,6 +56,111 @@ def filename_for_coordinates(x, y):
     y_fraction = int(abs(100 * (y - y_int)) + epsilon)
     return f"tile_{y_int:02d}x{y_fraction:02d}_{x_int:03d}x{x_fraction:02d}.flt"
 
+def write_multipolygon_to_file(multipolygon, filename):
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driver.CreateDataSource(filename)
+
+    srs =  osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    layer = ds.CreateLayer("boundary", srs, ogr.wkbMultiPolygon)
+    
+    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+    layer.CreateField(idField)
+    
+    # Create the feature and set values
+    featureDefn = layer.GetLayerDefn()
+    feature = ogr.Feature(featureDefn)
+    feature.SetGeometry(multipolygon)
+    feature.SetField("id", 1)
+    layer.CreateFeature(feature)
+    
+    feature = None
+    ds = None
+
+def create_vrts(tile_dir, input_files):
+    """
+    Creates virtual rasters (VRTs) for the input files on disk.
+    Returns:
+    1) The filename for a VRT of all of the input files in EPSG:4326
+    2) The bounding polygon for all of the input files in EPSG:4326
+    """
+    print("Creating VRTs and computing boundary")
+
+    # Some input datasets have more than one projection.
+    #
+    # All files in a VRT must have the same projection.  Thus, we must first
+    # create an intermediate VRT that warps the inputs.
+    #
+    # However, computing the boundary can be much faster on the raw
+    # data, because we can use overview (pyramid) images at lower
+    # resolution, and these would not be present in the warped
+    # version.  So, for each projection, we create a VRT of all the
+    # inputs with that projection, compute the boundary of each one,
+    # and then we take the union of all of these boundaries to get the
+    # boundary of all of the inputs.
+    
+    # Map of projection name to list of files with that projection
+    projection_map = {}  
+    for input_file in input_files:
+        ds = gdal.Open(input_file)
+        prj = ds.GetProjection()
+        srs = osr.SpatialReference(wkt=prj)
+        projection_name = srs.GetAttrValue('projcs')
+        projection_map.setdefault(projection_name, []).append(input_file)
+
+    # For each projection, build raw and warped VRTs
+    index = 1
+    boundary = ogr.Geometry(ogr.wkbMultiPolygon)
+    warped_vrt_filenames = []
+    for proj, filenames in projection_map.items():
+        print(f"Projection {index}: {proj}")
+        print("  Creating VRTs")
+        raw_vrt_filename = os.path.join(tile_dir, f"raw{index}.vrt")
+        warped_vrt_filename = os.path.join(tile_dir, f"warped{index}.vrt")
+
+        vrt_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
+        gdal.BuildVRT(raw_vrt_filename, filenames, options=vrt_options)
+        
+        warp_options = gdal.WarpOptions(format = "VRT", dstSRS = 'EPSG:4326')
+        gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options,
+                  callback=gdal.TermProgress_nocb)
+        warped_vrt_filenames.append(warped_vrt_filename)
+                  
+        # If there are overviews, it's much faster to use them.  Only the
+        # raw (unwarped) VRT will preserve the overviews from the source rasters.
+        raw_dataset = gdal.Open(raw_vrt_filename)
+        num_overviews = raw_dataset.GetRasterBand(1).GetOverviewCount()
+        if num_overviews == 0:
+            print("Data has no overviews; using full resolution (slow)")
+            overview_level = None
+        else:
+            overview_level = min(2, num_overviews)
+        raw_dataset = None
+
+        print("  Computing boundary")
+        footprint_filename = os.path.join(tile_dir, f'boundary{index}.shp')
+        footprint_options = gdal.FootprintOptions(
+            ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
+            callback=gdal.TermProgress_nocb)
+        footprint = gdal.Footprint(footprint_filename, raw_vrt_filename, options=footprint_options)
+
+        geometry = footprint.GetLayer(0).GetNextFeature()
+        boundary = boundary.Union(geometry.geometry())
+        footprint = None  # Close file
+
+        index += 1
+
+    # Write boundary to file for debugging / reuse.
+    write_multipolygon_to_file(boundary, os.path.join(tile_dir, "boundary.shp"))
+
+    # Build a single VRT of all the warped VRTs
+    overall_vrt_filename = os.path.join(tile_dir, 'all.vrt')
+    vrt_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
+    gdal.BuildVRT(overall_vrt_filename, warped_vrt_filenames, options=vrt_options)
+
+    return overall_vrt_filename, boundary
+
 @handle_ctrl_c
 def process_tile(args):
     (x, y, vrt_filename, output_filename) = args
@@ -89,8 +195,9 @@ def main():
     parser.add_argument('input_files', type=str, nargs='+',
                         help='Input Lidar tiles, or GDAL VRT of tiles')
 
-    parser.add_argument('--boundary',
-                        help="Precomputed shp file with boundary of input data")
+# TODO: Allow boundary to be specified from a file along with overall VRT file
+#    parser.add_argument('--boundary',
+#                        help="Precomputed shp file with boundary of input data")
     args = parser.parse_args()
 
     gdal.UseExceptions()
@@ -103,49 +210,10 @@ def main():
     input_files = [ glob.glob(x) for x in args.input_files ]
     input_files = list(itertools.chain.from_iterable(input_files))
 
-    print("Creating virtual raster")
+    # Build all the VRTs and compute boundary for entire input
+    warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files)
 
-    # Input is a VRT?
-    if len(args.input_files) == 1 and args.input_files[0].lower().endswith(".vrt"):
-        raw_vrt_filename = args.input_files[0]
-    else:
-        # Create raw VRT for all inputs
-        raw_vrt_filename = os.path.join(args.tile_dir, 'raw.vrt')
-        vrt_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
-        gdal.BuildVRT(raw_vrt_filename, input_files, options=vrt_options)
-    
-    # Reproject VRT
-    warped_vrt_filename = os.path.join(args.tile_dir, 'warped.vrt')
-    warp_options = gdal.WarpOptions(format = "VRT", dstSRS = 'EPSG:4326')
-    gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options,
-              callback=gdal.TermProgress_nocb)
-
-    # Get bounding polygon of source data
-    print("Computing bounding area")
-
-    if args.boundary:  # Boundary file manually specified?
-        footprint = ogr.Open(args.boundary)
-    else:
-        # If there are overviews, it's much faster to use them
-        raw_dataset = gdal.Open(raw_vrt_filename)
-        num_overviews = raw_dataset.GetRasterBand(1).GetOverviewCount()
-        if num_overviews == 0:
-            print("Data has no overviews; using full resolution (slow)")
-            overview_level = None
-        else:
-            overview_level = min(2, num_overviews)
-        raw_dataset = None
-
-        footprint_filename = os.path.join(args.tile_dir, 'boundary.shp')
-        footprint_options = gdal.FootprintOptions(
-            ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
-            callback=gdal.TermProgress_nocb)
-        footprint = gdal.Footprint(footprint_filename, raw_vrt_filename, options=footprint_options)
-
-    bounds = footprint.GetLayer(0).GetNextFeature()
-    coverage_geometry = bounds.GetGeometryRef()
-    xmin, xmax, ymin, ymax = coverage_geometry.GetEnvelope()
-    footprint = None  # Close file
+    xmin, xmax, ymin, ymax = bounds.GetEnvelope()
 
     # Rounded to tile degree boundaries so that we cover the whole data set
     xmin = round_down(xmin)
@@ -173,7 +241,7 @@ def main():
             box.AddPoint(x, y)
             polybox = ogr.Geometry(ogr.wkbPolygon)
             polybox.AddGeometry(box)
-            if polybox.Intersects(coverage_geometry):
+            if polybox.Intersects(bounds):
                 output_filename = os.path.join(args.tile_dir, filename_for_coordinates(x, y))
                 process_args.append((x, y, warped_vrt_filename, output_filename))
             
