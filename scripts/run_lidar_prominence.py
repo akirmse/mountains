@@ -145,6 +145,7 @@ def main():
     bounds = footprint.GetLayer(0).GetNextFeature()
     coverage_geometry = bounds.GetGeometryRef()
     xmin, xmax, ymin, ymax = coverage_geometry.GetEnvelope()
+    footprint = None  # Close file
 
     # Rounded to tile degree boundaries so that we cover the whole data set
     xmin = round_down(xmin)
