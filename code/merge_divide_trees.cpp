@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
     case 'f':
       finalize = true;
       break;
-      
+
     case 'm':
       minProminence = static_cast<Elevation>(atof(optarg));
       break;
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
         elevation = -elevation;
       }
 
-      fprintf(file, "%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
+      fprintf(file, "%.5f,%.5f,%.2f,%.5f,%.5f,%.2f\n",
               peakpos.latitude(), peakpos.longitude(), elevation * elevationScale,
               colpos.latitude(), colpos.longitude(),
               nodes[i].prominence * elevationScale);
