@@ -1,6 +1,6 @@
 # Processes a set of Lidar tiles:
 # - Converts them to lat-long projection
-# - Resamples to tiles that are of fixed size and resolution
+# - Resamples to tiles that are of fixed size and resolution, with elevations in meters
 #
 # Writes a shapefiles "boundary.shp" to the tile dir, showing the nodata
 # boundary of the input.
@@ -77,6 +77,18 @@ def write_multipolygon_to_file(multipolygon, filename):
     
     feature = None
     ds = None
+
+def polygon_for_tile(x, y, size):
+    """Return a square with (x,y) as its lower left corner, size degrees in both directions"""
+    box = ogr.Geometry(ogr.wkbLinearRing)
+    box.AddPoint(x, y)
+    box.AddPoint(x, y + size)
+    box.AddPoint(x + size, y + size)
+    box.AddPoint(x + size, y)
+    box.AddPoint(x, y)
+    polybox = ogr.Geometry(ogr.wkbPolygon)
+    polybox.AddGeometry(box)
+    return polybox
 
 def create_vrts(tile_dir, input_files):
     """
@@ -163,13 +175,16 @@ def create_vrts(tile_dir, input_files):
 
 @handle_ctrl_c
 def process_tile(args):
-    (x, y, vrt_filename, output_filename) = args
+    """scale is multiplied by each input value"""
+    (x, y, vrt_filename, output_filename, scale) = args
     print(f"Processing {x:.2f}, {y:.2f}")
     gdal.UseExceptions()
+
     translate_options = gdal.TranslateOptions(
         format = "EHdr",
         width = TILE_SIZE_SAMPLES, height = TILE_SIZE_SAMPLES,
         projWin = [x, y + TILE_SIZE_DEGREES, x + TILE_SIZE_DEGREES, y],
+        scaleParams = [[-30000, 30000, -30000*scale, 30000*scale]],
         callback=gdal.TermProgress_nocb)
     gdal.Translate(output_filename, vrt_filename, options = translate_options)
 
@@ -191,7 +206,7 @@ def main():
     parser.add_argument('--threads', default=1, type=int,
                         help="Number of threads to use in computing prominence")
     parser.add_argument('--min_prominence', default=100, type=float,
-                        help="Filter to this minimum prominence (units are --input_units")
+                        help="Filter to this minimum prominence in meters")
     parser.add_argument('input_files', type=str, nargs='+',
                         help='Input Lidar tiles, or GDAL VRT of tiles')
 
@@ -233,17 +248,16 @@ def main():
         x = xmin
         while x <= xmax - epsilon:
             # Skip this tile if it doesn't overlap any data in the source
-            box = ogr.Geometry(ogr.wkbLinearRing)
-            box.AddPoint(x, y)
-            box.AddPoint(x, y + TILE_SIZE_DEGREES)
-            box.AddPoint(x + TILE_SIZE_DEGREES, y + TILE_SIZE_DEGREES)
-            box.AddPoint(x + TILE_SIZE_DEGREES, y)
-            box.AddPoint(x, y)
-            polybox = ogr.Geometry(ogr.wkbPolygon)
-            polybox.AddGeometry(box)
+            polybox = polygon_for_tile(x, y, TILE_SIZE_DEGREES)
             if polybox.Intersects(bounds):
                 output_filename = os.path.join(args.tile_dir, filename_for_coordinates(x, y))
-                process_args.append((x, y, warped_vrt_filename, output_filename))
+                # If input is in feet, will need to scale tile to meters
+                if args.input_units == "feet":
+                    scale = 0.3048
+                else:
+                    scale = 1
+
+                process_args.append((x, y, warped_vrt_filename, output_filename, scale))
             
             x += TILE_SIZE_DEGREES
         y += TILE_SIZE_DEGREES
@@ -272,9 +286,7 @@ def main():
     merge_inputs = os.path.join(args.output_dir, "*_*.dvt")
     merge_output = os.path.join(args.output_dir, "results")
     units_multiplier = 1
-    if args.input_units == "feet" and args.output_units == "meters":
-        units_multiplier = 1.0 / 3.28084
-    if args.input_units == "meters" and args.output_units == "feet":
+    if args.output_units == "feet":
         units_multiplier = 3.28084
     merge_command = f"{merge_binary} --v=1 -f" + \
         f" -t {args.threads} -m {args.min_prominence} -s {units_multiplier}" + \
