@@ -78,19 +78,28 @@ def write_multipolygon_to_file(multipolygon, filename):
     feature = None
     ds = None
 
-def polygon_for_tile(x, y, size):
-    """Return a square with (x,y) as its lower left corner, size degrees in both directions"""
+def polygon_for_tile(x, y, xsize, ysize):
+    """Return a rectangle with (x,y) as its lower left corner, size degrees in both directions"""
     box = ogr.Geometry(ogr.wkbLinearRing)
     box.AddPoint(x, y)
-    box.AddPoint(x, y + size)
-    box.AddPoint(x + size, y + size)
-    box.AddPoint(x + size, y)
+    box.AddPoint(x, y + ysize)
+    box.AddPoint(x + xsize, y + ysize)
+    box.AddPoint(x + xsize, y)
     box.AddPoint(x, y)
     polybox = ogr.Geometry(ogr.wkbPolygon)
     polybox.AddGeometry(box)
     return polybox
 
-def create_vrts(tile_dir, input_files):
+def get_extent(ds):
+    """ Return list of corner coordinates from a gdal Dataset """
+    xmin, xpixel, _, ymax, _, ypixel = ds.GetGeoTransform()
+    width, height = ds.RasterXSize, ds.RasterYSize
+    xmax = xmin + width * xpixel
+    ymin = ymax + height * ypixel
+
+    return xmin, xmax, ymin, ymax
+
+def create_vrts(tile_dir, input_files, skip_boundary):
     """
     Creates virtual rasters (VRTs) for the input files on disk.
     Returns:
@@ -150,26 +159,33 @@ def create_vrts(tile_dir, input_files):
             overview_level = min(2, num_overviews-1)
         raw_dataset = None
 
-        print("  Computing boundary")
-        footprint_filename = os.path.join(tile_dir, f'boundary{index}.shp')
-        footprint_options = gdal.FootprintOptions(
-            ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
-            callback=gdal.TermProgress_nocb)
-        footprint = gdal.Footprint(footprint_filename, raw_vrt_filename, options=footprint_options)
-
-        geometry = footprint.GetLayer(0).GetNextFeature()
-        boundary = boundary.Union(geometry.geometry())
-        footprint = None  # Close file
+        if not skip_boundary:
+            print("  Computing boundary")
+            footprint_filename = os.path.join(tile_dir, f'boundary{index}.shp')
+            footprint_options = gdal.FootprintOptions(
+                ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
+                callback=gdal.TermProgress_nocb)
+            footprint = gdal.Footprint(footprint_filename, raw_vrt_filename, options=footprint_options)
+            
+            geometry = footprint.GetLayer(0).GetNextFeature()
+            boundary = boundary.Union(geometry.geometry())
+            footprint = None  # Close file
 
         index += 1
-
-    # Write boundary to file for debugging / reuse.
-    write_multipolygon_to_file(boundary, os.path.join(tile_dir, "boundary.shp"))
 
     # Build a single VRT of all the warped VRTs
     overall_vrt_filename = os.path.join(tile_dir, 'all.vrt')
     vrt_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
     gdal.BuildVRT(overall_vrt_filename, warped_vrt_filenames, options=vrt_options)
+
+    if skip_boundary:
+        # Get crude rectangular boundary
+        ds = gdal.Open(overall_vrt_filename)
+        xmin, xmax, ymin, ymax = get_extent(ds)
+        boundary = polygon_for_tile(xmin, ymin, xmax - xmin, ymax - ymin)
+    else:
+        # Write boundary to file for debugging / reuse.
+        write_multipolygon_to_file(boundary, os.path.join(tile_dir, "boundary.shp"))
 
     return overall_vrt_filename, boundary
 
@@ -207,6 +223,8 @@ def main():
                         help="Number of threads to use in computing prominence")
     parser.add_argument('--min_prominence', default=100, type=float,
                         help="Filter to this minimum prominence in meters")
+    parser.add_argument('--skip_boundary', action=argparse.BooleanOptionalAction,
+                        help="Skip computation of raster boundary; uses more disk")
     parser.add_argument('input_files', type=str, nargs='+',
                         help='Input Lidar tiles, or GDAL VRT of tiles')
 
@@ -226,7 +244,8 @@ def main():
     input_files = list(itertools.chain.from_iterable(input_files))
 
     # Build all the VRTs and compute boundary for entire input
-    warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files)
+    warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files,
+                                              args.skip_boundary)
 
     xmin, xmax, ymin, ymax = bounds.GetEnvelope()
 
@@ -248,8 +267,8 @@ def main():
         x = xmin
         while x <= xmax - epsilon:
             # Skip this tile if it doesn't overlap any data in the source
-            polybox = polygon_for_tile(x, y, TILE_SIZE_DEGREES)
-            if polybox.Intersects(bounds):
+            polybox = polygon_for_tile(x, y, TILE_SIZE_DEGREES, TILE_SIZE_DEGREES)
+            if args.skip_boundary or polybox.Intersects(bounds):
                 output_filename = os.path.join(args.tile_dir, filename_for_coordinates(x, y))
                 # If input is in feet, will need to scale tile to meters
                 if args.input_units == "feet":
