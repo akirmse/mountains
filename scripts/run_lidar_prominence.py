@@ -147,7 +147,7 @@ def create_vrts(tile_dir, input_files):
             print("Data has no overviews; using full resolution (slow)")
             overview_level = None
         else:
-            overview_level = min(2, num_overviews)
+            overview_level = min(2, num_overviews-1)
         raw_dataset = None
 
         print("  Computing boundary")
