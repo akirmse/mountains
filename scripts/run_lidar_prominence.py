@@ -200,6 +200,7 @@ def process_tile(args):
         format = "EHdr",
         width = TILE_SIZE_SAMPLES, height = TILE_SIZE_SAMPLES,
         projWin = [x, y + TILE_SIZE_DEGREES, x + TILE_SIZE_DEGREES, y],
+        noData = -999999,
         scaleParams = [[-30000, 30000, -30000*scale, 30000*scale]],
         callback=gdal.TermProgress_nocb)
     gdal.Translate(output_filename, vrt_filename, options = translate_options)
@@ -292,11 +293,8 @@ def main():
     # Run prominence and merge_divide_trees
     print("Running prominence")
     prominence_binary = os.path.join(args.binary_dir, "prominence")
-    # Find more peaks than ultimately desired, so that we regenerate a final list
-    # by simply running merge_divide_trees again (this is a personal preference).
-    low_min_prominence = args.min_prominence / 3
     prom_command = f"{prominence_binary} --v=1 -f LIDAR -i {args.tile_dir} -o {args.output_dir}" + \
-        f" -t {args.threads} -m {low_min_prominence}" + \
+        f" -t {args.threads} -m {args.min_prominence}" + \
         f" -- {ymin} {ymax} {xmin} {xmax}"
     run_command(prom_command)
 
