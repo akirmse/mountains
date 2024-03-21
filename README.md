@@ -173,7 +173,11 @@ High-resolution LIDAR can be processed by first converting it to FLT files using
 the following Python script in the ```scripts``` subdirectory.
 
 ```
-usage: run_lidar_prominence.py [-h] --output_dir OUTPUT_DIR [--threads THREADS] input_files [input_files ...]
+usage: run_lidar_prominence.py [-h] [--input_units {feet,meters}] [--output_units {feet,meters}]
+                               [--output_dir OUTPUT_DIR] [--tile_dir TILE_DIR] [--binary_dir BINARY_DIR]
+                               [--threads THREADS] [--min_prominence MIN_PROMINENCE]
+                               [--skip_boundary | --no-skip_boundary]
+                               input_files [input_files ...]
 
 Convert LIDAR to standard tiles
 
@@ -182,23 +186,39 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --threads THREADS     Number of threads to use
-
-required named arguments:
+  --input_units {feet,meters}
+                        Elevation units in input files
+  --output_units {feet,meters}
+                        Elevation units in final output files
   --output_dir OUTPUT_DIR
-                        Directory to place warped tiles
+                        Directory to place prominence output
+  --tile_dir TILE_DIR   Directory to place warped tiles
+  --binary_dir BINARY_DIR
+                        Path to prominence binary
+  --threads THREADS     Number of threads to use in computing prominence
+  --min_prominence MIN_PROMINENCE
+                        Filter to this minimum prominence in meters
+  --skip_boundary, --no-skip_boundary
+                        Skip computation of raster boundary; uses more disk
 ```
 
 This takes one or more input DEM files in any format GDAL understands, and warps them into a set of output
 tiles (in ```output_dir```) that are 0.1 degrees on a side in the lat/lng projection (EPSG:4326), with 10,000 x 10,000 resolution.  This is about 1 meter
 per sample.
 
-These tiles can then be used as input to the ```prominence``` program by specifying the LIDAR format (e.g. the flag ```-f LIDAR```).
-In summary, the steps are
+The script them runs the ```prominence``` and ```merge_divide_trees``` programs to generate the output, which will be in the 
+file prominence/results.txt.
 
-* Run ```run_lidar_prominence``` to convert the input LIDAR DEM to intermediate tiles.
-* Run ```prominence``` with these intermediate tiles as input to generate divide trees.
-* Run ```merge_divide_trees``` on the output files from ```prominence``` to get a text file with peak locations.
+Requirements:
+- Python 3
+- GDAL 3.8.0 or later in the path
+- **You must have already built the code in this repo** (RELEASE version strongly preferred for reasonable performance).  Specify the path to the built binaries with the ```--binary_dir``` flag.
+- Enough disk space for another copy of your source data at ```--tile_dir``` (default is the ```tiles``` subdirectory of your current directory.
+
+Sample invocation:
+```
+python mountains/scripts/run_lidar_prominence.py --binary_dir mountains/code/release --threads 6  <path to data>/*.tif
+```
 
 ### Isolation
 
