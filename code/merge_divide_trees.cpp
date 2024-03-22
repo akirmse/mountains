@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
         elevation = -elevation;
       }
 
-      fprintf(file, "%.5f,%.5f,%.2f,%.5f,%.5f,%.2f\n",
+      fprintf(file, "%.6f,%.6f,%.2f,%.6f,%.6f,%.2f\n",
               peakpos.latitude(), peakpos.longitude(), elevation * elevationScale,
               colpos.latitude(), colpos.longitude(),
               nodes[i].prominence * elevationScale);
