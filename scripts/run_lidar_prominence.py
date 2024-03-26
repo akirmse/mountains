@@ -50,10 +50,10 @@ def round_up(coord):
 def filename_for_coordinates(x, y):
     """Return output filename for the given coordinates"""
     y += TILE_SIZE_DEGREES  # Name uses upper left corner
-    x_int = int(x)
-    y_int = int(y)
-    x_fraction = int(abs(100 * (x - x_int)) + epsilon)
-    y_fraction = int(abs(100 * (y - y_int)) + epsilon)
+    x_int = int(x + epsilon)
+    y_int = int(y + epsilon)
+    x_fraction = int(abs(100 * (x - x_int)) + epsilon) % 100
+    y_fraction = int(abs(100 * (y - y_int)) + epsilon) % 100
     return f"tile_{y_int:02d}x{y_fraction:02d}_{x_int:03d}x{x_fraction:02d}.flt"
 
 def write_multipolygon_to_file(multipolygon, filename):
@@ -247,7 +247,6 @@ def main():
     # Build all the VRTs and compute boundary for entire input
     warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files,
                                               args.skip_boundary)
-
     xmin, xmax, ymin, ymax = bounds.GetEnvelope()
 
     # Rounded to tile degree boundaries so that we cover the whole data set
@@ -300,7 +299,7 @@ def main():
 
     print("Running merge")
     merge_binary = os.path.join(args.binary_dir, "merge_divide_trees")
-    merge_inputs = os.path.join(args.output_dir, "*_*.dvt")
+    merge_inputs = os.path.join(args.output_dir, "*_pruned_*.dvt")
     merge_output = os.path.join(args.output_dir, "results")
     units_multiplier = 1
     if args.output_units == "feet":
