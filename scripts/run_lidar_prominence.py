@@ -143,12 +143,17 @@ def create_vrts(tile_dir, input_files, skip_boundary):
         raw_vrt_filename = os.path.join(tile_dir, f"raw{index}.vrt")
         warped_vrt_filename = os.path.join(tile_dir, f"warped{index}.vrt")
 
-        vrt_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
-        gdal.BuildVRT(raw_vrt_filename, filenames, options=vrt_options)
+        raw_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
+        gdal.BuildVRT(raw_vrt_filename, filenames, options=raw_options)
         
         warp_options = gdal.WarpOptions(format = "VRT", dstSRS = 'EPSG:4326')
-        gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options,
-                  callback=gdal.TermProgress_nocb)
+        warped_dataset = gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options,
+                                   callback=gdal.TermProgress_nocb)
+        # BuildVRT requires that all sources have the same color interpretation, so set
+        # it to grayscale.  It's sometimes missing in some datasets, which isn't allowed.
+        band = warped_dataset.GetRasterBand(1)
+        band.SetColorInterpretation(gdal.GCI_GrayIndex)
+        warped_dataset = None  # Close file
         warped_vrt_filenames.append(warped_vrt_filename)
                   
         # If there are overviews, it's much faster to use them.  Only the
