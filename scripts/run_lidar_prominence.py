@@ -47,11 +47,14 @@ def round_up(coord):
     """Return coord rounded up to the nearest TILE_SIZE_DEGREES"""
     return math.ceil(coord / TILE_SIZE_DEGREES) * TILE_SIZE_DEGREES
 
+def sign(a):
+    return bool(a > 0) - bool(a < 0)
+
 def filename_for_coordinates(x, y):
     """Return output filename for the given coordinates"""
     y += TILE_SIZE_DEGREES  # Name uses upper left corner
-    x_int = int(x + epsilon)
-    y_int = int(y + epsilon)
+    x_int = int(x + epsilon * sign(x))
+    y_int = int(y + epsilon * sign(y))
     x_fraction = int(abs(100 * (x - x_int)) + epsilon) % 100
     y_fraction = int(abs(100 * (y - y_int)) + epsilon) % 100
     return f"tile_{y_int:02d}x{y_fraction:02d}_{x_int:03d}x{x_fraction:02d}.flt"
