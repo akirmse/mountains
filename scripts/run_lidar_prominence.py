@@ -53,11 +53,28 @@ def sign(a):
 def filename_for_coordinates(x, y):
     """Return output filename for the given coordinates"""
     y += TILE_SIZE_DEGREES  # Name uses upper left corner
-    x_int = int(x + epsilon * sign(x))
-    y_int = int(y + epsilon * sign(y))
-    x_fraction = int(abs(100 * (x - x_int)) + epsilon) % 100
-    y_fraction = int(abs(100 * (y - y_int)) + epsilon) % 100
-    return f"tile_{y_int:02d}x{y_fraction:02d}_{x_int:03d}x{x_fraction:02d}.flt"
+    xpart = int(round(x * 100))
+    ypart = int(round(y * 100))
+
+    x_int = int(float(xpart) / 100)
+    y_int = int(float(ypart) / 100)
+    x_fraction = abs(xpart) % 100
+    y_fraction = abs(ypart) % 100
+
+    # Handle "-0.1" -> "-00x10"
+    if xpart < 0:
+        x_string = f"-{abs(x_int):02d}"
+    else:
+        x_string = f"{x_int:03d}"
+    x_string +=  f"x{x_fraction:02d}"
+
+    if ypart < 0:
+        y_string = f"-{abs(y_int):02d}"
+    else:
+        y_string = f"{y_int:02d}"
+    y_string +=  f"x{y_fraction:02d}"
+
+    return f"tile_{y_string}_{x_string}.flt"
 
 def write_multipolygon_to_file(multipolygon, filename):
     driver = ogr.GetDriverByName("ESRI Shapefile")
