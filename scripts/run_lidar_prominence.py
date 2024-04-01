@@ -11,7 +11,6 @@
 
 import argparse
 import glob
-import itertools
 import math
 import os
 import signal
@@ -261,8 +260,13 @@ def main():
     maybe_create_directory(args.tile_dir)
     
     # Treat each input as potentially a glob, and then flatten the list
-    input_files = [ glob.glob(x) for x in args.input_files ]
-    input_files = list(itertools.chain.from_iterable(input_files))
+    input_files = []
+    for filespec in args.input_files:
+        files = glob.glob(filespec)
+        if len(files) == 0:
+            print(f"Input filespec {filespec} matched no files; exiting.")
+            exit(1)
+        input_files.extend(files)
 
     # Build all the VRTs and compute boundary for entire input
     warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files,
