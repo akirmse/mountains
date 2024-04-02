@@ -34,9 +34,20 @@ using std::string;
 TileCache::TileCache(TileLoadingPolicy *policy, int maxEntries)
     : mCache(maxEntries),
       mLoadingPolicy(policy) {
+  // Allow loading policy to use the cache.  This is a circular dependency,
+  // but allows for a nice optimization where the cache can store pixels
+  // for neighboring tiles that the loading policy needs (for prominence).
+  policy->setTileCache(this);
 }
 
 TileCache::~TileCache() {
+  // Clear cached first rows and columns
+  for (auto row : mFirstRows) {
+    delete [] row.second;
+  }
+  for (auto col : mFirstCols) {
+    delete [] col.second;
+  }
 }
 
 Tile *TileCache::getOrLoad(double minLat, double minLng,
@@ -125,6 +136,19 @@ Tile *TileCache::loadWithoutCaching(double minLat, double minLng,
     }
   }
 
+  // As an optimization, remember the first row and column
+  auto key = makeCacheKey(minLat, minLng);
+  Elevation *firstRow = new Elevation[tile->width()];
+  Elevation *firstCol = new Elevation[tile->height()];
+  for (auto i = 0; i < tile->width(); ++i) {
+    firstRow[i] = tile->get(i, 0);
+  }
+  for (auto i = 0; i < tile->height(); ++i) {
+    firstCol[i] = tile->get(0, i);
+  }
+  mFirstRows[key] = firstRow;
+  mFirstCols[key] = firstCol;
+  
   VLOG(1) << "Loaded tile at " << minLat << " " << minLng << " with max elevation " << tile->maxElevation();
 
   return tile;
@@ -142,6 +166,32 @@ bool TileCache::getMaxElevation(double lat, double lng, Elevation *elev) {
     retval = false;
   } else {
     *elev = it->second;
+  }
+  mLock.unlock();
+
+  return retval;
+}
+
+bool TileCache::getFirstRow(double lat, double lng, Elevation **elevs) {
+  return getFirstRowOrCol(lat, lng, mFirstRows, elevs);
+}
+
+bool TileCache::getFirstColumn(double lat, double lng, Elevation **elevs) {
+  return getFirstRowOrCol(lat, lng, mFirstCols, elevs);
+}
+
+bool TileCache::getFirstRowOrCol(double lat, double lng, const CachedElevations &cache, Elevation **elevs) {
+  assert(elevs != nullptr);
+
+  bool retval = true;
+  int key = makeCacheKey(lat, lng);
+
+  mLock.lock();
+  auto it = cache.find(key);
+  if (it == cache.end()) {
+    retval = false;
+  } else {
+    *elevs = it->second;
   }
   mLock.unlock();
 

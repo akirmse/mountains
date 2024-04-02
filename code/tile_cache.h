@@ -52,7 +52,15 @@ public:
   // If we've ever loaded the tile with the given minimum lat/lng, set elev to its maximum
   // elevation and return true, otherwise return false.
   bool getMaxElevation(double lat, double lng, Elevation *elev);
-  
+
+  // If we've ever loaded the tile with the given minimum lat/lng, set elevs to its
+  // first row and return true, otherwise return false.
+  bool getFirstRow(double lat, double lng, Elevation **elevs);
+
+  // If we've ever loaded the tile with the given minimum lat/lng, set elevs to its
+  // first column and return true, otherwise return false.
+  bool getFirstColumn(double lat, double lng, Elevation **elevs);
+
 private:
 
   Lock mLock;
@@ -61,9 +69,17 @@ private:
   // Map of encoded lat/lng to max elevation in that tile
   std::unordered_map<int, Elevation> mMaxElevations;
 
+  // Map of encoded lat/lng to first row/col in that tile.
+  // This is an optimization for the prominence algorithm.
+  typedef std::unordered_map<int, Elevation *> CachedElevations;
+  CachedElevations mFirstRows;
+  CachedElevations mFirstCols;
+
   Tile *loadInternal(double minLat, double minLng) const;
   
   int makeCacheKey(double minLat, double minLng) const;
+
+  bool getFirstRowOrCol(double lat, double lng, const CachedElevations &cache, Elevation **elevs);
 };
 
 #endif  // _TILE_CACHE_H_
