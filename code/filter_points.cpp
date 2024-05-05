@@ -47,12 +47,14 @@ static void usage() {
   printf("  Options:\n");
   printf("  -a longitude    Add 360 to any longitudes < this value in polygon.\n");
   printf("                  Allows polygon to cross antimeridian (negative longitude gets +360)\n");
+  printf("  -x              Print only lines *outside* the polygon instead\n");
   printf("\n");
   exit(1);
 }
 
 int main(int argc, char **argv) {
   double wrapLongitude = -180;
+  bool includeInside = true;
   
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -63,10 +65,13 @@ int main(int argc, char **argv) {
     {"v", required_argument, nullptr, 0},
     {nullptr, 0, 0, 0},
   };
-  while ((ch = getopt_long(argc, argv, "a:", long_options, nullptr)) != -1) {
+  while ((ch = getopt_long(argc, argv, "a:x", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       wrapLongitude = atof(optarg);
+      break;
+    case 'x':
+      includeInside = false;
       break;
     }
   }
@@ -115,14 +120,17 @@ int main(int argc, char **argv) {
     double lng = stod(elements[1]);
     LatLng point(lat, lng);
 
-    if (filter.isPointInside(point)) {
+    bool isInside = filter.isPointInside(point);
+    if (isInside) {
       VLOG(1) << "Point is in polygon: " <<  lat << ", " <<  lng;
       numPointsInPolygon += 1;
-
-      outputFile << line << std::endl;
     } else {
       VLOG(1) << "Point is not in polygon: " <<  lat << ", " <<  lng;
       numPointsNotInPolygon += 1;
+    }
+    
+    if ((isInside && includeInside) || (!isInside && !includeInside)) {
+      outputFile << line << std::endl;
     }
   }
 
