@@ -31,11 +31,16 @@
 
 #include <string>
 
+class TileCache;
+
 // Responsible for loading a tile given location.
 
 class TileLoadingPolicy {
 public:
   virtual Tile *loadTile(double minLat, double minLng) const = 0;
+
+  // Optionally get access to the tile cache
+  virtual void setTileCache(TileCache *cache) = 0;
 };
 
 
@@ -60,11 +65,14 @@ public:
 
   virtual Tile *loadTile(double minLat, double minLng) const;
 
+  virtual void setTileCache(TileCache *cache);
+
 private:
   std::string mDirectory;  // Directory for loading tiles
   FileFormat mFileFormat;  
   bool mNeighborEdgeLoadingEnabled;
   int mUtmZone;
+  TileCache *mTileCache;
 
   // Load tile without modifications
   Tile *loadInternal(double minLat, double minLng) const;

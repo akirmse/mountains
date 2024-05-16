@@ -204,8 +204,10 @@ int main(int argc, char **argv) {
   // Use double precision to avoid accumulating floating-point error during loop
   double lat = bounds[0];
   while (lat < bounds[1]) {
-    double lng = bounds[2];
-    while (lng < bounds[3]) {
+    // Go east-to-west to take advantage of some tile caching, since we need pixels
+    // from our eastern neighbor.
+    double lng = bounds[3];
+    while (lng >= bounds[2]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
       if (!fileFormat.isUtm() && wrappedLng >= 180) {
@@ -227,7 +229,7 @@ int main(int argc, char **argv) {
             }));
       }
 
-      lng += fileFormat.degreesAcross();
+      lng -= fileFormat.degreesAcross();
     }
     lat += fileFormat.degreesAcross();
   }

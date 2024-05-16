@@ -28,7 +28,7 @@
 #include "flt_loader.h"
 #include "glo_loader.h"
 #include "hgt_loader.h"
-#include "tile.h"
+#include "tile_cache.h"
 #include "easylogging++.h"
 
 using std::string;
@@ -38,7 +38,8 @@ BasicTileLoadingPolicy::BasicTileLoadingPolicy(const string &directory,
     : mDirectory(directory),
       mFileFormat(format),
       mNeighborEdgeLoadingEnabled(false),
-      mUtmZone(-1) {
+      mUtmZone(-1),
+      mTileCache(nullptr) {
 }
 
 void BasicTileLoadingPolicy::enableNeighborEdgeLoading(bool enabled) {
@@ -47,6 +48,10 @@ void BasicTileLoadingPolicy::enableNeighborEdgeLoading(bool enabled) {
 
 void BasicTileLoadingPolicy::setUtmZone(int utmZone) {
   mUtmZone = utmZone;
+}
+
+void BasicTileLoadingPolicy::setTileCache(TileCache *cache) {
+  mTileCache = cache;
 }
 
 Tile *BasicTileLoadingPolicy::loadTile(double minLat, double minLng) const {
@@ -191,33 +196,60 @@ Tile *BasicTileLoadingPolicy::appendPixelsFromNeighbors(Tile *tile, double minLa
     }
   }
 
+  Elevation *firstRow, *firstColumn;
+
   auto tileSpan = mFileFormat.degreesAcross();
   auto bottomLat = minLat - tileSpan;
-  Tile *neighbor = loadInternal(bottomLat, minLng);  // bottom neighbor
-  if (neighbor != nullptr) {
+
+  // The tile cache stores the first row and column of each tile it has loaded
+  // so that we can get them here without having to load the entire neighboring
+  // tile from disk again.
+  if (mTileCache != nullptr &&
+      mTileCache->getFirstRow(bottomLat, minLng, &firstRow)) {
     for (int i = 0; i < oldWidth; ++i) {
-      samples[oldHeight * newWidth + i] = neighbor->get(i, 0);
+      samples[oldHeight * newWidth + i] = firstRow[i];
     }
-    delete neighbor;
+  } else {
+    Tile *neighbor = loadInternal(bottomLat, minLng);  // bottom neighbor
+    if (neighbor != nullptr) {
+      for (int i = 0; i < oldWidth; ++i) {
+        samples[oldHeight * newWidth + i] = neighbor->get(i, 0);
+      }
+      delete neighbor;
+    }
   }
   
   auto rightLng = minLng + tileSpan;
   if (rightLng == 180) {
     rightLng = -180;  // antimeridian
   }
-  neighbor = loadInternal(minLat, rightLng);  // right neighbor
-  if (neighbor != nullptr) {
+
+  if (mTileCache != nullptr &&
+      mTileCache->getFirstColumn(minLat, rightLng, &firstColumn)) {
     for (int i = 0; i < oldHeight; ++i) {
-      samples[i * newWidth + oldWidth] = neighbor->get(0, i);
+      samples[i * newWidth + oldWidth] = firstColumn[i];
     }
-    delete neighbor;
+  } else {
+    Tile *neighbor = loadInternal(minLat, rightLng);  // right neighbor
+    if (neighbor != nullptr) {
+      for (int i = 0; i < oldHeight; ++i) {
+        samples[i * newWidth + oldWidth] = neighbor->get(0, i);
+      }
+      delete neighbor;
+    }
   }
 
   // Have to get a single corner pixel from the SE neighbor--annoying
-  neighbor = loadInternal(bottomLat, rightLng);
-  if (neighbor != nullptr) {
-    samples[newHeight * newWidth - 1] = neighbor->get(0, 0);
-    delete neighbor;
+  // Optimization: maybe we have this pixel cached.
+  if (mTileCache != nullptr &&
+      mTileCache->getFirstRow(bottomLat, rightLng, &firstRow)) {
+    samples[newHeight * newWidth - 1] = firstRow[0];
+  } else {
+    Tile *neighbor = loadInternal(bottomLat, rightLng);
+    if (neighbor != nullptr) {
+      samples[newHeight * newWidth - 1] = neighbor->get(0, 0);
+      delete neighbor;
+    }
   }
   
   Tile *newTile = new Tile(newWidth, newHeight, samples);
