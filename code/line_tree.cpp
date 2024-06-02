@@ -48,7 +48,7 @@ void LineTree::build() {
     mNodes[index].lowestElevationSaddleParentDir = UNDEFINED_ELEVATION;
     mNodes[index].runoffId = Node::Null;
   }
-
+  
   mSaddleInfo.resize(mDivideTree.saddles().size());
   for (SaddleInfo &info : mSaddleInfo) {
     info.saddleProminence = UNDEFINED_ELEVATION;
@@ -56,7 +56,7 @@ void LineTree::build() {
 
   VLOG(3) << "Computing off-map saddle prominence";
   computeOffMapSaddleProminence();
-  
+
   VLOG(3) << "Computing on-map saddle prominence";
   computeOnMapSaddleProminence();
 }
@@ -237,6 +237,14 @@ void LineTree::computeOnMapSaddleProminence() {
     if (startingPeakId != nodeId) {  // Can happen if node is top of tree
       reversePath(startingPeakId, lowestSaddleOwner);
       mNodes[startingPeakId].parentId = nodeId;
+
+      // This very rare case can happen if the top of the tree is next to a low
+      // runoff, making the root and the saddle owner the same.  Here the normal
+      // code path produces a cycle, which we break here by restoring the top
+      // of the tree.
+      if (nodeId == lowestSaddleOwner) {
+        mNodes[nodeId].parentId = Node::Null;
+      }
     }
   }
 }
@@ -314,3 +322,28 @@ int LineTree::peakIdForRunoff(int runoffId) const {
 const vector<LineTree::Node> &LineTree::nodes() const {
   return mNodes;
 }
+
+bool LineTree::hasCycle(int maxLength) const {
+  for (int i = 1; i < (int) mNodes.size(); ++i) {
+    const Node *node = &mNodes[i];
+
+    int length = 0;
+    while (node->parentId != Node::Null && length <= maxLength) {
+      if (node->parentId == i) {
+        printf("Found cycle starting at %d\n", i);
+        const Node *cycle = &mNodes[i];
+        while (cycle->parentId != i) {
+          printf("Parent ID is %d\n", cycle->parentId);
+          cycle = &mNodes[cycle->parentId];
+        }
+        return true;
+      }
+      
+      node = &mNodes[node->parentId];
+      length += 1;
+    }
+  }
+
+  return false;
+}
+

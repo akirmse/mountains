@@ -98,6 +98,9 @@ private:
   // chain of childId until we reach a lower saddle.
   void propagateLowestInterveningSaddle(int originNodeId);
 
+  // For debugging: Look for cycles in the tree and print them out
+  bool hasCycle(int maxLength) const;
+
   const Peak &getPeak(int peakId) const;
   const Saddle &getSaddle(int saddleId) const;
   const Runoff &getRunoff(int runoffId) const;
