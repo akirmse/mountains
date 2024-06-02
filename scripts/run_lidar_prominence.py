@@ -171,29 +171,37 @@ def create_vrts(tile_dir, input_files, skip_boundary):
         band.SetColorInterpretation(gdal.GCI_GrayIndex)
         warped_dataset = None  # Close file
         warped_vrt_filenames.append(warped_vrt_filename)
-                  
-        # If there are overviews, it's much faster to use them.  Only the
-        # raw (unwarped) VRT will preserve the overviews from the source rasters.
-        raw_dataset = gdal.Open(raw_vrt_filename)
-        num_overviews = raw_dataset.GetRasterBand(1).GetOverviewCount()
-        if num_overviews == 0:
-            print("Data has no overviews; using full resolution (slow)")
-            overview_level = None
-        else:
-            overview_level = min(2, num_overviews-1)
-        raw_dataset = None
 
         if not skip_boundary:
             print("  Computing boundary")
-            footprint_filename = os.path.join(tile_dir, f'boundary{index}.shp')
-            footprint_options = gdal.FootprintOptions(
-                ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
-                callback=gdal.TermProgress_nocb)
-            footprint = gdal.Footprint(footprint_filename, raw_vrt_filename, options=footprint_options)
-            
-            geometry = footprint.GetLayer(0).GetNextFeature()
-            boundary = boundary.Union(geometry.geometry())
-            footprint = None  # Close file
+            for tile in filenames:
+                print(tile)
+                raw_dataset = gdal.Open(tile)
+                # If there are overviews, it's much faster to use them.
+                # It's also possible to try to get overviews from the raw_vrt,
+                # but it occasionally fails (reports no overviews) when even 1 tile
+                # has overviews that don't somehow match the others.  In such cases,
+                # falling back to full resolution for the entire dataset is extremely
+                # slow.
+                num_overviews = raw_dataset.GetRasterBand(1).GetOverviewCount()
+                if num_overviews == 0:
+                    print("Data has no overviews; using full resolution (slow): ", tile)
+                    overview_level = None
+                else:
+                    overview_level = min(2, num_overviews-1)
+                raw_dataset = None
+
+                # TODO: Should be temp file?
+                footprint_filename = os.path.join(tile_dir, f'boundary{index}.shp')
+                footprint_options = gdal.FootprintOptions(
+                    ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
+                    callback=gdal.TermProgress_nocb)
+                footprint = gdal.Footprint(footprint_filename, tile, options=footprint_options)
+                
+                geometry = footprint.GetLayer(0).GetNextFeature()
+                if geometry:
+                    boundary = boundary.Union(geometry.geometry())
+                footprint = None  # Close file
 
         index += 1
 
