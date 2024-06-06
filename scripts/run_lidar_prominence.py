@@ -21,6 +21,8 @@ from multiprocessing import Pool
 from osgeo import gdal, ogr, osr
 from pathlib import Path
 
+from boundary import Boundary
+
 # Each output tile is this many degrees and samples on a side
 TILE_SIZE_DEGREES = 0.1  # Must divide 1 evenly
 TILE_SIZE_SAMPLES = 10000
@@ -74,28 +76,6 @@ def filename_for_coordinates(x, y):
     y_string +=  f"x{y_fraction:02d}"
 
     return f"tile_{y_string}_{x_string}.flt"
-
-def write_multipolygon_to_file(multipolygon, filename):
-    driver = ogr.GetDriverByName("ESRI Shapefile")
-    ds = driver.CreateDataSource(filename)
-
-    srs =  osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-
-    layer = ds.CreateLayer("boundary", srs, ogr.wkbMultiPolygon)
-    
-    idField = ogr.FieldDefn("id", ogr.OFTInteger)
-    layer.CreateField(idField)
-    
-    # Create the feature and set values
-    featureDefn = layer.GetLayerDefn()
-    feature = ogr.Feature(featureDefn)
-    feature.SetGeometry(multipolygon)
-    feature.SetField("id", 1)
-    layer.CreateFeature(feature)
-    
-    feature = None
-    ds = None
 
 def polygon_for_tile(x, y, xsize, ysize):
     """Return a rectangle with (x,y) as its lower left corner, size degrees in both directions"""
@@ -151,7 +131,10 @@ def create_vrts(tile_dir, input_files, skip_boundary):
 
     # For each projection, build raw and warped VRTs
     index = 1
-    boundary = ogr.Geometry(ogr.wkbMultiPolygon)
+
+    # With many thousands of files, continually merging into one polygon
+    # gets slow.  So instead we do it in batches.
+    boundary = Boundary()
     warped_vrt_filenames = []
     for proj, filenames in projection_map.items():
         print(f"Projection {index}: {proj}")
@@ -176,33 +159,7 @@ def create_vrts(tile_dir, input_files, skip_boundary):
             print("  Computing boundary")
             for tile in filenames:
                 print(tile)
-                raw_dataset = gdal.Open(tile)
-                # If there are overviews, it's much faster to use them.
-                # It's also possible to try to get overviews from the raw_vrt,
-                # but it occasionally fails (reports no overviews) when even 1 tile
-                # has overviews that don't somehow match the others.  In such cases,
-                # falling back to full resolution for the entire dataset is extremely
-                # slow.
-                num_overviews = raw_dataset.GetRasterBand(1).GetOverviewCount()
-                if num_overviews == 0:
-                    print("Data has no overviews; using full resolution (slow): ", tile)
-                    overview_level = None
-                else:
-                    overview_level = min(2, num_overviews-1)
-                raw_dataset = None
-
-                # TODO: Should be temp file?
-                footprint_filename = os.path.join(tile_dir, f'boundary{index}.shp')
-                footprint_options = gdal.FootprintOptions(
-                    ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
-                    callback=gdal.TermProgress_nocb)
-                footprint = gdal.Footprint(footprint_filename, tile, options=footprint_options)
-                
-                geometry = footprint.GetLayer(0).GetNextFeature()
-                if geometry:
-                    boundary = boundary.Union(geometry.geometry())
-                footprint = None  # Close file
-
+                boundary.add_dataset(tile)
         index += 1
 
     # Build a single VRT of all the warped VRTs
@@ -214,12 +171,13 @@ def create_vrts(tile_dir, input_files, skip_boundary):
         # Get crude rectangular boundary
         ds = gdal.Open(overall_vrt_filename)
         xmin, xmax, ymin, ymax = get_extent(ds)
-        boundary = polygon_for_tile(xmin, ymin, xmax - xmin, ymax - ymin)
+        polygon = polygon_for_tile(xmin, ymin, xmax - xmin, ymax - ymin)
     else:
         # Write boundary to file for debugging / reuse.
-        write_multipolygon_to_file(boundary, os.path.join(tile_dir, "boundary.shp"))
+        boundary.write_to_file(os.path.join(tile_dir, "boundary.shp"))
+        polygon = boundary.get_boundary()
 
-    return overall_vrt_filename, boundary
+    return overall_vrt_filename, polygon
 
 @handle_ctrl_c
 def process_tile(args):
@@ -260,10 +218,8 @@ def main():
                         help="Skip computation of raster boundary; uses more disk")
     parser.add_argument('input_files', type=str, nargs='+',
                         help='Input Lidar tiles, or GDAL VRT of tiles')
-
-# TODO: Allow boundary to be specified from a file along with overall VRT file
-#    parser.add_argument('--boundary',
-#                        help="Precomputed shp file with boundary of input data")
+    parser.add_argument('--boundary',
+                        help="Precomputed shp file with boundary of input data")
     args = parser.parse_args()
 
     gdal.UseExceptions()
@@ -272,6 +228,15 @@ def main():
     maybe_create_directory(args.output_dir)
     maybe_create_directory(args.tile_dir)
     
+    # If a boundary is specified, don't compute a new one
+    skip_computing_boundary = args.skip_boundary
+    if args.boundary:
+        skip_computing_boundary = True
+        ds = ogr.Open(args.boundary)
+        layer = ds.GetLayer(0)
+        feat = layer.GetFeature(0)
+        manually_specified_boundary = feat.GetGeometryRef()
+            
     # Treat each input as potentially a glob, and then flatten the list
     input_files = []
     for filespec in args.input_files:
@@ -283,7 +248,11 @@ def main():
 
     # Build all the VRTs and compute boundary for entire input
     warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files,
-                                              args.skip_boundary)
+                                              skip_computing_boundary)
+    # Boundary manually specified?
+    if args.boundary:
+        bounds = manually_specified_boundary
+        
     xmin, xmax, ymin, ymax = bounds.GetEnvelope()
 
     # Rounded to tile degree boundaries so that we cover the whole data set

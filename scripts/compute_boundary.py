@@ -9,61 +9,20 @@ import subprocess
 
 from osgeo import gdal, ogr, osr
 
+from boundary import Boundary
+
 def process_files(files):
     print("  Computing boundary")
-    boundary = ogr.Geometry(ogr.wkbMultiPolygon)
-    geometry = None
+
+    # With many thousands of files, continually merging into one boundary
+    # gets slow.  So instead we do it in batches.
+    boundary = Boundary()
     for f in files:
         print(f)
-        # Look for overviews
-        raw_dataset = gdal.Open(f)
-        if raw_dataset is None:
-            print("Couldn't open dataset")
-            continue
-        
-        num_overviews = raw_dataset.GetRasterBand(1).GetOverviewCount()
-        if num_overviews == 0:
-            print("Data has no overviews; using full resolution (slow)")
-            overview_level = None
-        else:
-            overview_level = min(2, num_overviews-1)
-        raw_dataset = None
-
-        footprint_options = gdal.FootprintOptions(
-            ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
-            callback=gdal.TermProgress_nocb)
-        dataset = gdal.Open(f)
-        footprint = gdal.Footprint("/vsimem/outline.shp", dataset, options=footprint_options)
-        if footprint:
-            geometry = footprint.GetLayer(0).GetNextFeature()
-            if geometry:  # Tiles can be completely empty
-                boundary = boundary.Union(geometry.geometry())
-        footprint = None  # Close file
+        boundary.add_dataset(f)
 
     # Write merged geometry
-    if geometry:
-        footprint_filename = 'boundary.shp'
-        driver = ogr.GetDriverByName("ESRI Shapefile")
-        # create the data source
-        ds = driver.CreateDataSource(footprint_filename)
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
-
-        # create one layer with an ID field
-        layer = ds.CreateLayer("boundary", srs, ogr.wkbMultiPolygon)
-        idField = ogr.FieldDefn("id", ogr.OFTInteger)
-        layer.CreateField(idField)
-
-        # Create the feature and set values
-        featureDefn = layer.GetLayerDefn()
-        feature = ogr.Feature(featureDefn)
-        feature.SetGeometry(boundary)
-        feature.SetField("id", 1)
-        layer.CreateFeature(feature)
-        
-        feature = None
-        ds = None
-
+    boundary.write_to_file('boundary.shp')
 
 def main():
     parser = argparse.ArgumentParser(description='Convert LIDAR to standard tiles')
