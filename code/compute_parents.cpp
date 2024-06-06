@@ -137,66 +137,81 @@ int main(int argc, char **argv) {
     auto &childPeak = peaks[i - 1];
     LatLng childPos = coords.getLatLng(childPeak.location);
     auto elev = childPeak.elevation;
+    int parentId = lineNodes[i].parentId;
 
-    // No output for landmass high points
-    if (prom == childPeak.elevation) {
-      continue;
-    }
-    
+    int promParentId = DivideTree::Node::Null;
+    int lineParentId = DivideTree::Node::Null;
+
     VLOG(3) << "Considering peak " <<
         childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
 
     // Find saddle
     LatLng colPos(0, 0);
-    if (islandNodes[i].keySaddleId != IslandTree::Node::Null) {
-      colPos = coords.getLatLng(saddles[islandNodes[i].keySaddleId - 1].location);
-    }
+    // Don't look for parents for landmass high points
+    if (prom != childPeak.elevation) {
+      if (islandNodes[i].keySaddleId != IslandTree::Node::Null) {
+        colPos = coords.getLatLng(saddles[islandNodes[i].keySaddleId - 1].location);
+      }
     
-    // Walk up line tree, looking for first peak with higher prominence.
-    // (Prominence values are stored in island tree.)
-    int parentId = lineNodes[i].parentId;
-    int promParentId = DivideTree::Node::Null;
-    int lineParentId = DivideTree::Node::Null;
-    while (parentId != DivideTree::Node::Null) {
-      auto parentProm = islandNodes[parentId].prominence;
-      if (promParentId == DivideTree::Node::Null && parentProm > prom) {
-        promParentId = parentId;
+      // Walk up line tree, looking for first peak with higher prominence.
+      // (Prominence values are stored in island tree.)
+      while (parentId != DivideTree::Node::Null) {
+        auto parentProm = islandNodes[parentId].prominence;
+        if (promParentId == DivideTree::Node::Null && parentProm > prom) {
+          promParentId = parentId;
+        }
+        
+        auto parentElevation = peaks[parentId - 1].elevation;
+        // TODO: Filter to line parent prom >= minProminence
+        if (lineParentId == DivideTree::Node::Null && parentElevation >= elev) {
+          lineParentId = parentId;
+        }
+        
+        // Found both parents?
+        if (lineParentId != DivideTree::Node::Null &&
+            promParentId != DivideTree::Node::Null) {
+          break;
+        }
+        
+        parentId = lineNodes[parentId].parentId;
       }
-
-      auto parentElevation = peaks[parentId - 1].elevation;
-      // TODO: Filter to line parent prom >= minProminence
-      if (lineParentId == DivideTree::Node::Null && parentElevation >= elev) {
-        lineParentId = parentId;
-      }
-
-      // Found both parents?
-      if (lineParentId != DivideTree::Node::Null &&
-          promParentId != DivideTree::Node::Null) {
-        break;
-      }
-      
-      parentId = lineNodes[parentId].parentId;
     }
+
+    auto promParentLat = 0.0;
+    auto promParentLng = 0.0;
+    auto promParentProm = 0.0;
+    auto lineParentLat = 0.0;
+    auto lineParentLng = 0.0;
+    auto lineParentElev = 0.0;
     
     if (promParentId == DivideTree::Node::Null) {
       VLOG(2) << "No prominence parent for peak " <<
         childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
-    } else if (lineParentId == DivideTree::Node::Null) {
-      VLOG(2) << "No line parent for peak " <<
-        childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
     } else {
       auto &promParentPeak = peaks[promParentId - 1];
       LatLng promParentPos = coords.getLatLng(promParentPeak.location);
-      auto parentProm = islandNodes[parentId].prominence;
+      promParentLat = promParentPos.latitude();
+      promParentLng = promParentPos.longitude();
+      promParentProm = islandNodes[parentId].prominence;
+    }
+    
+    if (lineParentId == DivideTree::Node::Null) {
+      VLOG(2) << "No line parent for peak " <<
+        childPos.latitude() << "," << childPos.longitude() << ",P=" << prom;
+    } else {
       auto &lineParentPeak = peaks[lineParentId - 1];
       LatLng lineParentPos = coords.getLatLng(lineParentPeak.location);
-      fprintf(file, "%.4f,%.4f,%.4f,%.4f,%.2f,%.2f,%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
-              childPos.latitude(), childPos.longitude(),
-              colPos.latitude(), colPos.longitude(),
-              elev, prom,
-              promParentPos.latitude(), promParentPos.longitude(), parentProm,
-              lineParentPos.latitude(), lineParentPos.longitude(), lineParentPeak.elevation);
+      lineParentLat = lineParentPos.latitude();
+      lineParentLng = lineParentPos.longitude();
+      lineParentElev = lineParentPeak.elevation;
     }
+    
+    fprintf(file, "%.4f,%.4f,%.4f,%.4f,%.2f,%.2f,%.4f,%.4f,%.2f,%.4f,%.4f,%.2f\n",
+            childPos.latitude(), childPos.longitude(),
+            colPos.latitude(), colPos.longitude(),
+            elev, prom,
+            promParentLat, promParentLng, promParentProm,
+            lineParentLat, lineParentLng, lineParentElev);
   }
   
   delete islandTree;
