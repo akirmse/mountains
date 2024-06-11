@@ -67,40 +67,54 @@ void IslandTree::uninvertPeaks() {
 }
 
 void IslandTree::uninvertPeak(int nodeId) {
-  VLOG(3) << "Uninverting peak " << nodeId;
-  Node *childNode = &mNodes[nodeId];
-  Elevation elev = getPeak(nodeId).elevation;
-  int parentId = childNode->parentId;
-  while (parentId != Node::Null) {
-    // Stop when parent is higher than us.
-    if (point2IsHigher(elev, nodeId, getPeak(parentId).elevation, parentId)) {
-      break;
-    }
-    uninvertPeak(parentId);
-    
-    Node *parentNode = &mNodes[parentId];
-    int grandparentId = parentNode->parentId;
-    int childSaddlePeakId = childNode->saddlePeakId;
-    int parentSaddlePeakId = parentNode->saddlePeakId;
+  // Doing this function recursively can get very deep and overflow the thread stack
+  std::vector<int> stack;
+  stack.push_back(nodeId);
 
-    int childSaddleId = mDivideTree.nodes()[childSaddlePeakId].saddleId;
-    int parentSaddleId = mDivideTree.nodes()[parentSaddlePeakId].saddleId;
-    if (grandparentId == Node::Null ||
-        point2IsHigher(getSaddle(parentSaddleId).elevation, parentSaddleId,
-                       getSaddle(childSaddleId).elevation, childSaddleId)) {
-      // Move parent node under child node
-      parentNode->parentId = nodeId;
-      parentNode->saddlePeakId = childSaddlePeakId;
-      childNode->saddlePeakId = parentSaddlePeakId;
-    }
-    
-    // Move child up one spot in tree
-    VLOG(3) << "Changing parent id of " << nodeId << " from " << parentId
-            << " to " << grandparentId;
-    assert(nodeId != grandparentId);
-    childNode->parentId = grandparentId;
+  while (!stack.empty()) {
+    int currentId = stack.back();
+    stack.pop_back();
 
-    parentId = grandparentId;
+    VLOG(3) << "Uninverting peak " << currentId;
+    Node *childNode = &mNodes[currentId];
+    Elevation elev = getPeak(currentId).elevation;
+    int parentId = childNode->parentId;
+
+    while (parentId != Node::Null) {
+      // Stop when parent is higher than us.
+      if (point2IsHigher(elev, currentId, getPeak(parentId).elevation, parentId)) {
+        break;
+      }
+
+      Node *parentNode = &mNodes[parentId];
+      int grandparentId = parentNode->parentId;
+      int childSaddlePeakId = childNode->saddlePeakId;
+      int parentSaddlePeakId = parentNode->saddlePeakId;
+
+      int childSaddleId = mDivideTree.nodes()[childSaddlePeakId].saddleId;
+      int parentSaddleId = mDivideTree.nodes()[parentSaddlePeakId].saddleId;
+      if (grandparentId == Node::Null ||
+          point2IsHigher(getSaddle(parentSaddleId).elevation, parentSaddleId,
+                         getSaddle(childSaddleId).elevation, childSaddleId)) {
+        // Move parent node under child node
+        parentNode->parentId = currentId;
+        parentNode->saddlePeakId = childSaddlePeakId;
+        childNode->saddlePeakId = parentSaddlePeakId;
+      }
+
+      // Move child up one spot in tree
+      VLOG(3) << "Changing parent id of " << currentId << " from " << parentId
+              << " to " << grandparentId;
+      assert(currentId != grandparentId);
+      childNode->parentId = grandparentId;
+
+      parentId = grandparentId;
+    }
+
+    // Push parent if it exists
+    if (parentId != Node::Null) {
+      stack.push_back(parentId);
+    }
   }
 }
 
