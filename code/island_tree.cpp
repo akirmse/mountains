@@ -75,7 +75,6 @@ void IslandTree::uninvertPeak(int nodeId) {
     int currentId = stack.back();
     stack.pop_back();
 
-    VLOG(3) << "Uninverting peak " << currentId;
     Node *childNode = &mNodes[currentId];
     Elevation elev = getPeak(currentId).elevation;
     int parentId = childNode->parentId;
