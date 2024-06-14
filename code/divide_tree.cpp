@@ -322,6 +322,7 @@ bool DivideTree::setOrigin(const CoordinateSystem &coordinateSystem) {
 void DivideTree::compact() {
   unordered_set<int> removedIndices;
   unordered_set<int> emptyIndices;
+  removedIndices.reserve(mSaddles.size());
 
   // TODO: May want to save basin saddles for debugging, only delete during merge
   for (int i = 0; i < (int) mSaddles.size(); ++i) {
@@ -542,8 +543,14 @@ void DivideTree::makeNodeIntoRoot(int nodeId) {
 
 int DivideTree::findCommonAncestor(int nodeId1, int nodeId2) {
   // First go up tree on one side until both nodes are at the same depth
-  int depth1 = getDepth(nodeId1);
-  int depth2 = getDepth(nodeId2);
+  int ancestor1, ancestor2;
+  int depth1 = getDepth(nodeId1, &ancestor1);
+  int depth2 = getDepth(nodeId2, &ancestor2);
+
+  // If the topmost ancestors aren't the same, they're in different trees entirely.
+  if (ancestor1 != ancestor2) {
+    return Node::Null;
+  }
 
   while (depth1 > depth2) {
     nodeId1 = mNodes[nodeId1].parentId;
@@ -576,14 +583,15 @@ int DivideTree::findCommonAncestor(int nodeId1, int nodeId2) {
   }
 }
 
-int DivideTree::getDepth(int nodeId) {
+int DivideTree::getDepth(int nodeId, int *ancestorId) {
   int depth = 0;
 
   do {
     depth += 1;
+    *ancestorId = nodeId;
     nodeId = mNodes[nodeId].parentId;
   } while (nodeId != Node::Null);
-  
+
   return depth;
 }
 
