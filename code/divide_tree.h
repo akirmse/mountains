@@ -131,7 +131,8 @@ private:
   int findCommonAncestor(int nodeId1, int nodeId2);
 
   // Return the depth of the given node in the tree.  A node with no parent has depth 1.
-  int getDepth(int nodeId);
+  // ancestor is set to the highest (non-Null) ancestor ID.
+  int getDepth(int nodeId, int *ancestorId);
 
   // Convert pairs of runoffs at the same location into saddles
   void spliceAllRunoffs();
