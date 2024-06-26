@@ -28,11 +28,24 @@ class Boundary:
             overview_level = min(2, num_overviews-1)
         raw_dataset = None
 
-        footprint_options = gdal.FootprintOptions(
-            ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
-            callback=gdal.TermProgress_nocb)
-        dataset = gdal.Open(filename)
-        footprint = gdal.Footprint("/vsimem/outline.shp", dataset, options=footprint_options)
+        # Rarely, an image will report having overviews, but gdal.Footprint can't
+        # find them (likely a gdal bug).  If so, retry with no overview.
+        footprint = None
+        while True:
+            try:
+                footprint_options = gdal.FootprintOptions(
+                    ovr=overview_level, dstSRS='EPSG:4326', maxPoints=10000,
+                    callback=gdal.TermProgress_nocb)
+                dataset = gdal.Open(filename)
+                footprint = gdal.Footprint("/vsimem/outline.shp", dataset, options=footprint_options)
+                break
+            except RuntimeError as e:
+                if overview_level is None:
+                    print(f"Failed to read overviews, even though they're present")
+                    raise
+                print("Couldn't read overviews; using full resolution (slow)")
+                overview_level = None
+            
         if footprint:
             geometry = footprint.GetLayer(0).GetNextFeature()
             if geometry:  # Tiles can be completely empty

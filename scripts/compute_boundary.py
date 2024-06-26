@@ -30,6 +30,8 @@ def main():
                         help='Input Lidar tiles, or GDAL VRT of tiles')
     args = parser.parse_args()
 
+    gdal.UseExceptions()
+
     # Treat each input as potentially a glob, and then flatten the list
     input_files = []
     for filespec in args.input_files:
