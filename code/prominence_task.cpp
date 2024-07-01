@@ -134,6 +134,6 @@ string ProminenceTask::getFilenamePrefix() const {
 }
 
 int ProminenceTask::fractionalDegree(double degree) const {
-  double excess = abs(degree - static_cast<int>(degree));
+  double excess = fabs(degree - static_cast<int>(degree));
   return static_cast<int>(std::round(100 * excess));
 }
