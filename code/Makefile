@@ -15,12 +15,12 @@ MKDIR = mkdir -p
 
 SOURCEDIR = .
 
-ifdef RELEASE
-DEBUG=
-OUTDIR=release
-else
+ifdef DEBUG
 DEBUG = 1
 OUTDIR=debug
+else
+DEBUG=
+OUTDIR=release
 endif
 
 LIBS =
@@ -156,9 +156,6 @@ $(OUTDIR)/%.o : $(SOURCEDIR)/%.cpp
 	$(CC) $(CFLAGS) -I $(SOURCEDIR) -o $@ -c $< 
 
 $(OUTDIR)/%.o : $(SOURCEDIR)/%.cc
-	$(CC) $(CFLAGS) -I $(SOURCEDIR) -o $@ -c $< 
-
-$(OUTDIR)/%.o : $(OUTDIR)/%.cpp
 	$(CC) $(CFLAGS) -I $(SOURCEDIR) -o $@ -c $< 
 
 makedirs:
