@@ -13,13 +13,13 @@ the "debug" or "release" subdirectories.
 Debug version:
 
 ```
-make
+DEBUG=1 make
 ```
 
 Release version:
 
 ```
-RELEASE=1 make
+make
 ```
 
 This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, Unbuntu 20.04 with gcc 9 and Debian 12 with gcc 13.2.0.
@@ -29,13 +29,13 @@ This has been tested under Mac OS 12.2.1 with clang-1300.0.29.30, Unbuntu 20.04 
 Debug version:
 
 ```
-nmake -f makefile.win
+nmake DEBUG=1 -f makefile.win
 ```
 
 Release version:
 
 ```
-nmake RELEASE=1 -f makefile.win
+nmake -f makefile.win
 ```
 
 This has been tested under Windows 10 with Microsoft Visual Studio 2022.
