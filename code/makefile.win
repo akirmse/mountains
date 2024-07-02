@@ -15,12 +15,12 @@ MKDIR = mkdir
 
 SOURCEDIR = .
 
-!ifdef RELEASE
-!undef DEBUG
-OUTDIR=release
-!else
+!ifdef DEBUG
 DEBUG = 1
 OUTDIR=debug
+!else
+!undef DEBUG
+OUTDIR=release
 !endif
 
 LIBS = setargv.obj
