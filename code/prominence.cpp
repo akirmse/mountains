@@ -55,7 +55,7 @@ static void usage() {
   printf("  Options:\n");
   printf("  -i directory      Directory with terrain data\n");
   printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"NED13\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\" input files\n");
+  printf("  -f format         \"SRTM\", \"SRTM30\", \"NED13\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\", \"LIDAR\"\n");
   printf("  -k filename       File with KML polygon to filter input tiles\n");
   printf("  -m min_prominence Minimum prominence threshold for output\n");
   printf("                    in same units as terrain data, default = 100\n");

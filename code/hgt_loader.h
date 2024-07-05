@@ -26,14 +26,19 @@
 #define _HGT_LOADER_H_
 
 #include "tile_loader.h"
-
+#include "file_format.h"
 
 // Load a .hgt tile.  This is the format used by SRTM data.
 
 class HgtLoader : public TileLoader {
 public:
+  explicit HgtLoader(FileFormat fileFormat);
+  
   // minLat and minLng name the SW corner of the tile, in degrees
   virtual Tile *loadTile(const std::string &directory, double minLat, double minLng);
+
+private:
+  int mTileSize;
 };
 
 #endif  // _HGT_LOADER_H_

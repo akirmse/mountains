@@ -41,6 +41,7 @@ int FileFormat::rawSamplesAcross() const {
   case Value::NED1_ZIP:   return 3612;
   case Value::NED19:      return 8112;
   case Value::HGT:        return 1201;
+  case Value::HGT30:      return 3601;
   case Value::THREEDEP_1M:  return 10012;
   case Value::LIDAR: return 10000;
   default:
@@ -57,7 +58,9 @@ int FileFormat::inMemorySamplesAcross() const {
     return 10801;
   case Value::NED1_ZIP:   return 3601;
   case Value::NED19:      return 8101;
-  case Value::HGT:        return 1201;
+  case Value::HGT: // fall through
+  case Value::HGT30:
+    return rawSamplesAcross();
   case Value::THREEDEP_1M:  return 10001;
   case Value::GLO30: // Fall through
   case Value::FABDEM:
@@ -77,7 +80,9 @@ double FileFormat::degreesAcross() const {
     return 1.0;
   case Value::NED1_ZIP:   return 1.0;
   case Value::NED19:      return 0.25;
-  case Value::HGT:        return 1.0;
+  case Value::HGT:    // fall through
+  case Value::HGT30:
+    return 1.0;
   case Value::GLO30:  // Fall through
   case Value::FABDEM:
     return 1.0;
@@ -102,7 +107,8 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(double lat, double lng, 
   case Value::NED13:
   case Value::NED1_ZIP:   
   case Value::NED19:      
-  case Value::HGT:        
+  case Value::HGT:
+  case Value::HGT30:
   case Value::GLO30:
   case Value::FABDEM: {
     // The -1 removes overlap with neighbors
@@ -143,6 +149,7 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(double lat, double lng, 
 FileFormat *FileFormat::fromName(const string &name) {
   const std::map<string, FileFormat> fileFormatNames = {
     { "SRTM",      Value::HGT, },
+    { "SRTM30",    Value::HGT30, },
     { "NED1-ZIP",  Value::NED1_ZIP, },
     { "NED13",     Value::NED13, },
     { "NED13-ZIP", Value::NED13_ZIP, },

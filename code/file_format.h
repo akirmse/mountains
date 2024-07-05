@@ -34,7 +34,8 @@ class Tile;
 class FileFormat {
 public:
   enum class Value {
-    HGT,  // SRTM (90m, 3 arcsecond)
+    HGT,       // SRTM (90m, 3 arcsecond)
+    HGT30,     // SRTM (30m, 1 arcsecond)
     NED19,     // FLT file containing NED 1/9 arcsecond data
     NED13,     // FLT file containing NED 1/3 arcsecond data
     NED13_ZIP, // ZIP file containing FLT NED 1/3 arcsecond data

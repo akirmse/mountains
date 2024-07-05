@@ -32,11 +32,26 @@
 
 using std::string;
 
-static const int HGT_TILE_SIZE = 1201;
 static const int16 HGT_NODATA_ELEVATION = -32768;
 
 static uint16 swapByteOrder16(uint16 us) {
   return (us >> 8) | (us << 8);
+}
+
+HgtLoader::HgtLoader(FileFormat fileFormat) {
+  switch (fileFormat.value()) {
+  case FileFormat::Value::HGT:
+    mTileSize = 1201;
+    break;
+
+  case FileFormat::Value::HGT30:
+    mTileSize = 3601;
+    break;
+
+  default:
+    LOG(ERROR) << "Tried to load HGT file from unknown file format " << static_cast<int>(fileFormat.value());
+    break;
+  }
 }
 
 Tile *HgtLoader::loadTile(const std::string &directory, double minLat, double minLng) {
@@ -57,7 +72,7 @@ Tile *HgtLoader::loadTile(const std::string &directory, double minLat, double mi
     return nullptr;
   }
   
-  int num_samples = HGT_TILE_SIZE * HGT_TILE_SIZE;
+  int num_samples = mTileSize * mTileSize;
   
   int16 *inbuf = (int16 *) malloc(sizeof(int16) * num_samples);
   
@@ -80,7 +95,7 @@ Tile *HgtLoader::loadTile(const std::string &directory, double minLat, double mi
       }
     }
 
-    retval = new Tile(HGT_TILE_SIZE, HGT_TILE_SIZE, samples);
+    retval = new Tile(mTileSize, mTileSize, samples);
   }
 
   free(inbuf);
