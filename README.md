@@ -66,6 +66,9 @@ SRTM or the data from Viewfinderpanoramas is delivered as HGT files, with names 
 N59E006.hgt
 ```
 
+Both the original 90m SRTM data and newer 30m data are available.  The prominence code
+can handle either format via the `-f` flag.  The isolation code currently handles only 90m data.
+
 #### NED
 
 The National Elevation Dataset (NED) covers the U.S. at various resolutions:
@@ -250,7 +253,7 @@ prominence -- <min latitude> <max latitude> <min longitude> <max longitude>
   Options:
   -i directory      Directory with terrain data
   -o directory      Directory for output data
-  -f format         "SRTM", "NED13-ZIP", "NED1-ZIP", "NED19", "3DEP-1M", "GLO30" input files
+  -f format         "SRTM", "SRTM30", "NED13-ZIP", "NED1-ZIP", "NED19", "3DEP-1M", "GLO30", "LIDAR"
   -k filename       File with KML polygon to filter input tiles
   -m min_prominence Minimum prominence threshold for output
                     in same units as terrain data, default = 100
