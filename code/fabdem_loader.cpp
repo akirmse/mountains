@@ -34,7 +34,7 @@
 
 using std::string;
 
-static const float COPERNICUS_NODATA_ELEVATION = -32767.0f;
+static const float FABDEM_NODATA_ELEVATION = -9999.0f;
 
 Tile *FabdemLoader::loadTile(const std::string &directory, double minLat, double minLng) {
   char buf[100];
@@ -78,11 +78,11 @@ Tile *FabdemLoader::loadTile(const std::string &directory, double minLat, double
       // Some source data appears to be corrupt
       if (isnan(sample)) {
         VLOG(1) << "Got NaN pixel at " << i << " " << j;
-        sample = COPERNICUS_NODATA_ELEVATION;
+        sample = FABDEM_NODATA_ELEVATION;
       }
       
       // Convert Copernicus NODATA to our NODATA
-      if (fabs(sample - COPERNICUS_NODATA_ELEVATION) < 0.01) {
+      if (fabs(sample - FABDEM_NODATA_ELEVATION) < 0.01) {
         inbuf[index] = Tile::NODATA_ELEVATION;
       } else {
         inbuf[index] = sample;
