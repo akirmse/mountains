@@ -1,4 +1,4 @@
-# Processes a set of Lidar tiles:
+# Processes a set of raster tiles:
 # - Converts them to lat-long projection
 # - Resamples to tiles that are of fixed size and resolution, with elevations in meters
 #
@@ -23,10 +23,6 @@ from pathlib import Path
 
 from boundary import Boundary
 
-# Each output tile is this many degrees and samples on a side
-TILE_SIZE_DEGREES = 0.1  # Must divide 1 evenly
-TILE_SIZE_SAMPLES = 10000
-
 epsilon = 0.0001
 
 def run_command(command_string):
@@ -40,20 +36,20 @@ def maybe_create_directory(dir_name):
     if not os.path.isdir(dir_name):
         print(f"Couldn't create directory {dir_name}")
     
-def round_down(coord):
-    """Return coord rounded down to the nearest TILE_SIZE_DEGREES"""
-    return math.floor(coord / TILE_SIZE_DEGREES) * TILE_SIZE_DEGREES
+def round_down(coord, interval):
+    """Return coord rounded down to the nearest interval"""
+    return math.floor(coord / interval) * interval
 
-def round_up(coord):
-    """Return coord rounded up to the nearest TILE_SIZE_DEGREES"""
-    return math.ceil(coord / TILE_SIZE_DEGREES) * TILE_SIZE_DEGREES
+def round_up(coord, interval):
+    """Return coord rounded up to the nearest interval"""
+    return math.ceil(coord / interval) * interval
 
 def sign(a):
     return bool(a > 0) - bool(a < 0)
 
-def filename_for_coordinates(x, y):
+def filename_for_coordinates(x, y, degrees_per_tile):
     """Return output filename for the given coordinates"""
-    y += TILE_SIZE_DEGREES  # Name uses upper left corner
+    y += degrees_per_tile  # Name uses upper left corner
     xpart = int(round(x * 100))
     ypart = int(round(y * 100))
 
@@ -182,22 +178,21 @@ def create_vrts(tile_dir, input_files, skip_boundary):
 @handle_ctrl_c
 def process_tile(args):
     """scale is multiplied by each input value"""
-    (x, y, vrt_filename, output_filename, scale) = args
+    (x, y, vrt_filename, output_filename, scale, degrees_per_tile, samples_per_tile) = args
     print(f"Processing {x:.2f}, {y:.2f}")
     gdal.UseExceptions()
 
     translate_options = gdal.TranslateOptions(
         format = "EHdr",
-        width = TILE_SIZE_SAMPLES, height = TILE_SIZE_SAMPLES,
-        projWin = [x, y + TILE_SIZE_DEGREES, x + TILE_SIZE_DEGREES, y],
+        width = samples_per_tile, height = samples_per_tile,
+        projWin = [x, y + degrees_per_tile, x + degrees_per_tile, y],
         noData = -999999,
         scaleParams = [[-30000, 30000, -30000*scale, 30000*scale]],
         callback=gdal.TermProgress_nocb)
     gdal.Translate(output_filename, vrt_filename, options = translate_options)
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert LIDAR to standard tiles')
-    requiredNamed = parser.add_argument_group('required named arguments')
+    parser = argparse.ArgumentParser(description='Reproject arbitrary rasters to a fixed grid and compute prominence')
     parser.add_argument('--input_units', choices=['feet', 'meters'],
                         default='meters',
                         help="Elevation units in input files")
@@ -220,10 +215,20 @@ def main():
                         help='Input Lidar tiles, or GDAL VRT of tiles')
     parser.add_argument('--boundary',
                         help="Precomputed shp file with boundary of input data")
+    parser.add_argument('--degrees_per_tile', type=float, default=0.1,
+                        help='Size of reprojected tiles to generate')
+    parser.add_argument('--samples_per_tile', type=int, default=10000,
+                        help='Number of samples per edge of a reprojected tile')
     args = parser.parse_args()
 
     gdal.UseExceptions()
 
+    # Valudate degrees per tile; it must divide 1 degree evenly
+    tiles_per_degree = 1 / args.degrees_per_tile
+    if abs(int(tiles_per_degree) - tiles_per_degree) > 0.001:
+        print("tiles_per_degree must divide 1 degree evenly")
+        exit(1)
+    
     # Create missing directories
     maybe_create_directory(args.output_dir)
     maybe_create_directory(args.tile_dir)
@@ -256,10 +261,10 @@ def main():
     xmin, xmax, ymin, ymax = bounds.GetEnvelope()
 
     # Rounded to tile degree boundaries so that we cover the whole data set
-    xmin = round_down(xmin)
-    ymin = round_down(ymin)
-    xmax = round_up(xmax)
-    ymax = round_up(ymax)
+    xmin = round_down(xmin, args.degrees_per_tile)
+    ymin = round_down(ymin, args.degrees_per_tile)
+    xmax = round_up(xmax, args.degrees_per_tile)
+    ymax = round_up(ymax, args.degrees_per_tile)
 
     # Run in parallel
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -273,19 +278,20 @@ def main():
         x = xmin
         while x <= xmax - epsilon:
             # Skip this tile if it doesn't overlap any data in the source
-            polybox = polygon_for_tile(x, y, TILE_SIZE_DEGREES, TILE_SIZE_DEGREES)
+            polybox = polygon_for_tile(x, y, args.degrees_per_tile, args.degrees_per_tile)
             if args.skip_boundary or polybox.Intersects(bounds):
-                output_filename = os.path.join(args.tile_dir, filename_for_coordinates(x, y))
+                output_filename = os.path.join(args.tile_dir, filename_for_coordinates(x, y, args.degrees_per_tile))
                 # If input is in feet, will need to scale tile to meters
                 if args.input_units == "feet":
                     scale = 0.3048
                 else:
                     scale = 1
 
-                process_args.append((x, y, warped_vrt_filename, output_filename, scale))
+                process_args.append((x, y, warped_vrt_filename, output_filename, scale,
+                                     args.degrees_per_tile, args.samples_per_tile))
             
-            x += TILE_SIZE_DEGREES
-        y += TILE_SIZE_DEGREES
+            x += args.degrees_per_tile
+        y += args.degrees_per_tile
 
     results = pool.map(process_tile, process_args)
     if any(map(lambda x: isinstance(x, KeyboardInterrupt), results)):
@@ -298,7 +304,8 @@ def main():
     # Run prominence and merge_divide_trees
     print("Running prominence")
     prominence_binary = os.path.join(args.binary_dir, "prominence")
-    prom_command = f"{prominence_binary} --v=1 -f LIDAR -i {args.tile_dir} -o {args.output_dir}" + \
+    prom_command = f"{prominence_binary} --v=1 -f CUSTOM-{args.degrees_per_tile}-{args.samples_per_tile}" + \
+        f" -i {args.tile_dir} -o {args.output_dir}" + \
         f" -t {args.threads} -m {args.min_prominence}" + \
         f" -- {ymin} {ymax} {xmin} {xmax}"
     run_command(prom_command)

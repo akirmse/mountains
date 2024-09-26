@@ -33,9 +33,9 @@ using std::string;
 // while NED19 uses some very negative value (< -1e38).
 static const float NED_NODATA_MIN_ELEVATION = -9998;
 
-FltLoader::FltLoader(const FileFormat &format, int utmZone) {
-  mFormat = format;
-  mUtmZone = utmZone;
+FltLoader::FltLoader(const FileFormat &format, int utmZone) :
+    mFormat(format),
+    mUtmZone(utmZone) {
 }
 
 Tile *FltLoader::loadTile(const std::string &directory, double minLat, double minLng) {
@@ -47,7 +47,7 @@ Tile *FltLoader::loadTile(const std::string &directory, double minLat, double mi
   case FileFormat::Value::NED13:
   case FileFormat::Value::NED19:
   case FileFormat::Value::THREEDEP_1M:
-  case FileFormat::Value::LIDAR:
+  case FileFormat::Value::CUSTOM:
     return loadFromFltFile(directory, minLat, minLng);
 
   default:
@@ -194,7 +194,7 @@ string FltLoader::getFltFilename(double minLat, double minLng, const FileFormat 
              fractionalDegree(minLng));
     break;
 
-  case FileFormat::Value::LIDAR:
+  case FileFormat::Value::CUSTOM:
     snprintf(buf, sizeof(buf), "tile_%02dx%02d_%03dx%02d.flt",
              static_cast<int>(upperLat),
              fractionalDegree(upperLat),

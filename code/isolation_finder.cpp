@@ -36,11 +36,11 @@
 using std::vector;
 
 IsolationFinder::IsolationFinder(TileCache *cache, const Tile *tile,
-                                 const CoordinateSystem &coordinateSystem, FileFormat format) {
+                                 const CoordinateSystem &coordinateSystem, const FileFormat &format) :
+    mFormat(format) {
   mTile = tile;
   mCache = cache;
   mCoordinateSystem = std::unique_ptr<CoordinateSystem>(coordinateSystem.clone());
-  mFormat = format;
 }
 
 IsolationRecord IsolationFinder::findIsolation(Offsets peak) const {

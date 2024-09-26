@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
   Elevation minProminence = 100;
   int numThreads = 1;
-  FileFormat fileFormat = FileFormat(FileFormat::Value::HGT);
+  std::unique_ptr<FileFormat> fileFormat(new FileFormat(FileFormat::Value::HGT));
 
   // Parse options
   START_EASYLOGGINGPP(argc, argv);
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
         usage();
       }
 
-      fileFormat = *format;
+      fileFormat.reset(format);
       break;
     }
 
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
     usage();
   }
 
-  if (fileFormat.isUtm() && utmZone == NO_UTM_ZONE) {
+  if (fileFormat->isUtm() && utmZone == NO_UTM_ZONE) {
     LOG(ERROR) << "You must specify a UTM zone with this format";
     exit(1);
   }
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
   }
 
   // Validate that bounds are on tile boundaries
-  double degreesAcross = fileFormat.degreesAcross();
+  double degreesAcross = fileFormat->degreesAcross();
   for (auto bound : bounds) {
     if (fabs(bound / degreesAcross - static_cast<int>(std::round(bound / degreesAcross))) > 0.001) {
       LOG(ERROR) << "Coordinates must be multiples of " << degreesAcross;
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
   // Load filtering polygon
   Filter filter;
   if (!polygonFilename.empty()) {
-    if (fileFormat.isUtm()) {
+    if (fileFormat->isUtm()) {
       LOG(ERROR) << "Can't specify a filter polygon with UTM data";
       exit(1);
     }
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
                                static_cast<bool>(writeKml)};
   
   // Caching doesn't do anything for our calculation and the tiles are huge
-  BasicTileLoadingPolicy policy(terrain_directory, fileFormat);
+  BasicTileLoadingPolicy policy(terrain_directory, *fileFormat.get());
   policy.enableNeighborEdgeLoading(true);
   if (utmZone != NO_UTM_ZONE) {
     policy.setUtmZone(utmZone);
@@ -210,16 +210,16 @@ int main(int argc, char **argv) {
     while (lng >= bounds[2]) {
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
-      if (!fileFormat.isUtm() && wrappedLng >= 180) {
+      if (!fileFormat->isUtm() && wrappedLng >= 180) {
         wrappedLng -= 360;
       }
 
       std::shared_ptr<CoordinateSystem> coordinateSystem(
-        fileFormat.coordinateSystemForOrigin(lat, wrappedLng, utmZone));
+        fileFormat->coordinateSystemForOrigin(lat, wrappedLng, utmZone));
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects(lat, lat + fileFormat.degreesAcross(),
-                             lng, lng + fileFormat.degreesAcross())) {
+      if (!filter.intersects(lat, lat + fileFormat->degreesAcross(),
+                             lng, lng + fileFormat->degreesAcross())) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Actually calculate prominence
@@ -229,9 +229,9 @@ int main(int argc, char **argv) {
             }));
       }
 
-      lng -= fileFormat.degreesAcross();
+      lng -= fileFormat->degreesAcross();
     }
-    lat += fileFormat.degreesAcross();
+    lat += fileFormat->degreesAcross();
   }
 
   for (auto && result : results) {
