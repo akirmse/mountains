@@ -42,6 +42,9 @@ This has been tested under Windows 10 with Microsoft Visual Studio 2022.
 
 ## Running the code
 
+**If you already have some terrain data, you've built the code, and you just want to run it, go
+to [this section](#running-on-arbitrary-data).**
+
 ### Source data
 
 Download source DEM data for the region of interest. 90-meter data is
@@ -170,22 +173,20 @@ These X and Y coordinates also correspond to the naming of the tiles.
 | NED19  | 3m         | partial US | lat/lng | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/19) |
 | 3DEP1m | 1m         | partial US | UTM | [Link](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/1m/Projects/) |
 
-#### LIDAR
+#### Running on arbitrary data
 
-High-resolution LIDAR can be processed by first converting it to FLT files using
+Pretty much any raster data can be processed by first converting it to FLT files using
 the following Python script in the ```scripts``` subdirectory.
 
 ```
-usage: run_lidar_prominence.py [-h] [--input_units {feet,meters}] [--output_units {feet,meters}]
+usage: run_prominence.py [-h] [--input_units {feet,meters}] [--output_units {feet,meters}]
                                [--output_dir OUTPUT_DIR] [--tile_dir TILE_DIR] [--binary_dir BINARY_DIR]
                                [--threads THREADS] [--min_prominence MIN_PROMINENCE]
                                [--skip_boundary | --no-skip_boundary]
                                input_files [input_files ...]
 
-Convert LIDAR to standard tiles
-
 positional arguments:
-  input_files           Input Lidar tiles, or GDAL VRT of tiles
+  input_files           Input tiles, or GDAL VRT of tiles
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -203,11 +204,20 @@ optional arguments:
                         Filter to this minimum prominence in meters
   --skip_boundary, --no-skip_boundary
                         Skip computation of raster boundary; uses more disk
+  --degrees_per_tile DEGREES_PER_TILE
+                        Size of reprojected tiles to generate
+  --samples_per_tile SAMPLES_PER_TILE
+                        Number of samples per edge of a reprojected tile
 ```
 
 This takes one or more input DEM files in any format GDAL understands, and warps them into a set of output
-tiles (in ```output_dir```) that are 0.1 degrees on a side in the lat/lng projection (EPSG:4326), with 10,000 x 10,000 resolution.  This is about 1 meter
-per sample.
+tiles (in ```output_dir```) in the lat/lng projection (EPSG:4326)
+
+The default is to generate intermediate tiles that are 0.1 degrees on a side, with 10,000 x 10,000 resolution.  While this is appropriate for 
+1m Lidar input, **if you have coarser data, it will run extremely slowly**.  Set the ```--degrees_per_tile``` and ```--samples_per_tile``` 
+arguments appropriately to roughly match your data size.  For example, if your input data is 30m resolution, setting 
+```--degrees_per_tile 1 --samples_per_tile 5000``` will just about match your input resolution and will run very fast.
+Use 100000m = 1 degree at the equator as a rough guide for how to size your intermediate tiles.
 
 The script them runs the ```prominence``` and ```merge_divide_trees``` programs to generate the output, which will be in the 
 file prominence/results.txt.
@@ -216,11 +226,11 @@ Requirements:
 - Python 3
 - GDAL 3.8.0 or later in the path
 - **You must have already built the code in this repo** (RELEASE version strongly preferred for reasonable performance).  Specify the path to the built binaries with the ```--binary_dir``` flag.
-- Enough disk space for another copy of your source data at ```--tile_dir``` (default is the ```tiles``` subdirectory of your current directory.
+- Enough disk space for another copy of your source data at ```--tile_dir``` (default is the ```tiles``` subdirectory of your current directory).
 
 Sample invocation:
 ```
-python mountains/scripts/run_lidar_prominence.py --binary_dir mountains/code/release --threads 6  <path to data>/*.tif
+python mountains/scripts/run_prominence.py --binary_dir mountains/code/release --threads 6  <path to data>/*.tif
 ```
 
 ### Isolation
