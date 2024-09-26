@@ -43,7 +43,7 @@ public:
     THREEDEP_1M,  // FLT file containing one-meter LIDAR from 3D Elevation Program (3DEP)
     GLO30,  // Copernicus GLO-30 30m data
     FABDEM, // Tree-free Copernicus GLO-30 30m data
-    LIDAR,  // FLT file converted from LIDAR, 0.1 arcsecond
+    CUSTOM, // FLT file with customizable resolution
   };
 
   FileFormat() = default;
@@ -53,16 +53,16 @@ public:
 
   // Return the number of samples in one row or column of the file format,
   // including any border samples.
-  int rawSamplesAcross() const;
+  virtual int rawSamplesAcross() const;
 
   // Return the number of samples in a tile after its loaded and the borders
   // have been modified.
-  int inMemorySamplesAcross() const;
+  virtual int inMemorySamplesAcross() const;
   
   // Return the degrees in lat or lng covered by one tile.
   // Note that this is the logical value (1 degree, 0.25 degree), not necessarily
   // the precise value covered, including border samples.
-  double degreesAcross() const;
+  virtual double degreesAcross() const;
 
   // Does this format use UTM coordinates rather than lat/lng?
   bool isUtm() const;
@@ -77,6 +77,34 @@ public:
   
 private:
   Value mValue;
+};
+
+// A file format where the size of the tile in degrees and samples
+// can be specified.  There must be an integer number of tiles per
+// degree.  The data is assumed to be in FLT format.
+class CustomFileFormat : public FileFormat {
+public:
+  CustomFileFormat(double degreesAcross, int samplesAcross) :
+      FileFormat(Value::CUSTOM),
+      mDegreesAcross(degreesAcross),
+      mSamplesAcross(samplesAcross) {
+  }
+
+  virtual int rawSamplesAcross() const {
+    return mSamplesAcross;
+  }
+
+  virtual int inMemorySamplesAcross() const {
+    return mSamplesAcross;
+  }
+  
+  virtual double degreesAcross() const {
+    return mDegreesAcross;
+  }
+
+private:
+  double mDegreesAcross;
+  int mSamplesAcross;
 };
 
 #endif  // _FILE_FORMAT_H_

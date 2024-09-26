@@ -43,7 +43,7 @@ public:
   virtual Tile *loadTile(const std::string &directory, double minLat, double minLng);
 
 private:
-  FileFormat mFormat;
+  const FileFormat &mFormat;
   int mUtmZone;  // For data in UTM coordinates
   
   Tile *loadFromNEDZipFileInternal(const std::string &directory, double minLat, double minLng);

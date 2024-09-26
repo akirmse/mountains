@@ -25,11 +25,13 @@
 #include "file_format.h"
 #include "degree_coordinate_system.h"
 #include "utm_coordinate_system.h"
+#include "util.h"
 #include "easylogging++.h"
 
 #include <cassert>
 #include <cmath>
 #include <map>
+#include <vector>
 
 using std::string;
 
@@ -43,7 +45,6 @@ int FileFormat::rawSamplesAcross() const {
   case Value::HGT:        return 1201;
   case Value::HGT30:      return 3601;
   case Value::THREEDEP_1M:  return 10012;
-  case Value::LIDAR: return 10000;
   default:
     // In particular, fail on GLO, because this number is variable with latitude.
     LOG(ERROR) << "Couldn't compute tile size of unknown file format";
@@ -65,7 +66,6 @@ int FileFormat::inMemorySamplesAcross() const {
   case Value::GLO30: // Fall through
   case Value::FABDEM:
     return 3601;
-  case Value::LIDAR: return 10000;
   default:
     LOG(ERROR) << "Couldn't compute tile size of unknown file format";
     exit(1);
@@ -86,7 +86,6 @@ double FileFormat::degreesAcross() const {
   case Value::GLO30:  // Fall through
   case Value::FABDEM:
     return 1.0;
-  case Value::LIDAR: return 0.1;
   case Value::THREEDEP_1M:
     // This is a misnomer, as these tiles are in UTM coordinates.  The "degrees" across
     // means one x or y unit per tile (where each tile is 10000m in UTM).
@@ -120,7 +119,7 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(double lat, double lng, 
                                       samplesPerDegreeLat, samplesPerDegreeLng);
   }
 
-  case Value::LIDAR: {
+  case Value::CUSTOM: {
     int samplesPerDegreeLat = static_cast<int>(std::round(inMemorySamplesAcross() / degreesAcross()));
     int samplesPerDegreeLng = static_cast<int>(std::round(inMemorySamplesAcross() / degreesAcross()));
     return new DegreeCoordinateSystem(lat, lng,
@@ -129,7 +128,6 @@ CoordinateSystem *FileFormat::coordinateSystemForOrigin(double lat, double lng, 
                                       samplesPerDegreeLat, samplesPerDegreeLng);
   }
     
-
   case Value::THREEDEP_1M:
     // 10km x 10km tiles, NW corner
     return new UtmCoordinateSystem(utmZone,
@@ -157,9 +155,40 @@ FileFormat *FileFormat::fromName(const string &name) {
     { "GLO30",     Value::GLO30, },
     { "FABDEM",    Value::FABDEM, },
     { "3DEP-1M",   Value::THREEDEP_1M, },
-    { "LIDAR",     Value::LIDAR, },
   };
 
+  // Handle CUSTOM-<degrees per tile>-<samples across>
+  if (0 == name.compare(0, 6, "CUSTOM")) {
+    std::vector<string> fields;
+    split(name, '-', fields);
+    if (fields.size() != 3) {
+      LOG(ERROR) << "Custom format must have 3 components";
+      return nullptr;
+    }
+
+    double degreesAcross = std::stod(fields[1]);
+    int samplesAcross = std::stoi(fields[2]);
+
+    if (degreesAcross <= 0) {
+      LOG(ERROR) << "Illegal value for degrees per tile: " << degreesAcross;
+      return nullptr;
+    }
+
+    // degreesAcross must divide 1
+    double tilesPerDegree = 1.0 / degreesAcross;
+    if (tilesPerDegree - static_cast<int>(tilesPerDegree) > 0.001) {
+      LOG(ERROR) << "Value for degrees per tile must divide 1 evenly: " << degreesAcross;
+      return nullptr;
+    }
+    
+    if (samplesAcross <= 0) {
+      LOG(ERROR) << "Illegal value for samples across tile: " << samplesAcross;
+      return nullptr;
+    }
+  
+    return new CustomFileFormat(degreesAcross, samplesAcross);
+  }
+  
   auto it = fileFormatNames.find(name);
   if (it == fileFormatNames.end()) {
     return nullptr;

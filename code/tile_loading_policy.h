@@ -69,7 +69,7 @@ public:
 
 private:
   std::string mDirectory;  // Directory for loading tiles
-  FileFormat mFileFormat;  
+  const FileFormat &mFileFormat;  
   bool mNeighborEdgeLoadingEnabled;
   int mUtmZone;
   TileCache *mTileCache;

@@ -87,7 +87,7 @@ Tile *BasicTileLoadingPolicy::loadTile(double minLat, double minLng) const {
       break;
 
     case FileFormat::Value::GLO30:  // fall through
-    case FileFormat::Value::LIDAR:
+    case FileFormat::Value::CUSTOM:
     case FileFormat::Value::FABDEM: {
       // GLO30 "helpfully" removes the last row and column from each tile,
       // so we need to stick them back on.
@@ -126,7 +126,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(double minLat, double minLng) const {
   case FileFormat::Value::NED19:
   case FileFormat::Value::NED1_ZIP:
   case FileFormat::Value::THREEDEP_1M:
-  case FileFormat::Value::LIDAR:
+  case FileFormat::Value::CUSTOM:
     loader = new FltLoader(mFileFormat, mUtmZone);
     break;
     

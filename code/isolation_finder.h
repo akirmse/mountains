@@ -60,7 +60,7 @@ struct IsolationRecord {
 class IsolationFinder {
 public:
   IsolationFinder(TileCache *cache, const Tile *tile,
-                  const CoordinateSystem &coordinateSystem, FileFormat format);
+                  const CoordinateSystem &coordinateSystem, const FileFormat &format);
   
   IsolationRecord findIsolation(Offsets peak) const;
   
@@ -69,7 +69,7 @@ private:
   const Tile *mTile;
   TileCache *mCache;
   std::unique_ptr<CoordinateSystem> mCoordinateSystem;
-  FileFormat mFormat;
+  const FileFormat &mFormat;
 
   // Search tile for a point higher than seedElevation.
   //

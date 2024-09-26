@@ -38,7 +38,7 @@ static uint16 swapByteOrder16(uint16 us) {
   return (us >> 8) | (us << 8);
 }
 
-HgtLoader::HgtLoader(FileFormat fileFormat) {
+HgtLoader::HgtLoader(const FileFormat &fileFormat) {
   switch (fileFormat.value()) {
   case FileFormat::Value::HGT:
     mTileSize = 1201;
