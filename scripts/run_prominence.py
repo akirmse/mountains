@@ -1,4 +1,4 @@
-# Processes a set of Lidar tiles:
+# Processes a set of raster tiles:
 # - Converts them to lat-long projection
 # - Resamples to tiles that are of fixed size and resolution, with elevations in meters
 #
@@ -192,7 +192,7 @@ def process_tile(args):
     gdal.Translate(output_filename, vrt_filename, options = translate_options)
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert LIDAR to standard tiles')
+    parser = argparse.ArgumentParser(description='Reproject arbitrary rasters to a fixed grid and compute prominence')
     parser.add_argument('--input_units', choices=['feet', 'meters'],
                         default='meters',
                         help="Elevation units in input files")
@@ -223,6 +223,12 @@ def main():
 
     gdal.UseExceptions()
 
+    # Valudate degrees per tile; it must divide 1 degree evenly
+    tiles_per_degree = 1 / args.degrees_per_tile
+    if abs(int(tiles_per_degree) - tiles_per_degree) > 0.001:
+        print("tiles_per_degree must divide 1 degree evenly")
+        exit(1)
+    
     # Create missing directories
     maybe_create_directory(args.output_dir)
     maybe_create_directory(args.tile_dir)
