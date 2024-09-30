@@ -17,7 +17,17 @@ jobs:
     - name: make
       working-directory: code
       run: make
-      
+
+  build-macos:
+
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: make
+      working-directory: code
+      run: make
+
   build-windows:
   
     runs-on: windows-latest
