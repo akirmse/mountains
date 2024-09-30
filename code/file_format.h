@@ -48,6 +48,7 @@ public:
 
   FileFormat() = default;
   constexpr FileFormat(Value v) : mValue(v) {}
+  virtual ~FileFormat() {}
 
   Value value() const { return mValue; }
 
@@ -89,6 +90,7 @@ public:
       mDegreesAcross(degreesAcross),
       mSamplesAcross(samplesAcross) {
   }
+  virtual ~CustomFileFormat() {}
 
   virtual int rawSamplesAcross() const {
     return mSamplesAcross;
