@@ -47,9 +47,13 @@ class Boundary:
                 overview_level = None
             
         if footprint:
-            geometry = footprint.GetLayer(0).GetNextFeature()
-            if geometry:  # Tiles can be completely empty
-                self.batch_boundary = self.batch_boundary.Union(geometry.geometry())
+            feature = footprint.GetLayer(0).GetNextFeature()
+            if feature:  # Tiles can be completely empty
+                geometry = feature.geometry()
+                # Very rarely, there can be self-intersection.  Try to fix it.
+                if not geometry.IsValid():
+                    geometry = geometry.MakeValid()
+                self.batch_boundary = self.batch_boundary.Union(geometry)
                 self.batch_boundary_size += 1
                 if self.batch_boundary_size >= self.batch_size:
                     self.boundary = self.boundary.Union(self.batch_boundary)
