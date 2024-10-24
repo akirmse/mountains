@@ -24,26 +24,37 @@ def run_command(command_string):
 @handle_ctrl_c
 def process_tile(args):
     (project, x, y, zone, tile_dir) = args
-        
-    filename_base = f"USGS_1M_{zone}_x{x:02}y{y:03}"
 
-    flt_filename = os.path.join(tile_dir, filename_base +  ".flt")
+    # The USGS isn't consistent about naming their files; try all these
+    potential_filenames = [
+        f"USGS_1M_{zone}_x{x:02}y{y:03}",
+        f"USGS_one_meter_x{x:02}y{y:03}",
+        f"USGS_1m_x{x:02}y{y:03}",
+    ]
+    
+    # Use the first format for local filenames
+    local_filename_base = potential_filenames[0]
+
+    flt_filename = os.path.join(tile_dir, local_filename_base +  ".flt")
+    tif_filename = os.path.join(tile_dir, local_filename_base + ".tif")
     
     # Tile already exists locally?
     if not os.path.isfile(flt_filename):
-        tif_filename = os.path.join(tile_dir, filename_base + ".tif")
-
-        # Download TIF file
-        tif_url = f"{DOWNLOAD_URL_BASE}/{project}/TIFF/{filename_base}_{project}.tif"
         print("Downloading tile for x =", x, ", y =", y)
-        r = requests.get(tif_url, allow_redirects=True)
-        if r.status_code == 200:
-            with open(tif_filename, "wb") as f:
-                f.write(r.content)
+        for potential_filename in potential_filenames:
+            # Download TIF file
+            tif_url = f"{DOWNLOAD_URL_BASE}/{project}/TIFF/{potential_filename}_{project}.tif"
+            r = requests.get(tif_url, allow_redirects=True)
+            if r.status_code == 200:
+                with open(tif_filename, "wb") as f:
+                    f.write(r.content)
 
-            # Convert to .flt file format
-            gdal_command = f"gdal_translate -of EHdr {tif_filename} {flt_filename}"
-            run_command(gdal_command)
+                # Convert to .flt file format
+                gdal_command = f"gdal_translate -of EHdr {tif_filename} {flt_filename}"
+                run_command(gdal_command)
+                
+                return
+            
 
 def main():
     parser = argparse.ArgumentParser(description='Download GLO tiles and run prominence on them')
