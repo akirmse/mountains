@@ -50,8 +50,7 @@ double LatLng::distance(const LatLng &other) const {
   a += term * term * cos(lat1) * cos(lat2);
   auto c = 2 * atan2(sqrt(a), sqrt(1-a));
   
-  const double earthRadius = 6371000;
-  return c * earthRadius;
+  return c * kEarthRadiusMeters;
 }
 
 double LatLng::distanceEllipsoid(const LatLng &other) const {
