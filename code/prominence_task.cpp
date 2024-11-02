@@ -86,7 +86,7 @@ bool ProminenceTask::run(double lat, double lng, const CoordinateSystem &coordin
   VLOG(1) << "Pruning divide tree to " << mOptions.minProminence << " prominence";
 
   IslandTree islandTree(*divideTree);
-  islandTree.build();
+  islandTree.build(mOptions.bathymetry);
 
   divideTree->prune(mOptions.minProminence, islandTree);
 

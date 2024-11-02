@@ -219,6 +219,8 @@ def main():
                         help='Size of reprojected tiles to generate')
     parser.add_argument('--samples_per_tile', type=int, default=10000,
                         help='Number of samples per edge of a reprojected tile')
+    parser.add_argument('--bathymetry', action=argparse.BooleanOptionalAction,
+                        help='Is the input DEM bathymetry?')
     args = parser.parse_args()
 
     gdal.UseExceptions()
@@ -304,9 +306,13 @@ def main():
     # Run prominence and merge_divide_trees
     print("Running prominence")
     prominence_binary = os.path.join(args.binary_dir, "prominence")
+    extra_args = ""
+    if args.bathymetry:
+        extra_args += " -b"
     prom_command = f"{prominence_binary} --v=1 -f CUSTOM-{args.degrees_per_tile}-{args.samples_per_tile}" + \
         f" -i {args.tile_dir} -o {args.output_dir}" + \
         f" -t {args.threads} -m {args.min_prominence}" + \
+        extra_args + \
         f" -- {ymin} {ymax} {xmin} {xmax}"
     run_command(prom_command)
 
@@ -317,8 +323,12 @@ def main():
     units_multiplier = 1
     if args.output_units == "feet":
         units_multiplier = 3.28084
+    extra_args = ""
+    if args.bathymetry:
+        extra_args += " -b"
     merge_command = f"{merge_binary} --v=1 -f" + \
         f" -t {args.threads} -m {args.min_prominence} -s {units_multiplier}" + \
+        extra_args + \
         f" {merge_output} {merge_inputs}"
     run_command(merge_command)
 

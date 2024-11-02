@@ -43,6 +43,9 @@ struct ProminenceOptions {
   // or anti-prominence, which is the "prominence" of low points.
   bool antiprominence;
 
+  // Data is bathymetry; do not assume sea level = 0 for prom calculations.
+  bool bathymetry;
+
   // Write KML of pruned divide tree?
   bool writeKml;
 };

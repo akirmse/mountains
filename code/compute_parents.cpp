@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
   
   // Build island tree to get prominence values
   IslandTree *islandTree = new IslandTree(*divideTree);
-  islandTree->build();
+  islandTree->build(false);  // TODO: Flag for bathymetry?
 
   // Build line parent tree
   LineTree *lineTree = new LineTree(*divideTree);

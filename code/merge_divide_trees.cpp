@@ -48,6 +48,7 @@ static void usage() {
   printf("                    in same units as divide tree, default = 100\n");
   printf("  -s scale_factor   Scale output elevations by this (e.g. meters to feet), default = 1\n");
   printf("  -t num_threads    Number of threads to use, default = 1\n");
+  printf("  -b                Input data is bathymetric (do not use sea level)\n");
   exit(1);
 }
 
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
   Elevation minProminence = 100;
   bool finalize = false;
   bool flipElevations = false;
+  bool bathymetry = false;
   int numThreads = 1;
   float elevationScale = 1.0f;
 
@@ -96,12 +98,16 @@ int main(int argc, char **argv) {
     {"v", required_argument, nullptr, 0},
     {nullptr, 0, 0, 0},
   };
-  while ((ch = getopt_long(argc, argv, "afm:s:t:", long_options, nullptr)) != -1) {
+  while ((ch = getopt_long(argc, argv, "abfm:s:t:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       flipElevations = true;
       break;
-      
+
+    case 'b':
+      bathymetry = true;
+      break;
+
     case 'f':
       finalize = true;
       break;
@@ -183,7 +189,7 @@ int main(int argc, char **argv) {
   VLOG(1) << "Building prominence island tree";
 
   IslandTree *unprunedIslandTree = new IslandTree(*divideTree);
-  unprunedIslandTree->build();
+  unprunedIslandTree->build(bathymetry);
 
   if (finalize) {
     divideTree->deleteRunoffs();  // Does not affect island tree
@@ -211,7 +217,7 @@ int main(int argc, char **argv) {
 
   // Build new island tree on pruned divide tree to get final prominence values
   IslandTree *prunedIslandTree = new IslandTree(*divideTree);
-  prunedIslandTree->build();
+  prunedIslandTree->build(bathymetry);
   
   // Write final prominence value table
   string filename = outputFilename + ".txt";

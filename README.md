@@ -355,6 +355,16 @@ The input divide tree must be free of runoffs (see the options to ```merge_divid
 parent, and its line parent on each line.  Landmass high points (where the prominence is equal to the elevation) are not included.
 Their key saddles are the ocean, and there isn't a well-defined way to connect such peaks to other land masses through the divide tree.
 
+## Bathymetry
+
+For "regular" terrain on the Earth, we set the prominence of the highest peak equal to its elevation by convention.  This obviously 
+doesn't work for bathymetry (terrain below sea level).  It's not clear what the prominence of such underwater peaks should be,
+but clearly we don't want to filter them away by assigning them negative prominence values.
+
+If the ```-b``` flag is set on the ```prominence``` and ```merge_divide_trees```, we compute the prominence of the highest peak to
+be its elevation, minus the elevation of the lowest saddle in the divide tree.  This guarantees that the highest peak will have
+the highest prominence.  Setting the ```--bathymetry``` flag on ```run_prominence.py``` will also turn on this behavior.
+
 ## Anti-prominence
 
 The "anti-prominence" of low points can be computed by the same algorithm, simply by changing

@@ -36,7 +36,7 @@ IslandTree::IslandTree(const DivideTree &divideTree) :
     mDivideTree(divideTree) {
 }
 
-void IslandTree::build() { 
+void IslandTree::build(bool isBathymetry) { 
   // Initialize topology
   mNodes.resize(mDivideTree.nodes().size());
   int index = 1;  // Peaks are 1-indexed; put in a dummy node 0
@@ -54,7 +54,7 @@ void IslandTree::build() {
   uninvertPeaks();
   uninvertSaddles();
   
-  computeProminences();
+  computeProminences(isBathymetry);
 }
 
 // Sort peaks so that parent is always higher elevation.
@@ -152,7 +152,7 @@ void IslandTree::uninvertSaddle(int nodeId) {
   }
 }
 
-void IslandTree::computeProminences() {
+void IslandTree::computeProminences(bool isBathymetry) {
   for (int i = 1; i < (int) mNodes.size(); ++i) {
     Elevation elev = getPeak(i).elevation;
     int childNodeId = i;
@@ -177,8 +177,17 @@ void IslandTree::computeProminences() {
     }
 
     if (parentNodeId == Node::Null) {
-      // This is the highest point in the tree
-      mNodes[i].prominence = elev;
+      // This is the highest point in the tree.  In "normal" circumstances where
+      // all the elevations are nonnegative, we can safely define the prominence as equal
+      // to the elevation.  But for bathymetry the prominence is not so clear.  We
+      // use the elevation of the minimum saddle as "sea level".  This should agree
+      // with the traditional definition (prominence = elevation) for regular terrain,
+      // and for bathymetry, it will guarantee that the highest point has the
+      // highest prominence, which matches intuition.
+      //
+      // Other definitions of the prominence of the highest point are possible,
+      // for example, height above the minimum sample value.
+      mNodes[i].prominence = elev - getSeaLevelValue(isBathymetry);
     } else {
       // Prominence = peak elevation - key col elevation
       int saddlePeakId = mNodes[childNodeId].saddlePeakId;
@@ -187,6 +196,19 @@ void IslandTree::computeProminences() {
       mNodes[i].keySaddleId = saddleId;
     }
   }
+}
+
+Elevation IslandTree::getSeaLevelValue(bool isBathymetry) {
+  // If this is bathymetry, find the minimum saddle elevation in the tree.
+  if (isBathymetry && !mNodes.empty()) {
+    Elevation elevation = std::numeric_limits<Elevation>::max();
+    for (auto const &saddle : mDivideTree.saddles()) {
+      elevation = std::min(elevation, saddle.elevation);
+    }
+    return elevation;
+  }
+  
+  return 0;
 }
 
 const Peak &IslandTree::getPeak(int peakId) const {
