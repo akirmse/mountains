@@ -62,6 +62,7 @@ static void usage() {
   printf("  -t num_threads    Number of threads, default = 1\n");
   printf("  -z                UTM zone (if input data is in UTM)\n");
   printf("  -a                Compute anti-prominence instead of prominence\n");
+  printf("  -b                Input DEM is bathymetric (do not use sea level)\n");
   printf("  --kml             Generate KML output of divide tree\n"); 
   exit(1);
 }
@@ -80,6 +81,7 @@ int main(int argc, char **argv) {
   int ch;
   string str;
   bool antiprominence = false;
+  bool bathymetry = false;
   int writeKml = false;
   int utmZone = NO_UTM_ZONE;
 
@@ -91,12 +93,16 @@ int main(int argc, char **argv) {
     {"kml", no_argument, &writeKml, 1},
     {nullptr, 0, 0, 0},
   };
-  while ((ch = getopt_long(argc, argv, "af:i:k:m:o:t:z:", long_options, nullptr)) != -1) {
+  while ((ch = getopt_long(argc, argv, "abf:i:k:m:o:t:z:", long_options, nullptr)) != -1) {
     switch (ch) {
     case 'a':
       antiprominence = true;
       break;
-      
+
+    case 'b':
+      bathymetry = true;
+      break;
+
     case 'f': {
       auto format = FileFormat::fromName(optarg);
       if (format == nullptr) {
@@ -183,6 +189,7 @@ int main(int argc, char **argv) {
 
   // Don't write out unpruned divide tree--it's too large and slow
   ProminenceOptions options = {output_directory, minProminence, false, antiprominence,
+                               bathymetry,
                                static_cast<bool>(writeKml)};
   
   // Caching doesn't do anything for our calculation and the tiles are huge

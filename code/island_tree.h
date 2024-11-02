@@ -49,7 +49,8 @@ public:
 
   explicit IslandTree(const DivideTree &divideTree);
 
-  void build();
+  // If isBathymetry is true, don't assume sea level = 0.
+  void build(bool isBathymetry);
 
   bool writeToFile(const std::string &filename) const;
 
@@ -66,10 +67,14 @@ private:
   // Sort peaks by increasing divide tree saddle elevation
   void uninvertSaddles();
 
-  void computeProminences();
+  void computeProminences(bool isBathymetry);
 
   void uninvertPeak(int nodeId);
   void uninvertSaddle(int nodeId);
+
+  // Return the elevation of "sea level", i.e. the elevation used as the
+  // base of the highest peak in the tree.
+  Elevation getSeaLevelValue(bool isBathymetry);
 
   // Indices start at 1; use these helper functions to deal with offset.
   const Peak &getPeak(int peakId) const;
