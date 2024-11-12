@@ -44,9 +44,6 @@ def round_up(coord, interval):
     """Return coord rounded up to the nearest interval"""
     return math.ceil(coord / interval) * interval
 
-def sign(a):
-    return bool(a > 0) - bool(a < 0)
-
 def filename_for_coordinates(x, y, degrees_per_tile):
     """Return output filename for the given coordinates"""
     y += degrees_per_tile  # Name uses upper left corner
@@ -122,7 +119,11 @@ def create_vrts(tile_dir, input_files, skip_boundary):
         ds = gdal.Open(input_file)
         prj = ds.GetProjection()
         srs = osr.SpatialReference(wkt=prj)
-        projection_name = srs.GetAttrValue('projcs')
+        # gdalbuildvrt needs the projections to match pretty much exactly within a VRT file.
+        # It's not enough to use the projection name; sometimes two projections have the
+        # same name but slightly different datums, and gdalbuildvrt will fail.
+        # So instead we use the whole WKT string.
+        projection_name = srs.ExportToWkt()
         projection_map.setdefault(projection_name, []).append(input_file)
 
     # For each projection, build raw and warped VRTs
