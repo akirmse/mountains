@@ -194,13 +194,16 @@ string FltLoader::getFltFilename(double minLat, double minLng, const FileFormat 
              fractionalDegree(minLng));
     break;
 
-  case FileFormat::Value::CUSTOM:
-    snprintf(buf, sizeof(buf), "tile_%02dx%02d_%03dx%02d.flt",
-             static_cast<int>(upperLat),
+  case FileFormat::Value::CUSTOM: {
+    int upperLatInt = static_cast<int>(upperLat);  // Watch out for "minus 0"
+    snprintf(buf, sizeof(buf), "tile_%s%02dx%02d_%03dx%02d.flt",
+             (upperLatInt >= 0) ? "" : "-",
+             abs(upperLatInt),
              fractionalDegree(upperLat),
              static_cast<int>(minLng),
              fractionalDegree(minLng));
     break;
+  }
 
   case FileFormat::Value::THREEDEP_1M:
     // Note order: X (lng), then Y (lat)
