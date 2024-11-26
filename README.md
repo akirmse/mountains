@@ -372,6 +372,14 @@ the sign of the elevation values.  This can be done by giving the -a option to t
 ```prominence``` command.  Then, at the final stage of merging (with the -f flag), add the -a option
 again to flip the elevation values back to positive.
 
+## Projects using this code
+
+Peak database with many prominence values computed from Lidar: https://peakbagger.com
+
+Database and book with all mountains over 1000m of prominence: https://worldribus.org/
+
+SIGGRAPH paper using prominence to synthesize artificial mountains: https://dl.acm.org/doi/10.1145/3355089.3356535
+
 ## More information
 
 Explanations of what these calculations are about are at
