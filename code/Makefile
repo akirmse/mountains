@@ -25,9 +25,17 @@ endif
 
 LIBS =
 
+
 # Disable easylogging++ logging to a file by default
 CCOMMONFLAGS = -DPLATFORM_LINUX -Wall -Werror -Wno-unused-variable -std=c++14 \
-	-DELPP_NO_DEFAULT_LOG_FILE -DELPP_THREAD_SAFE -pthread -Wno-error=stringop-overflow=
+	-DELPP_NO_DEFAULT_LOG_FILE -DELPP_THREAD_SAFE -pthread
+
+# This warning depends on the gcc version, which differs between Mac and Linux
+PLATFORM=$(shell uname)
+ifneq ($(PLATFORM),Darwin)
+CCOMMONFLAGS += -Wno-error=stringop-overflow=
+endif
+
 CNORMALFLAGS = $(CCOMMONFLAGS) -O3
 CDEBUGFLAGS = $(CCOMMONFLAGS) -g
 LINKCOMMONFLAGS = -pthread
