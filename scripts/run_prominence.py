@@ -91,7 +91,7 @@ def get_extent(ds):
 
     return xmin, xmax, ymin, ymax
 
-def create_vrts(tile_dir, input_files, skip_boundary):
+def create_vrts(tile_dir, input_files, skip_boundary, tile_srs):
     """
     Creates virtual rasters (VRTs) for the input files on disk.
     Returns:
@@ -141,9 +141,13 @@ def create_vrts(tile_dir, input_files, skip_boundary):
 
         raw_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
         gdal.BuildVRT(raw_vrt_filename, filenames, options=raw_options)
-        
-        warp_options = gdal.WarpOptions(format = "VRT", dstSRS = 'EPSG:4326')
-        warped_dataset = gdal.Warp(warped_vrt_filename, raw_vrt_filename, options = warp_options,
+
+        # We want to specify -novshift to prevent a vertical CRS in one dataset from causing all datasets
+        # to have a vertical shift applied.  But there's no Python -novshift option; in order to get it,
+        # all options must be specified as a string.
+        # warp_options = gdal.WarpOptions(format = "VRT", dstSRS = tile_srs)
+        warped_dataset = gdal.Warp(warped_vrt_filename, raw_vrt_filename,
+                                   options = f"-t_srs {tile_srs} -of VRT -novshift",
                                    callback=gdal.TermProgress_nocb)
         # BuildVRT requires that all sources have the same color interpretation, so set
         # it to grayscale.  It's sometimes missing in some datasets, which isn't allowed.
@@ -210,6 +214,8 @@ def main():
                         help="Number of threads to use in computing prominence")
     parser.add_argument('--min_prominence', default=100, type=float,
                         help="Filter to this minimum prominence in meters")
+    parser.add_argument('--tile_srs', default = "EPSG:4326", type=str,
+                        help='Coordinate system of generated tiles')
     parser.add_argument('--skip_boundary', action=argparse.BooleanOptionalAction,
                         help="Skip computation of raster boundary; uses more disk")
     parser.add_argument('input_files', type=str, nargs='+',
@@ -256,7 +262,7 @@ def main():
 
     # Build all the VRTs and compute boundary for entire input
     warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files,
-                                              skip_computing_boundary)
+                                              skip_computing_boundary, args.tile_srs)
     # Boundary manually specified?
     if args.boundary:
         bounds = manually_specified_boundary
