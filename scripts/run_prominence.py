@@ -189,6 +189,7 @@ def process_tile(args):
 
     translate_options = gdal.TranslateOptions(
         format = "EHdr",
+        outputType=gdal.GDT_Float32,
         width = samples_per_tile, height = samples_per_tile,
         projWin = [x, y + degrees_per_tile, x + degrees_per_tile, y],
         noData = -999999,
