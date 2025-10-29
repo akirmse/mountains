@@ -127,9 +127,11 @@ string ProminenceTask::getFilenamePrefix() const {
 
   int latHundredths = fractionalDegree(lat);
   int lngHundredths = fractionalDegree(lng);
-  snprintf(filename, sizeof(filename), "prominence-%02dx%02d-%03dx%02d",
-           static_cast<int>(lat), latHundredths,
-           static_cast<int>(lng), lngHundredths);
+  snprintf(filename, sizeof(filename), "prominence-%s%02dx%02d-%s%03dx%02d",
+           (lat >= 0) ? "" : "-",
+           static_cast<int>(abs(lat)), latHundredths,
+           (lng >= 0) ? "" : "-",
+           static_cast<int>(abs(lng)), lngHundredths);
   return mOptions.outputDir + "/" + filename;
 }
 

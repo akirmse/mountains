@@ -196,11 +196,13 @@ string FltLoader::getFltFilename(double minLat, double minLng, const FileFormat 
 
   case FileFormat::Value::CUSTOM: {
     int upperLatInt = static_cast<int>(upperLat);  // Watch out for "minus 0"
-    snprintf(buf, sizeof(buf), "tile_%s%02dx%02d_%03dx%02d.flt",
+    int minLngInt = static_cast<int>(minLng);
+    snprintf(buf, sizeof(buf), "tile_%s%02dx%02d_%s%03dx%02d.flt",
              (upperLatInt >= 0) ? "" : "-",
              abs(upperLatInt),
              fractionalDegree(upperLat),
-             static_cast<int>(minLng),
+             (minLng >= 0) ? "" : "-",
+             abs(minLngInt),
              fractionalDegree(minLng));
     break;
   }
