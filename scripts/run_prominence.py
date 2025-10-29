@@ -55,7 +55,7 @@ def filename_for_coordinates(x, y, degrees_per_tile):
     x_fraction = abs(xpart) % 100
     y_fraction = abs(ypart) % 100
 
-    # Handle "-0.1" -> "-00x10"
+    # Handle "-0.1" -> "-000x10"
     if xpart < 0:
         x_string = f"-{abs(x_int):03d}"
     else:
