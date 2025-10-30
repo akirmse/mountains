@@ -48,7 +48,7 @@ double adjustCoordinate(double coordinate) {
   // A tile is not going to be smaller than 0.1 degrees or so, so this
   // amount should be safe.
   const double epsilon = 0.001;
-  return coordinate + ((coordinate >= 0) ? epsilon : -epsilon);
+  return coordinate + ((coordinate >= -1e-8) ? epsilon : -epsilon);
 }
 
 string trim(const string &s) {
