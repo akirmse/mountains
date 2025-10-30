@@ -111,7 +111,7 @@ Tile *BasicTileLoadingPolicy::loadInternal(double minLat, double minLng) const {
 
   // If the lat/lng can't be represented exactly in floating point,
   // there's sometimes roundoff error when converting to integers for
-  // tile filenames.  Adding a little slop prevents truncation.  
+  // tile filenames.  Adding a little slop prevents truncation.
   minLat = adjustCoordinate(minLat);
   minLng = adjustCoordinate(minLng);
 
