@@ -38,7 +38,6 @@
 #include "tile.h"
 #include "pixel_array.h"
 
-#include <stack>
 #include <vector>
 
 class DomainMap {
@@ -100,7 +99,7 @@ private:
     Coord y;
   };
 
-  std::stack<Range> mPendingRanges;
+  std::vector<Range> mPendingRanges;
 };
 
 #endif  // _DOMAIN_MAP_H_

@@ -27,7 +27,6 @@
 
 #include <math.h>
 
-using std::stack;
 using std::vector;
 
 DomainMap::DomainMap(const Tile *tile) :
@@ -47,11 +46,11 @@ void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {
   Elevation elev = mTile->get(x, y);
 
   // Flood fill
-  mPendingRanges.push(Range(x, x, y));
+  mPendingRanges.push_back(Range(x, x, y));
   
   while (!mPendingRanges.empty()) {
-    Range range(mPendingRanges.top());
-    mPendingRanges.pop();
+    Range range(mPendingRanges.back());
+    mPendingRanges.pop_back();
 
     // Extend range to the left
     while (true) {
@@ -113,7 +112,7 @@ void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {
               // It's enough to check the leftmost pixel, since the whole
               // range is either empty or non-empty.
               if (mMarkers.get(lo, topy) != mMarkerValue) {
-                mPendingRanges.push(Range(lo, topx - 1, topy));
+                mPendingRanges.push_back(Range(lo, topx - 1, topy));
               }
               lo = -1;
             }
@@ -122,7 +121,7 @@ void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {
       }
       // Didn't encounter end of range
       if (lo != -1 && mMarkers.get(lo, topy) != mMarkerValue) {
-        mPendingRanges.push(Range(lo, maxx, topy));
+        mPendingRanges.push_back(Range(lo, maxx, topy));
       }
     }
 
@@ -147,7 +146,7 @@ void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {
               // It's enough to check the leftmost pixel, since the whole
               // range is either empty or non-empty.
               if (mMarkers.get(lo, bottomy) != mMarkerValue) {
-                mPendingRanges.push(Range(lo, bottomx - 1, bottomy));
+                mPendingRanges.push_back(Range(lo, bottomx - 1, bottomy));
               }
               lo = -1;
             }
@@ -156,7 +155,7 @@ void DomainMap::findFlatArea(int x, int y, Boundary *boundary) {
       }
       // Didn't encounter end of range
       if (lo != -1 && mMarkers.get(lo, bottomy) != mMarkerValue) {
-        mPendingRanges.push(Range(lo, maxx, bottomy));
+        mPendingRanges.push_back(Range(lo, maxx, bottomy));
       }
     }
   }
@@ -166,11 +165,11 @@ void DomainMap::fillFlatArea(int x, int y, Pixel value) {
   // Flood fill based on horizontal ranges
   Elevation elev = mTile->get(x, y);
 
-  mPendingRanges.push(Range(x, x, y));
+  mPendingRanges.push_back(Range(x, x, y));
   
   while (!mPendingRanges.empty()) {
-    Range range(mPendingRanges.top());
-    mPendingRanges.pop();
+    Range range(mPendingRanges.back());
+    mPendingRanges.pop_back();
 
     // Extend range to the left
     while (true) {
@@ -204,7 +203,7 @@ void DomainMap::fillFlatArea(int x, int y, Pixel value) {
             // It's enough to check the leftmost pixel, since the whole
             // range is either empty or non-empty.
             if (mPixels.get(lo, topy) == EmptyPixel) {
-              mPendingRanges.push(Range(lo, topx - 1, topy));
+              mPendingRanges.push_back(Range(lo, topx - 1, topy));
             }
             lo = -1;
           }
@@ -216,7 +215,7 @@ void DomainMap::fillFlatArea(int x, int y, Pixel value) {
       }
       // Didn't encounter end of range
       if (lo != -1 && mPixels.get(lo, topy) == EmptyPixel) {
-        mPendingRanges.push(Range(lo, range.xmax + 1, topy));
+        mPendingRanges.push_back(Range(lo, range.xmax + 1, topy));
       }
     }
 
@@ -229,7 +228,7 @@ void DomainMap::fillFlatArea(int x, int y, Pixel value) {
           if (lo != -1) {
             // End of a range
             if (mPixels.get(lo, bottomy) == EmptyPixel) {
-              mPendingRanges.push(Range(lo, bottomx - 1, bottomy));
+              mPendingRanges.push_back(Range(lo, bottomx - 1, bottomy));
             }
             lo = -1;
           }
@@ -241,7 +240,7 @@ void DomainMap::fillFlatArea(int x, int y, Pixel value) {
       }
       // Didn't encounter end of range
       if (lo != -1 && mPixels.get(lo, bottomy) == EmptyPixel) {
-        mPendingRanges.push(Range(lo, range.xmax + 1, bottomy));
+        mPendingRanges.push_back(Range(lo, range.xmax + 1, bottomy));
       }
     }
   }
