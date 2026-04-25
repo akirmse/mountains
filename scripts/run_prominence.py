@@ -91,6 +91,32 @@ def get_extent(ds):
 
     return xmin, xmax, ymin, ymax
 
+def get_extent_transformed(src_ds, target_srs_name):
+    """Return list of corner coordinates from a Dataset, in the target CRS, accounting for antimeridian"""
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromWkt(src_ds.GetProjection())
+    
+    gt = src_ds.GetGeoTransform()
+    w, h = src_ds.RasterXSize, src_ds.RasterYSize
+    
+    corners = [
+        (gt[0],             gt[3]),
+        (gt[0] + w * gt[1], gt[3]),
+        (gt[0],             gt[3] + h * gt[5]),
+        (gt[0] + w * gt[1], gt[3] + h * gt[5]),
+    ]
+    
+    target_srs = osr.SpatialReference()
+    target_srs.SetFromUserInput(target_srs_name)
+    target_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    
+    transform = osr.CoordinateTransformation(src_srs, target_srs)
+    projected = [transform.TransformPoint(x, y)[:2] for x, y in corners]
+    
+    xs = [(x + 180) % 360 - 180 for x, _ in projected]  # Deal with antimeridian
+    ys = [y for _, y in projected]
+    return min(xs), min(ys), max(xs), max(ys)
+
 def create_vrts(tile_dir, input_files, skip_boundary, tile_srs):
     """
     Creates virtual rasters (VRTs) for the input files on disk.
@@ -142,12 +168,19 @@ def create_vrts(tile_dir, input_files, skip_boundary, tile_srs):
         raw_options = gdal.BuildVRTOptions(callback=gdal.TermProgress_nocb)
         gdal.BuildVRT(raw_vrt_filename, filenames, options=raw_options)
 
+        # If the data crosses the antimeridian, GDAL will compute a bad bounding box for the warped
+        # VRT internally, causing the output to have low resolution.  We manually compute and
+        # specify the output bounding box ourselves.
+        src_ds = gdal.Open(raw_vrt_filename)
+        xmin, ymin, xmax, ymax = get_extent_transformed(src_ds, tile_srs)
+        src_ds = None  # Close file
+        
         # We want to specify -novshift to prevent a vertical CRS in one dataset from causing all datasets
         # to have a vertical shift applied.  But there's no Python -novshift option; in order to get it,
         # all options must be specified as a string.
         # warp_options = gdal.WarpOptions(format = "VRT", dstSRS = tile_srs)
         warped_dataset = gdal.Warp(warped_vrt_filename, raw_vrt_filename,
-                                   options = f"-t_srs {tile_srs} -of VRT -novshift",
+                                   options = f"-t_srs {tile_srs} -of VRT -novshift -te {xmin} {ymin} {xmax} {ymax}",
                                    callback=gdal.TermProgress_nocb)
         # BuildVRT requires that all sources have the same color interpretation, so set
         # it to grayscale.  It's sometimes missing in some datasets, which isn't allowed.
