@@ -79,6 +79,7 @@ void TreeBuilder::findExtrema() {
   bool vlog4 = VLOG_IS_ON(4);
   
   DomainMap::Boundary boundary;
+  vector<Range> ranges;
   vector<Offsets> segmentHighPoints;
   for (int y = 0; y < mTile->height(); ++y) {
     for (int x = 0; x < mTile->width(); ++x) {
@@ -94,12 +95,12 @@ void TreeBuilder::findExtrema() {
         continue;
       }
 
-      mDomainMap.findFlatArea(x, y, &boundary);
+      mDomainMap.findFlatArea(x, y, &boundary, &ranges);
       
       // If no higher boundary points, this is a peak
       if (boundary.higherPoints.empty()) {
         int peakId = static_cast<int>(mPeaks.size() + 1);
-        mDomainMap.fillFlatArea(x, y, peakId);
+        mDomainMap.fillFlatArea(ranges, peakId);
         
         // TODO: Pick a point near the middle of the flat region
         mPeaks.push_back(Peak(Offsets(x, y), elev));
@@ -115,7 +116,7 @@ void TreeBuilder::findExtrema() {
       // Look for saddles
       // Quick reject: can't be a saddle if there's only 1 higher point
       if (boundary.higherPoints.size() < 2) {
-        mDomainMap.fillFlatArea(x, y, DomainMap::GenericFlatArea);
+        mDomainMap.fillFlatArea(ranges, DomainMap::GenericFlatArea);
         continue;
       }
 
@@ -200,7 +201,7 @@ void TreeBuilder::findExtrema() {
           VLOG(4) << "Rejecting flat area " << x << " " << y
                   << " elev " << elev << " multiplicity " << numSegments;
         }
-        mDomainMap.fillFlatArea(x, y, DomainMap::GenericFlatArea);
+        mDomainMap.fillFlatArea(ranges, DomainMap::GenericFlatArea);
         continue;
       }
 
@@ -214,7 +215,7 @@ void TreeBuilder::findExtrema() {
 
           // Mark flat area; only need to do this once, and which saddle ID to use is arbitrary
           if (filledSaddleId == 0) {
-            mDomainMap.fillFlatArea(x, y, saddleId);
+            mDomainMap.fillFlatArea(ranges, saddleId);
             filledSaddleId = saddleId;
           }
 
@@ -426,7 +427,7 @@ vector<Offsets> TreeBuilder::walkUpToPeak(Offsets startPoint) {
     if (point == newPoint) {
       // No higher neighbor; need to check boundary of entire flat area
       DomainMap::Boundary boundary;
-      mDomainMap.findFlatArea(point.x(), point.y(), &boundary);
+      mDomainMap.findFlatArea(point.x(), point.y(), &boundary, nullptr);
 
       Elevation highestElevation = mTile->get(point);
       for (auto value : boundary.higherPoints) {

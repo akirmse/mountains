@@ -40,6 +40,13 @@
 
 #include <vector>
 
+// A Range is the set of pixels at [xmin,y] through [xmax,y] inclusive.
+// All pixels in a Range are known to be at the target elevation and are marked.
+struct Range {
+  Coord xmin, xmax;
+  Coord y;
+};
+
 class DomainMap {
 public:
   explicit DomainMap(const Tile *tile);
@@ -58,11 +65,12 @@ public:
   // Find the flat region containing the given point, then fills in
   // boundary with the points on the boundary higher than the given
   // point.  A given point may appear in the boundary multiple times.
-  void findFlatArea(int x, int y, Boundary *boundary);
+  // ranges, if non-null, is filled in with the flat region's extent.
+  void findFlatArea(int x, int y, Boundary *boundary, std::vector<Range> *ranges);
 
-  // Fill the 8-connected flat region at (x, y) with the given value.
-  void fillFlatArea(int x, int y, Pixel value);
-  
+  // Fill the given ranges with the given value
+  void fillFlatArea(const std::vector<Range> &ranges, Pixel value);
+
   Pixel get(Offsets offsets) const {
     return get(offsets.x(), offsets.y());
   }
@@ -85,19 +93,6 @@ private:
 
   // An unused marker value for use during the next operation
   int mMarkerValue;  
-
-  // A Range is the set of pixels at [xmin,y] through [xmax,y] inclusive.
-  // All pixels in a Range are known to be at the target elevation and are marked.
-  struct Range {
-    Range(Coord minx, Coord maxx, Coord ycoord) {
-      xmin = minx;
-      xmax = maxx;
-      y = ycoord;
-    }
-    
-    Coord xmin, xmax;
-    Coord y;
-  };
 
   std::vector<Range> mPendingRanges;
 };
