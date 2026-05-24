@@ -26,11 +26,11 @@
 #ifndef _TILE_CACHE_H_
 #define _TILE_CACHE_H_
 
-#include "lock.h"
 #include "lrucache.h"
 #include "tile.h"
 #include "tile_loading_policy.h"
 
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -63,7 +63,7 @@ public:
 
 private:
 
-  Lock mLock;
+  std::mutex mLock;
   lru_cache<int, Tile *> mCache;
   TileLoadingPolicy *mLoadingPolicy;
   // Map of encoded lat/lng to max elevation in that tile
