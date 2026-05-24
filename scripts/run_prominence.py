@@ -21,7 +21,8 @@ from multiprocessing import Pool
 from osgeo import gdal, ogr, osr
 from pathlib import Path
 
-from boundary import Boundary
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from boundary import Boundary, process_chunk
 
 epsilon = 0.0001
 
@@ -117,7 +118,7 @@ def get_extent_transformed(src_ds, target_srs_name):
     ys = [y for _, y in projected]
     return min(xs), min(ys), max(xs), max(ys)
 
-def create_vrts(tile_dir, input_files, skip_boundary, tile_srs):
+def create_vrts(tile_dir, input_files, skip_boundary, tile_srs, threads):
     """
     Creates virtual rasters (VRTs) for the input files on disk.
     Returns:
@@ -191,9 +192,20 @@ def create_vrts(tile_dir, input_files, skip_boundary, tile_srs):
 
         if not skip_boundary:
             print("  Computing boundary")
-            for tile in filenames:
-                print(tile)
-                boundary.add_dataset(tile)
+            if threads <= 1:
+                for tile in filenames:
+                    print(tile)
+                    boundary.add_dataset(tile)
+            else:
+                chunk_size = Boundary.batch_size
+                chunks = [filenames[i:i + chunk_size]
+                          for i in range(0, len(filenames), chunk_size)]
+                with ThreadPoolExecutor(max_workers=threads) as executor:
+                    futures = [executor.submit(process_chunk, chunk) for chunk in chunks]
+                    for future in as_completed(futures):
+                        geom = future.result()
+                        if not geom.IsEmpty():
+                            boundary.add_geometry(geom)
         index += 1
 
     # Build a single VRT of all the warped VRTs
@@ -296,7 +308,8 @@ def main():
 
     # Build all the VRTs and compute boundary for entire input
     warped_vrt_filename, bounds = create_vrts(args.tile_dir, input_files,
-                                              skip_computing_boundary, args.tile_srs)
+                                              skip_computing_boundary, args.tile_srs,
+                                              args.threads)
     # Boundary manually specified?
     if args.boundary:
         bounds = manually_specified_boundary

@@ -6,28 +6,48 @@ import math
 import os
 import signal
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from osgeo import gdal, ogr, osr
 
-from boundary import Boundary
+from boundary import Boundary, process_chunk
 
-def process_files(files):
+
+def process_files(files, threads):
     print("  Computing boundary")
 
-    # With many thousands of files, continually merging into one boundary
-    # gets slow.  So instead we do it in batches.
-    boundary = Boundary()
-    for f in files:
-        print(f)
-        boundary.add_dataset(f)
+    if threads <= 1:
+        b = Boundary()
+        for f in files:
+            print(f)
+            b.add_dataset(f)
+        b.write_to_file('boundary.shp')
+        return
 
-    # Write merged geometry
+    # Split files into chunks of batch_size so each thread does a balanced amount
+    # of both I/O and Union work independently, mirroring Boundary's own batching.
+    chunk_size = Boundary.batch_size
+    chunks = [files[i:i + chunk_size] for i in range(0, len(files), chunk_size)]
+
+    # Submit all chunks; merge each chunk's boundary into the final result as it
+    # completes rather than waiting for all threads to finish first.
+    boundary = Boundary()
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        futures = [executor.submit(process_chunk, chunk) for chunk in chunks]
+        for future in as_completed(futures):
+            geom = future.result()
+            if not geom.IsEmpty():
+                boundary.add_geometry(geom)
+
     boundary.write_to_file('boundary.shp')
+
 
 def main():
     parser = argparse.ArgumentParser(description='Convert LIDAR to standard tiles')
     parser.add_argument('input_files', type=str, nargs='+',
                         help='Input Lidar tiles, or GDAL VRT of tiles')
+    parser.add_argument('--threads', type=int, default=1,
+                        help='Number of threads for parallel boundary computation')
     args = parser.parse_args()
 
     gdal.UseExceptions()
@@ -41,7 +61,8 @@ def main():
             exit(1)
         input_files.extend(files)
 
-    process_files(input_files)
-        
+    process_files(input_files, args.threads)
+
+
 if __name__ == '__main__':
     main()
