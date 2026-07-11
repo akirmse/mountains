@@ -96,7 +96,10 @@ def get_extent_transformed(src_ds, target_srs_name):
     """Return list of corner coordinates from a Dataset, in the target CRS, accounting for antimeridian"""
     src_srs = osr.SpatialReference()
     src_srs.ImportFromWkt(src_ds.GetProjection())
-    
+    # The geotransform corners below are always stored easting-first (x, y).
+    # Force the same order on the source SRS.
+    src_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     gt = src_ds.GetGeoTransform()
     w, h = src_ds.RasterXSize, src_ds.RasterYSize
     
@@ -274,6 +277,8 @@ def main():
                         help='Number of samples per edge of a reprojected tile')
     parser.add_argument('--bathymetry', action=argparse.BooleanOptionalAction,
                         help='Is the input DEM bathymetry?')
+    parser.add_argument('--full_divide_tree', action=argparse.BooleanOptionalAction,
+                        help='Generate unpruned divide tree output files?')
     args = parser.parse_args()
 
     gdal.UseExceptions()
@@ -363,6 +368,8 @@ def main():
     extra_args = ""
     if args.bathymetry:
         extra_args += " -b"
+    if args.full_divide_tree:
+        extra_args += " --full_divide_tree"
     prom_command = f"{prominence_binary} --v=1 -f CUSTOM-{args.degrees_per_tile}-{args.samples_per_tile}" + \
         f" -i {args.tile_dir} -o {args.output_dir}" + \
         f" -t {args.threads} -m {args.min_prominence}" + \
