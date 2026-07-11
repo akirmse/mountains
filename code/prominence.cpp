@@ -53,17 +53,18 @@ static void usage() {
   printf("  where coordinates are on tile boundaries\n");
   printf("\n");
   printf("  Options:\n");
-  printf("  -i directory      Directory with terrain data\n");
-  printf("  -o directory      Directory for output data\n");
-  printf("  -f format         \"SRTM\", \"SRTM30\", \"NED13\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\", \"LIDAR\"\n");
-  printf("  -k filename       File with KML polygon to filter input tiles\n");
-  printf("  -m min_prominence Minimum prominence threshold for output\n");
-  printf("                    in same units as terrain data, default = 100\n");
-  printf("  -t num_threads    Number of threads, default = 1\n");
-  printf("  -z                UTM zone (if input data is in UTM)\n");
-  printf("  -a                Compute anti-prominence instead of prominence\n");
-  printf("  -b                Input DEM is bathymetric (do not use sea level)\n");
-  printf("  --kml             Generate KML output of divide tree\n"); 
+  printf("  -i directory        Directory with terrain data\n");
+  printf("  -o directory        Directory for output data\n");
+  printf("  -f format           \"SRTM\", \"SRTM30\", \"NED13\", \"NED1-ZIP\", \"NED19\", \"3DEP-1M\", \"GLO30\", \"LIDAR\"\n");
+  printf("  -k filename         File with KML polygon to filter input tiles\n");
+  printf("  -m min_prominence   Minimum prominence threshold for output\n");
+  printf("                      in same units as terrain data, default = 100\n");
+  printf("  -t num_threads      Number of threads, default = 1\n");
+  printf("  -z                  UTM zone (if input data is in UTM)\n");
+  printf("  -a                  Compute anti-prominence instead of prominence\n");
+  printf("  -b                  Input DEM is bathymetric (do not use sea level)\n");
+  printf("  --kml               Generate KML output of divide tree\n"); 
+  printf("  --full_divide_tree  Generate output files for unpruned divide trees\n"); 
   exit(1);
 }
 
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
   bool antiprominence = false;
   bool bathymetry = false;
   int writeKml = false;
+  int writeFullDivideTree = false;
   int utmZone = NO_UTM_ZONE;
 
   // Make a do-nothing "v" option to avoid getting runtime warnings about --v (for
@@ -91,6 +93,7 @@ int main(int argc, char **argv) {
   const struct option long_options[] = {
     {"v", required_argument, nullptr, 0},
     {"kml", no_argument, &writeKml, 1},
+    {"full_divide_tree", no_argument, &writeFullDivideTree, 1},
     {nullptr, 0, 0, 0},
   };
   while ((ch = getopt_long(argc, argv, "abf:i:k:m:o:t:z:", long_options, nullptr)) != -1) {
@@ -188,8 +191,9 @@ int main(int argc, char **argv) {
   }
 
   // Don't write out unpruned divide tree--it's too large and slow
-  ProminenceOptions options = {output_directory, minProminence, false, antiprominence,
-                               bathymetry,
+  ProminenceOptions options = {output_directory, minProminence,
+                               static_cast<bool>(writeFullDivideTree),
+                               antiprominence, bathymetry,
                                static_cast<bool>(writeKml)};
   
   // Caching doesn't do anything for our calculation and the tiles are huge
