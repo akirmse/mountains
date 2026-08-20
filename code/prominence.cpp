@@ -212,13 +212,16 @@ int main(int argc, char **argv) {
   auto threadPool = std::make_unique<ThreadPool>(numThreads);
   int num_tiles_processed = 0;
   vector<std::future<bool>> results;
-  // Use double precision to avoid accumulating floating-point error during loop
-  double lat = bounds[0];
-  while (lat < bounds[1]) {
+  // Latitude range is half-open [bounds[0], bounds[1]); longitude range is
+  // closed [bounds[2], bounds[3]] and traversed east-to-west.
+  int numLatTiles = static_cast<int>(std::round((bounds[1] - bounds[0]) / degreesAcross));
+  int numLngTiles = static_cast<int>(std::round((bounds[3] - bounds[2]) / degreesAcross));
+  for (int latIndex = 0; latIndex < numLatTiles; ++latIndex) {
+    double lat = bounds[0] + latIndex * degreesAcross;
     // Go east-to-west to take advantage of some tile caching, since we need pixels
     // from our eastern neighbor.
-    double lng = bounds[3];
-    while (lng >= bounds[2]) {
+    for (int lngIndex = 0; lngIndex <= numLngTiles; ++lngIndex) {
+      double lng = bounds[3] - lngIndex * degreesAcross;
       // Allow specifying longitude ranges that span the antimeridian (lng > 180)
       auto wrappedLng = lng;
       if (!fileFormat->isUtm() && wrappedLng >= 180) {
@@ -229,8 +232,8 @@ int main(int argc, char **argv) {
         fileFormat->coordinateSystemForOrigin(lat, wrappedLng, utmZone));
 
       // Skip tiles that don't intersect filtering polygon
-      if (!filter.intersects(lat, lat + fileFormat->degreesAcross(),
-                             lng, lng + fileFormat->degreesAcross())) {
+      if (!filter.intersects(lat, lat + degreesAcross,
+                             lng, lng + degreesAcross)) {
         VLOG(3) << "Skipping tile that doesn't intersect polygon " << lat << " " << lng;
       } else {
         // Actually calculate prominence
@@ -239,10 +242,7 @@ int main(int argc, char **argv) {
               return task->run(lat, wrappedLng, *coordinateSystem);
             }));
       }
-
-      lng -= fileFormat->degreesAcross();
     }
-    lat += fileFormat->degreesAcross();
   }
 
   for (auto && result : results) {

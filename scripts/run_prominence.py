@@ -117,8 +117,14 @@ def get_extent_transformed(src_ds, target_srs_name):
     transform = osr.CoordinateTransformation(src_srs, target_srs)
     projected = [transform.TransformPoint(x, y)[:2] for x, y in corners]
     
-    xs = [(x + 180) % 360 - 180 for x, _ in projected]  # Deal with antimeridian
+    raw_xs = [x for x, _ in projected]
     ys = [y for _, y in projected]
+    # A dataset covering the whole globe in longitude (e.g. -180..180) would have
+    # its right edge wrapped onto its left edge by the antimeridian normalization
+    # below, collapsing the extent to zero width.  Handle it explicitly.
+    if max(raw_xs) - min(raw_xs) >= 360 - 1e-6:
+        return -180, min(ys), 180, max(ys)
+    xs = [(x + 180) % 360 - 180 for x in raw_xs]  # Deal with antimeridian
     return min(xs), min(ys), max(xs), max(ys)
 
 def create_vrts(tile_dir, input_files, skip_boundary, tile_srs, threads):
